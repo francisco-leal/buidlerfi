@@ -8,6 +8,11 @@ import { Web3Modal } from '@web3modal/react'
 import { configureChains, createConfig, WagmiConfig } from 'wagmi'
 import { arbitrum, mainnet, polygon } from 'wagmi/chains'
 
+import { Separator } from "@/components/ui/separator"
+
+import { NavActions } from "@/components/nav-actions"
+import { NavWeb3Button } from "@/components/nav-web3-button"
+
 const chains = [arbitrum, mainnet, polygon]
 const projectId = '530148d9ddb07d128a40fc21cc9ffdd9'
 
@@ -30,7 +35,17 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className={inter.className}>
         <WagmiConfig config={wagmiConfig}>
+        <div className="h-full flex-col">
+          <div className="container flex items-center justify-between py-4 h-16">
+            <h2 className="text-lg font-semibold">BuidlerFi</h2>
+            <div className="ml-auto flex w-full space-x-2 justify-end">
+              <NavWeb3Button />
+              <NavActions />
+            </div>
+          </div>
+          <Separator />
           {children}
+        </div>
         </WagmiConfig>
         <Web3Modal projectId={projectId} ethereumClient={ethereumClient} />
       </body>

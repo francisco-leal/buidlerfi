@@ -1,28 +1,25 @@
-import { Metadata } from "next"
-import { Separator } from "@/components/ui/separator"
-
-import { NavActions } from "@/components/nav-actions"
-import { NavWeb3Button } from "@/components/nav-web3-button"
-
-export const metadata: Metadata = {
-  title: "BuidlerFi",
-  description: "The open platform for builders.",
-}
+'use client'
+import { useAccount, useEnsName } from 'wagmi'
 
 export default function Home() {
+  const { address, isConnecting, isDisconnected } = useAccount()
+  const { data: ensName, isError, isLoading } = useEnsName({
+    address,
+  });
+
+  const builderName = () => {
+    if (!address) return ("Buidler");
+    if (isError || isLoading || !ensName) return (address.slice(0, 5) + "..." + address.slice(-3));
+    return ensName;
+  }
+
+  if (isConnecting) return <h1>Connecting...</h1>
+  if (isDisconnected) return <h1>Please connect your wallet to proceed</h1>
+
   return (
-    <>
-      <div className="h-full flex-col">
-        <div className="container flex items-center justify-between py-4 h-16">
-          <h2 className="text-lg font-semibold">BuidlerFi</h2>
-          <div className="ml-auto flex w-full space-x-2 justify-end">
-            <NavWeb3Button />
-            <NavActions />
-          </div>
-        </div>
-        <Separator />
-        <h1>BuidlerFi</h1>
-      </div>
-    </>
+    <main className="p-8">
+      <h1>BuidlerFi</h1>
+      <p>Welcome {builderName()}!</p>
+    </main>
   )
 }
