@@ -23,7 +23,7 @@ export function UserItem({ item }: any) {
     return ensName;
   }
 
-  const price = (item: any) => formatUnits(item.buyPrice, 18);
+  const price = (item: any) => formatUnits(item.buyPrice || 0, 18);
 
   return (
     <div className="flex items-center justify-between w-full rounded-md p-2 transition-all hover:bg-accent hover:text-accent-foreground" onClick={() => router.push(`/${item.owner}`)}>
