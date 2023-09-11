@@ -94,6 +94,10 @@ export function handleTrade(event: TradeEvent): void {
     relationship.heldKeyNumber = ONE_BI
   } else {
     if (event.params.isBuy) {
+      if (relationship.heldKeyNumber == ZERO_BI) {
+        subject.numberOfHolders = subject.numberOfHolders.plus(ONE_BI)
+        buyer.numberOfHoldings = buyer.numberOfHoldings.plus(ONE_BI)
+      }
       relationship.heldKeyNumber = relationship.heldKeyNumber.plus(ONE_BI)
     } else {
       relationship.heldKeyNumber = relationship.heldKeyNumber.minus(ONE_BI)
