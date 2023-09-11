@@ -18,8 +18,11 @@ type ShareParticipant @entity {
   id: ID!
   owner: ID! # address
   supply: BigInt! # uint256
+  buyPrice: BigInt # uint256
+  sellPrice: BigInt # uint256
   numberOfHolders: BigInt! # uint256
   numberOfHoldings: BigInt! # uint256
+  tradingFeesAmount: BigInt! # uint256
 }
 
 type ShareRelationship @entity {

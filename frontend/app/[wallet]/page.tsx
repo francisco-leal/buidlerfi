@@ -63,10 +63,10 @@ export default function ProfilePage({ params }: { params: { wallet: string } }) 
           <ChatTab wallet={params.wallet}/>
         </TabsContent>
         <TabsContent value="holding" className="space-y-4">
-          <HoldingTab />
+          <HoldingTab wallet={params.wallet}/>
         </TabsContent>
         <TabsContent value="holders" className="space-y-4">
-          <HoldersTab />
+          <HoldersTab wallet={params.wallet}/>
         </TabsContent>
       </Tabs>
     </main>

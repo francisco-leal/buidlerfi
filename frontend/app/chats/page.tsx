@@ -1,33 +1,61 @@
 'use client'
-import { useEffect, useState } from 'react';
-import { DATA, DEFAULT_PROFILE_PICTURE, DATA_TYPE } from "@/lib/mock"
-import { Button } from "@/components/ui/button"
-import { useRouter } from 'next/navigation'
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { useEffect, useState, useContext } from 'react';
 import { Icons } from "@/components/ui/icons"
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ChevronRight } from "lucide-react"
+import { useAccount } from 'wagmi'
+import { GraphContext } from '@/lib/context';
+import { UserItem } from '@/components/user-item';
+import { formatUnits } from 'viem';
 
 export default function ChatsPage() {
-  const router = useRouter();
-  const [holding, setHolding] = useState<Array<DATA_TYPE>>([]);
+  const { address } = useAccount();
+  const [holding, setHolding] = useState<any>([]);
+  const [portfolio, setPortfolioValue] = useState(0);
+  const [tradingFees, setTradingFees] = useState(0);
   const [loading, setLoading] = useState(true);
+  const graphContext = useContext(GraphContext)
 
-  useEffect(() => { 
-    // @ts-ignore
-    setHolding(DATA.filter((item) => item.number_of_votes > 0));
+  useEffect(() => {
+    //@ts-ignore
+    if (!graphContext.graphData) return;
 
-    // TODO: Remove after adding backend
-    setTimeout(() => setLoading(false), 1000);
-  }, []);
+    //@ts-ignore
+    const allHolders = graphContext.graphData.shareRelationships.filter((item: any) => {
+      return item.holder.id == address?.toLowerCase();
+    })
 
-  const builderName = (item: { wallet: string, ens_name: string}) => {
-    if (!item.wallet) return ("Buidler");
-    if (!item.ens_name) return (item.wallet.slice(0, 5) + "..." + item.wallet.slice(-3));
-    return item.ens_name;
-  }
+    let value = 0;
 
-  const price = (item: { number_of_holders: number}) => (item.number_of_holders * 0.013).toFixed(3);
+    allHolders.forEach((item: any) => {
+      value += item.owner.buyPrice;
+    });
+    setPortfolioValue(value);
+
+    setHolding(allHolders.map((item: any) => item.owner));
+    setLoading(false);
+
+    //@ts-ignore
+  }, [graphContext.graphData, address])
+
+  useEffect(() => {
+    //@ts-ignore
+    if (!graphContext.graphData) return;
+
+    //@ts-ignore
+    const viewedUser = graphContext.graphData.shareParticipants.find((user) => user.owner == address.toLowerCase());
+
+    if(viewedUser) {
+      setTradingFees(viewedUser.tradingFeesAmount);
+    }
+
+    //@ts-ignore
+  }, [graphContext.graphData, address])
+
+  // @ts-ignore
+  const tradingFeesValue = () => formatUnits(tradingFees, 18);
+
+  // @ts-ignore
+  const portfolioValue = () => formatUnits(portfolio, 18);
 
   if (loading) {
     return (
@@ -47,7 +75,7 @@ export default function ChatsPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-lg font-bold">345.87 MATIC</div>
+            <div className="text-lg font-bold">{portfolioValue()} MATIC</div>
           </CardContent>
         </Card>
         <Card>
@@ -57,28 +85,12 @@ export default function ChatsPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-lg font-bold">21.62 MATIC</div>
+            <div className="text-lg font-bold">{tradingFeesValue()} MATIC</div>
           </CardContent>
         </Card>
       </div>
-      {holding.map((item) => 
-        <div key={`holders-${item.wallet}`} className="flex items-center justify-between w-full rounded-md p-2 transition-all hover:bg-accent hover:text-accent-foreground">
-          <div className="space-x-4 flex items-center">
-            <Avatar className="mt-px h-5 w-5">
-              <AvatarImage src={item.profile_picture_url || DEFAULT_PROFILE_PICTURE} />
-              <AvatarFallback>OM</AvatarFallback>
-            </Avatar>
-            <div className="space-y-1">
-              <p className="text-sm font-medium leading-none">{builderName(item)}</p>
-              <p className="text-sm text-muted-foreground">
-                {item.number_of_holders} holders | Price {price(item)} MATIC
-              </p>
-            </div>
-          </div>
-          <Button variant="ghost" size="icon" onClick={() => router.push(`/${item.wallet}`)}>
-            <ChevronRight className="h-4 w-4" />
-          </Button>
-        </div>
+      {holding.map((item: any) => 
+        <UserItem item={item} key={`home-${item.owner}`} />
       )}
     </main>
   )

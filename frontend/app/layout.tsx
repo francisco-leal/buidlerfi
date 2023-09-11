@@ -13,6 +13,10 @@ import { Toaster } from "@/components/ui/toaster"
 import { BottomNav } from "@/components/bottom-nav"
 import { NavBalance } from '@/components/nav-balance'
 
+import { fetchTheGraphData } from '@/lib/graphql'
+import { useEffect, useState } from 'react'
+import { GraphContext } from '@/lib/context'
+
 const chains = [polygonMumbai]
 const projectId = '530148d9ddb07d128a40fc21cc9ffdd9'
 
@@ -31,21 +35,33 @@ export default function RootLayout({
 }: {
   children: React.ReactNode
 }) {
+  const [refreshGraph, setRefreshGraph] = useState(true);
+  const [graphData, setGraphData] = useState({ data: null });
+
+  useEffect(() => {
+    if (!refreshGraph) return;
+
+    console.log("REFRESHING DATA");
+    fetchTheGraphData().then((data) => setGraphData(data));
+  }, [refreshGraph])
+
   return (
     <html lang="en" suppressHydrationWarning className='h-full'>
       <body className={inter.className + " relative h-full"}>
         <WagmiConfig config={wagmiConfig}>
-        <div className="h-full flex-col pt-16">
-          <div className="container flex items-center justify-between py-4 h-16 px-4 fixed top-0 left-0 border-b bg-white z-10">
-            <h2 className="text-lg font-semibold">BuidlerFi</h2>
-            <div className="ml-auto flex items-center w-full space-x-2 justify-end">
-              <NavBalance />
-              <NavWeb3Button />
+        <GraphContext.Provider value={{graphData: graphData?.data, forceRefresh: () => setRefreshGraph(true)}}>
+          <div className="h-full flex-col pt-16">
+            <div className="container flex items-center justify-between py-4 h-16 px-4 fixed top-0 left-0 border-b bg-white z-10">
+              <h2 className="text-lg font-semibold">BuidlerFi</h2>
+              <div className="ml-auto flex items-center w-full space-x-2 justify-end">
+                <NavBalance />
+                <NavWeb3Button />
+              </div>
             </div>
+            {children}
+            <BottomNav />
           </div>
-          {children}
-          <BottomNav />
-        </div>
+        </GraphContext.Provider>
         </WagmiConfig>
         <Toaster />
         <Web3Modal
