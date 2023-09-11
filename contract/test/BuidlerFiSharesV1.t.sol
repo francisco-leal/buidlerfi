@@ -33,62 +33,62 @@ contract BuidlerFiSharesV1Test is StdCheats, Test {
 
     function test_SuccessfulInitialBuySingleKey() external {
         vm.startPrank(address(0x1));
-        uint256 buyPrice = sharesContract.getBuyPriceAfterFee(address(0x1),1);
+        uint256 buyPrice = sharesContract.getBuyPriceAfterFee(address(0x1));
         vm.deal(address(0x1), buyPrice);
-        sharesContract.buyShares{value: 0}(address(0x1),1);
+        sharesContract.buyShares{value: 0}(address(0x1));
         assertEq(sharesContract.supporterAddressArray(address(0x1),0), address(0x1), "Array not updated");
         vm.stopPrank();
     }
 
     function test_SuccessfulInitialBuyMultipleKeys() external {
         vm.startPrank(address(0x1));
-        uint256 buyPrice = sharesContract.getBuyPriceAfterFee(address(0x1),5);
+        uint256 buyPrice = sharesContract.getBuyPriceAfterFee(address(0x1));
         vm.deal(address(0x1), buyPrice);
-        sharesContract.buyShares{value: buyPrice}(address(0x1),5);
+        sharesContract.buyShares{value: buyPrice}(address(0x1));
         assertEq(sharesContract.supporterAddressArray(address(0x1),0), address(0x1), "Array not updated");
         vm.stopPrank();
     }
 
     function test_UnsuccessfulInitialBuy_FirstShareByNonOwner() external {
         vm.startPrank(address(0x1));
-        uint256 buyPrice = sharesContract.getBuyPriceAfterFee(address(0x1),1);
+        uint256 buyPrice = sharesContract.getBuyPriceAfterFee(address(0x1));
         vm.deal(address(0x1), buyPrice);
         vm.expectRevert();
-        sharesContract.buyShares{value: buyPrice}(address(0x2),1);
+        sharesContract.buyShares{value: buyPrice}(address(0x2));
         vm.stopPrank();
     }
 
     function test_SupporterNumber() external {
         vm.startPrank(address(0x1));
-        uint256 buyPrice1 = sharesContract.getBuyPriceAfterFee(address(0x1),1);
+        uint256 buyPrice1 = sharesContract.getBuyPriceAfterFee(address(0x1));
         vm.deal(address(0x1), buyPrice1);
-        sharesContract.buyShares{value:buyPrice1}(address(0x1),1);
+        sharesContract.buyShares{value:buyPrice1}(address(0x1));
         vm.stopPrank();
         vm.startPrank(address(0x2));
-        uint256 buyPrice2 = sharesContract.getBuyPriceAfterFee(address(0x1),2);
+        uint256 buyPrice2 = sharesContract.getBuyPriceAfterFee(address(0x1));
         vm.deal(address(0x2), buyPrice2);
-        sharesContract.buyShares{value:buyPrice2}(address(0x1),2);
+        sharesContract.buyShares{value:buyPrice2}(address(0x1));
         vm.stopPrank();
         vm.startPrank(address(0x3));
-        uint256 buyPrice3 = sharesContract.getBuyPriceAfterFee(address(0x1),3);
+        uint256 buyPrice3 = sharesContract.getBuyPriceAfterFee(address(0x1));
         vm.deal(address(0x3), buyPrice3);
-        sharesContract.buyShares{value:buyPrice3}(address(0x1),3);
+        sharesContract.buyShares{value:buyPrice3}(address(0x1));
         vm.stopPrank();
         assertEq(sharesContract.supporterAddressArray(address(0x1),0), address(0x1), "Array not updated");
         assertEq(sharesContract.supporterAddressArray(address(0x1),1), address(0x2), "Array not updated");
         assertEq(sharesContract.supporterAddressArray(address(0x1),2), address(0x3), "Array not updated");
 
         assertEq(sharesContract.supporterKeysArray(address(0x1),0), 1, "Array not updated");
-        assertEq(sharesContract.supporterKeysArray(address(0x1),1), 2, "Array not updated");
-        assertEq(sharesContract.supporterKeysArray(address(0x1),2), 3, "Array not updated");
+        assertEq(sharesContract.supporterKeysArray(address(0x1),1), 1, "Array not updated");
+        assertEq(sharesContract.supporterKeysArray(address(0x1),2), 1, "Array not updated");
     }
 
     function test_getTopNHodlers() external {
         for(uint256 i=1;i<10;i++) {
             vm.startPrank(address(uint160(i)));
-            uint256 buyPrice = sharesContract.getBuyPriceAfterFee(address(0x1),1);
+            uint256 buyPrice = sharesContract.getBuyPriceAfterFee(address(0x1));
             vm.deal(address(uint160(i)), buyPrice);
-            sharesContract.buyShares{value:buyPrice}(address(0x1),1);
+            sharesContract.buyShares{value:buyPrice}(address(0x1));
             vm.stopPrank();
         }
 

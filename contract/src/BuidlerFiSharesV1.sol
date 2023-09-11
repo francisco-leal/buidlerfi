@@ -69,16 +69,16 @@ contract BuidlerFiSharesV1 is Ownable {
         return summation * 1 ether / 16000;
     }
 
-    function getBuyPrice(address sharesSubject, uint256 amount) public view returns (uint256) {
-        return getPrice(sharesSupply[sharesSubject], amount);
+    function getBuyPrice(address sharesSubject) public view returns (uint256) {
+        return getPrice(sharesSupply[sharesSubject], 1);
     }
 
     function getSellPrice(address sharesSubject, uint256 amount) public view returns (uint256) {
         return getPrice(sharesSupply[sharesSubject] - amount, amount);
     }
 
-    function getBuyPriceAfterFee(address sharesSubject, uint256 amount) public view returns (uint256) {
-        uint256 price = getBuyPrice(sharesSubject, amount);
+    function getBuyPriceAfterFee(address sharesSubject) public view returns (uint256) {
+        uint256 price = getBuyPrice(sharesSubject);
         uint256 protocolFee = price * protocolFeePercent / 1 ether;
         uint256 subjectFee = price * subjectFeePercent / 1 ether;
         uint256 hodlerFee = price * hodlerFeePercent / 1 ether;
@@ -93,10 +93,11 @@ contract BuidlerFiSharesV1 is Ownable {
         return price - protocolFee - subjectFee - hodlerFee;
     }
 
-    function buyShares(address sharesSubject, uint256 amount) public payable {
+    /// @notice Can only buy one share at a time
+    function buyShares(address sharesSubject) public payable {
         uint256 supply = sharesSupply[sharesSubject];
         if(supply == 0 && sharesSubject != msg.sender) revert OnlySharesSubjectCanBuyFirstShare();
-        uint256 price = getPrice(supply, amount);
+        uint256 price = getPrice(supply, 1);
         uint256 protocolFee = price * protocolFeePercent / 1 ether;
         uint256 subjectFee = price * subjectFeePercent / 1 ether;
         uint256 hodlerFee = price * hodlerFeePercent / 1 ether;
@@ -104,18 +105,18 @@ contract BuidlerFiSharesV1 is Ownable {
 
         uint256 initialBalance = sharesBalance[sharesSubject][msg.sender];
         
-        sharesBalance[sharesSubject][msg.sender] += amount;
-        sharesSupply[sharesSubject] = supply + amount;
+        sharesBalance[sharesSubject][msg.sender]++;
+        sharesSupply[sharesSubject]++;
         emit Trade(
             msg.sender, 
             sharesSubject, 
             true, 
-            amount, 
+            1, 
             price, 
             protocolFee, 
             subjectFee, 
             hodlerFee,
-            supply + amount
+            supply + 1
         );
 
         (bool success1, ) = protocolFeeDestination.call{value: protocolFee}("");
@@ -126,12 +127,12 @@ contract BuidlerFiSharesV1 is Ownable {
 
         if (initialBalance==0) {
             supporterNumber[sharesSubject][msg.sender] = supporterKeysArray[sharesSubject].length;
-            supporterKeysArray[sharesSubject].push(amount);
+            supporterKeysArray[sharesSubject].push(1);
             supporterAddressArray[sharesSubject].push(msg.sender);
         }
 
         else {
-            supporterKeysArray[sharesSubject][supporterNumber[sharesSubject][msg.sender]] += amount;
+            supporterKeysArray[sharesSubject][supporterNumber[sharesSubject][msg.sender]]++;
         }
     }
 
