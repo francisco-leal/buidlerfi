@@ -2,8 +2,7 @@
 import { useEffect, useState, useContext } from 'react'
 import { useAccount, usePublicClient } from 'wagmi'
 import { Button } from '@/components/ui/button'
-import { getEnsName } from 'viem/ens';
-import { isAddress, formatUnits } from 'viem';
+import { formatUnits } from 'viem';
 import {
   AlertDialog,
   AlertDialogContent,
@@ -17,6 +16,30 @@ import { useContractWrite, useWaitForTransaction, useContractRead } from 'wagmi'
 import abi from "@/lib/abi/BuidlerFiV1.json";
 import { MUMBAI_ADDRESS } from '@/lib/address';
 import { GraphContext } from '@/lib/context';
+import { init, useQuery } from "@airstack/airstack-react";
+
+
+// @ts-ignore
+init(process.env.NEXT_PUBLIC_AIRSTACK_TOKEN);
+
+const QUERY = `query GetSocial($identity: Identity!) {
+  Wallet(input: {identity: $identity, blockchain: ethereum}) {
+    primaryDomain {
+      name
+    }
+    domains {
+      name
+    }
+    socials {
+      dappName
+      profileName
+    }
+    xmtp {
+      isXMTPEnabled
+    }
+  }
+}
+`;
 
 export function Overview({
   wallet,
@@ -31,7 +54,6 @@ export function Overview({
   buyPriceAfterFee: unknown,
   sellPrice: unknown
 }) {
-  const publicClient = usePublicClient()
   const { address, isConnecting, isDisconnected } = useAccount()
   const [ensName, setENSName] = useState("");
   const [holders, setHolders] = useState(0);
@@ -41,6 +63,8 @@ export function Overview({
   const [openBuy, setOpenBuy] = useState(false);
   const { toast } = useToast()
   const graphContext = useContext(GraphContext)
+
+  const { data: walletDetails, loading } = useQuery(QUERY, {identity: wallet});
 
   useEffect(() => {
     //@ts-ignore
@@ -100,6 +124,7 @@ export function Overview({
         title: "Key bought!",
         description: `You bought a key of ${builderName()}.`,
       })
+      window.location.reload();
     },
   })
 
@@ -147,16 +172,9 @@ export function Overview({
   }
 
   useEffect(() => {
-    if (wallet && isAddress(wallet as string)) {
-      // @ts-ignore
-      getEnsName(publicClient, { address: wallet })
-        .then((name) => {
-          if (name) {
-            setENSName(name);
-          }
-        });
-    }
-  }, [wallet])
+    let primaryName = walletDetails.Wallet.primaryDomain?.name;
+    setENSName(primaryName);
+  }, [walletDetails])
 
   const buyKeys = async () => {
     setBuyingKeys(true)
