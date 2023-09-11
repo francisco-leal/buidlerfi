@@ -27,7 +27,7 @@ export default function ChatsPage() {
     let value = 0;
 
     allHolders.forEach((item: any) => {
-      value += item.owner.buyPrice;
+      value += parseFloat(item.owner.buyPrice);
     });
     setPortfolioValue(value);
 
@@ -42,7 +42,7 @@ export default function ChatsPage() {
     if (!graphContext.graphData) return;
 
     //@ts-ignore
-    const viewedUser = graphContext.graphData.shareParticipants.find((user) => user.owner == address.toLowerCase());
+    const viewedUser = graphContext.graphData.shareParticipants.find((user) => user.owner == address?.toLowerCase());
 
     if(viewedUser) {
       setTradingFees(viewedUser.tradingFeesAmount);
@@ -55,7 +55,7 @@ export default function ChatsPage() {
   const tradingFeesValue = () => formatUnits(tradingFees, 18);
 
   // @ts-ignore
-  const portfolioValue = () => formatUnits(portfolio, 18);
+  const portfolioValue = () => formatUnits(portfolio.toString(), 18);
 
   if (loading) {
     return (
