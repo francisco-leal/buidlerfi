@@ -113,7 +113,7 @@ export function Overview({ wallet }: { wallet: string }) {
           <AlertDialogTrigger>
             <Button>{isSupporting ? "Trade" : "Buy"}</Button>
           </AlertDialogTrigger>
-          <AlertDialogContent>
+          <AlertDialogContent className='w-11/12'>
             <AlertDialogHeader>
               <AlertDialogTitle>{isSupporting ? "Trade":"Buy"} Keys</AlertDialogTitle>
               <div className="flex flex-col pt-8">
@@ -144,6 +144,9 @@ export function Overview({ wallet }: { wallet: string }) {
                     </div>
                   </>)
                 }
+                <Button variant="ghost" onClick={() => setOpenBuy(false)} disabled={buyingKeys || sellingKeys} className="mt-2">
+                  Cancel
+                </Button>
               </div>
             </AlertDialogHeader>
           </AlertDialogContent>
