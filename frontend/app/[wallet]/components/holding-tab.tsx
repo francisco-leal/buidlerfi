@@ -15,7 +15,7 @@ export function HoldingTab({ wallet }: {wallet: string}) {
 
     //@ts-ignore
     const allHolders = graphContext.graphData.shareRelationships.filter((item: any) => {
-      return item.holder.id == wallet?.toLowerCase();
+      return item.holder.id == wallet?.toLowerCase() && (item.heldKeyNumber > 0);
     })
 
     setHolding(allHolders.map((item: any) => item.owner));

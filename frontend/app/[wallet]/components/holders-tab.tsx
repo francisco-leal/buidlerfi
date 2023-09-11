@@ -15,10 +15,10 @@ export function HoldersTab({ wallet }: {wallet: string}) {
 
     //@ts-ignore
     const allHolders = graphContext.graphData.shareRelationships.filter((item: any) => {
-      return item.owner.id == wallet?.toLowerCase();
+      return item.owner.id == wallet?.toLowerCase() && (item.heldKeyNumber > 0);;
     })
 
-    setHolders(allHolders.map((item: any) => item.owner));
+    setHolders(allHolders.map((item: any) => item.holder));
     setLoading(false);
 
     //@ts-ignore
