@@ -31,8 +31,8 @@ export function ChatTab({ wallet } : { wallet: string }) {
   }, [wallet])
 
   const builderName = () => {
-    if (!address) return ("Buidler");
-    if (!ensName) return (address.slice(0, 12) + "..." + address.slice(-10));
+    if (!wallet) return ("Buidler");
+    if (!ensName) return (wallet.slice(0, 12) + "..." + wallet.slice(-10));
     return ensName;
   }
 
