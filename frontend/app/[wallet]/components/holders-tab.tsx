@@ -2,11 +2,9 @@
 import { useEffect, useState, useContext } from "react"
 import { Icons } from "@/components/ui/icons"
 import { GraphContext } from '@/lib/context';
-import { useAccount } from 'wagmi'
 import { UserItem } from "@/components/user-item"
 
-export function HoldersTab() {
-  const { address, isConnecting, isDisconnected } = useAccount()
+export function HoldersTab({ wallet }: {wallet: string}) {
   const [holders, setHolders] = useState<any>([]);
   const [loading, setLoading] = useState(true);
   const graphContext = useContext(GraphContext)
@@ -17,14 +15,14 @@ export function HoldersTab() {
 
     //@ts-ignore
     const allHolders = graphContext.graphData.shareRelationships.filter((item: any) => {
-      return item.owner.id == address?.toLowerCase();
+      return item.owner.id == wallet?.toLowerCase();
     })
 
     setHolders(allHolders.map((item: any) => item.owner));
     setLoading(false);
 
     //@ts-ignore
-  }, [graphContext.graphData, address])
+  }, [graphContext.graphData, wallet])
 
   if (loading) {
     return (

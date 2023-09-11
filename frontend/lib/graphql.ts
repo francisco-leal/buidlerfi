@@ -8,6 +8,7 @@ const query = `
       numberOfHoldings
       buyPrice
       sellPrice
+      tradingFeesAmount
     }
     shareRelationships(first: 100) {
       id
@@ -19,6 +20,7 @@ const query = `
         numberOfHoldings
         buyPrice
         sellPrice
+        tradingFeesAmount
       }
       owner {
         id
@@ -28,6 +30,7 @@ const query = `
         numberOfHoldings
         buyPrice
         sellPrice
+        tradingFeesAmount
       }
       supporterNumber
       heldKeyNumber

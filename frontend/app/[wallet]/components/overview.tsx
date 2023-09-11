@@ -173,12 +173,12 @@ export function Overview({
 
   const calculateBuyPrice = () => {
     //@ts-ignore
-    return `${formatUnits(buyPrice, 18)}`
+    return `${formatUnits(buyPrice || 0, 18)}`
   }
 
   const calculateSellPrice = () => {
     //@ts-ignore
-    return `${formatUnits(sellPrice, 18)}`
+    return `${formatUnits(sellPrice || 0, 18)}`
   }
 
   const holderNumberText = () => {

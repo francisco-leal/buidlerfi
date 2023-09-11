@@ -42,6 +42,9 @@ export function handleTrade(event: TradeEvent): void {
     buyer.numberOfHolders = ZERO_BI
     buyer.supply = ZERO_BI
     buyer.owner = event.params.trader.toHexString()
+    buyer.tradingFeesAmount = event.params.hodlerEthAmount
+  } else {
+    buyer.tradingFeesAmount = buyer.tradingFeesAmount.plus(event.params.hodlerEthAmount)
   }
 
   // CREATE SUBJECT INFO
@@ -68,6 +71,7 @@ export function handleTrade(event: TradeEvent): void {
   if (subject.id == buyer.id) {
     buyer.buyPrice = subject.buyPrice
     buyer.sellPrice = subject.sellPrice
+    subject.tradingFeesAmount = buyer.tradingFeesAmount
   }
 
   // CREATE RELATIONSHIP INFO
