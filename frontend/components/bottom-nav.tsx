@@ -1,9 +1,11 @@
 import Link from "next/link"
 import { Search, MessageSquare, User } from "lucide-react"
 import { usePathname } from 'next/navigation'
+import { useAccount } from 'wagmi'
 
 export function BottomNav() {
   const pathname = usePathname();
+  const { address } = useAccount()
 
   return (
     <nav
@@ -24,7 +26,7 @@ export function BottomNav() {
         Chats
       </Link>
       <Link
-        href="/profile"
+        href={address ? `/${address}` : `/`}
         className={`text-sm font-medium transition-colors hover:text-primary flex flex-col items-center ${pathname === '/profile' ? 'text-primary' : 'text-muted-foreground'}`}
       >
         <User className="h-4 w-4" />
