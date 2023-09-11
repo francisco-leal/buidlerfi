@@ -27,7 +27,7 @@ export function BottomNav() {
       </Link>
       <Link
         href={address ? `/${address}` : `/`}
-        className={`text-sm font-medium transition-colors hover:text-primary flex flex-col items-center ${pathname === '/profile' ? 'text-primary' : 'text-muted-foreground'}`}
+        className={`text-sm font-medium transition-colors hover:text-primary flex flex-col items-center ${pathname.length > 6 ? 'text-primary' : 'text-muted-foreground'}`}
       >
         <User className="h-4 w-4" />
         Profile
