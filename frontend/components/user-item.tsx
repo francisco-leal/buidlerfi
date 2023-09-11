@@ -26,7 +26,7 @@ export function UserItem({ item }: any) {
   const price = (item: any) => formatUnits(item.buyPrice, 18);
 
   return (
-    <div className="flex items-center justify-between w-full rounded-md p-2 transition-all hover:bg-accent hover:text-accent-foreground" onClick={() => router.push(`/${item.wallet}`)}>
+    <div className="flex items-center justify-between w-full rounded-md p-2 transition-all hover:bg-accent hover:text-accent-foreground" onClick={() => router.push(`/${item.owner}`)}>
       <div className="space-x-4 flex items-center">
         <Avatar className="mt-px h-5 w-5">
           <AvatarImage src={ensAvatar || DEFAULT_PROFILE_PICTURE} />
