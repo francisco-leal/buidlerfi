@@ -1,9 +1,11 @@
 import { BigInt } from "@graphprotocol/graph-ts"
 import {
-  Trade as TradeEvent
+  Trade as TradeEvent,
+  BuidlerFiV1
 } from "../generated/BuidlerFiV1/BuidlerFiV1"
 import { Trade, ShareParticipant, ShareRelationship } from "../generated/schema"
 
+const SHARES_CONTRACT = '0x7083d3c0B2c031dc62ecD14184eB61B6815b31ED'
 const ONE_BI = BigInt.fromI32(1)
 const ZERO_BI = BigInt.fromI32(0)
 
@@ -27,6 +29,8 @@ export function handleTrade(event: TradeEvent): void {
   entity.transactionHash = event.transaction.hash
 
   entity.save()
+
+  let contract = BuidlerFiV1.bind(event.address)
 
   // CREATE BUYER INFO
 
@@ -58,6 +62,14 @@ export function handleTrade(event: TradeEvent): void {
     }
   }
 
+  subject.buyPrice = contract.getBuyPrice(event.params.subject)
+  subject.sellPrice = contract.getSellPrice(event.params.subject, ONE_BI)
+  // edge case where we buy/sell from ourselves
+  if (subject.id == buyer.id) {
+    buyer.buyPrice = subject.buyPrice
+    buyer.sellPrice = subject.sellPrice
+  }
+
   // CREATE RELATIONSHIP INFO
   let relationshipID = event.params.trader.toHexString() + "-" + event.params.subject.toHexString()
   let relationship = ShareRelationship.load(relationshipID)
@@ -66,6 +78,8 @@ export function handleTrade(event: TradeEvent): void {
     // the number of holders/holding only changes if the relationship did not exist before
     subject.numberOfHolders = subject.numberOfHolders.plus(ONE_BI)
     buyer.numberOfHoldings = buyer.numberOfHoldings.plus(ONE_BI)
+
+    // edge case where we buy/sell from ourselves
     if (subject.id == buyer.id) {
       buyer.numberOfHolders = subject.numberOfHolders
       subject.numberOfHoldings = buyer.numberOfHoldings

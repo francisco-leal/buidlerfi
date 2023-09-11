@@ -1,9 +1,9 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useContext } from 'react'
 import { useAccount, usePublicClient } from 'wagmi'
 import { Button } from '@/components/ui/button'
 import { getEnsName } from 'viem/ens';
-import { isAddress, parseEther, formatUnits } from 'viem';
+import { isAddress, formatUnits } from 'viem';
 import {
   AlertDialog,
   AlertDialogContent,
@@ -16,6 +16,7 @@ import { useToast } from "@/components/ui/use-toast"
 import { useContractWrite, useWaitForTransaction, useContractRead } from 'wagmi'
 import abi from "@/lib/abi/BuidlerFiV1.json";
 import { MUMBAI_ADDRESS } from '@/lib/address';
+import { GraphContext } from '@/lib/context';
 
 export function Overview({
   wallet,
@@ -33,12 +34,28 @@ export function Overview({
   const publicClient = usePublicClient()
   const { address, isConnecting, isDisconnected } = useAccount()
   const [ensName, setENSName] = useState("");
-  const [holders, setHolders] = useState("10");
-  const [holdings, setHoldings] = useState("1");
+  const [holders, setHolders] = useState(0);
+  const [holdings, setHoldings] = useState(0);
   const [buyingKeys, setBuyingKeys] = useState(false);
   const [sellingKeys, setSellingKeys] = useState(false);
   const [openBuy, setOpenBuy] = useState(false);
   const { toast } = useToast()
+  const graphContext = useContext(GraphContext)
+
+  useEffect(() => {
+    //@ts-ignore
+    if (!graphContext.graphData) return;
+
+    //@ts-ignore
+    const viewedUser = graphContext.graphData.shareParticipants.find((user) => user.owner == wallet.toLowerCase());
+
+    if(viewedUser) {
+      setHolders(viewedUser.numberOfHolders);
+      setHoldings(viewedUser.numberOfHoldings);
+    }
+
+    //@ts-ignore
+  }, [graphContext.graphData])
 
   const { data: supporterKeys } = useContractRead({
     address: MUMBAI_ADDRESS,
