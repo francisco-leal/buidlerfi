@@ -136,14 +136,14 @@ export function Overview({
   })
 
   const builderName = () => {
-    if (!address) return ("Buidler");
-    if (!ensName) return (address.slice(0, 4) + "..." + address.slice(-2));
+    if (!wallet) return ("Buidler");
+    if (!ensName) return (wallet.slice(0, 4) + "..." + wallet.slice(-2));
     return ensName;
   }
 
   const shortAddress = () => {
-    if (!address || !ensName) return "";
-    return address.slice(0, 6) + "..." + address.slice(-4);
+    if (!wallet || !ensName) return "";
+    return wallet.slice(0, 6) + "..." + wallet.slice(-4);
   }
 
   useEffect(() => {
