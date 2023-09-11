@@ -129,9 +129,7 @@ contract BuidlerFiSharesV1 is Ownable {
             supporterNumber[sharesSubject][msg.sender] = supporterKeysArray[sharesSubject].length;
             supporterKeysArray[sharesSubject].push(1);
             supporterAddressArray[sharesSubject].push(msg.sender);
-        }
-
-        else {
+        } else {
             supporterKeysArray[sharesSubject][supporterNumber[sharesSubject][msg.sender]]++;
         }
     }

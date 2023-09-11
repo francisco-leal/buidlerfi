@@ -35,7 +35,6 @@ export function Overview({
   const [ensName, setENSName] = useState("");
   const [holders, setHolders] = useState("10");
   const [holdings, setHoldings] = useState("1");
-  const [supporterNumber, setSupporterNumber] = useState(1);
   const [buyingKeys, setBuyingKeys] = useState(false);
   const [sellingKeys, setSellingKeys] = useState(false);
   const [openBuy, setOpenBuy] = useState(false);
@@ -48,7 +47,14 @@ export function Overview({
     args: [wallet, address]
   });
 
-  const { data: tx, write } = useContractWrite({
+  const { data: supporterNumber } = useContractRead({
+    address: MUMBAI_ADDRESS,
+    abi: abi,
+    functionName: 'supporterNumber',
+    args: [wallet, address]
+  });
+
+  const { data: tx_buy, write: contractBuyKeys } = useContractWrite({
     address: MUMBAI_ADDRESS,
     abi: abi,
     functionName: 'buyShares',
@@ -57,7 +63,7 @@ export function Overview({
       setBuyingKeys(false)
       toast({
         title: "Transaction submitted!",
-        description: `Hash: ${tx}`,
+        description: `Hash: ${tx_buy}`,
       })
     },
     onError: () => {
@@ -70,12 +76,44 @@ export function Overview({
     }
   })
 
-  const { data: tx_data } = useWaitForTransaction({
-    hash: tx?.hash,
+  const { data: tx_data_buy } = useWaitForTransaction({
+    hash: tx_buy?.hash,
     onSuccess: () => {
       toast({
         title: "Key bought!",
         description: `You bought a key of ${builderName()}.`,
+      })
+    },
+  })
+
+  const { data: tx_sell, write: contractSellKeys } = useContractWrite({
+    address: MUMBAI_ADDRESS,
+    abi: abi,
+    functionName: 'sellShares',
+    onSuccess: () => {
+      setOpenBuy(false)
+      setSellingKeys(false)
+      toast({
+        title: "Transaction submitted!",
+        description: `Hash: ${tx_sell?.hash}`,
+      })
+    },
+    onError: () => {
+      setOpenBuy(false)
+      setSellingKeys(false)
+      toast({
+        title: "Unable to sell key",
+        description: `There was an error processing your transaction`,
+      })
+    }
+  })
+
+  const { data: tx_data_sell } = useWaitForTransaction({
+    hash: tx_sell?.hash,
+    onSuccess: () => {
+      toast({
+        title: "Key sold!",
+        description: `You sold a key of ${builderName()}.`,
       })
     },
   })
@@ -106,20 +144,14 @@ export function Overview({
   const buyKeys = async () => {
     setBuyingKeys(true)
     // @ts-ignore
-    write({args: [wallet], from: address, value: buyPriceAfterFee})
+    contractBuyKeys({args: [wallet], from: address, value: buyPriceAfterFee})
   }
 
   const sellKeys = async () => {
     setSellingKeys(true)
 
-    setTimeout(() => {
-      setOpenBuy(false)
-      setSellingKeys(false)
-      toast({
-        title: "Key sold!",
-        description: `You sold a key of ${builderName()}.`,
-      })
-    }, 3000)
+    // @ts-ignore
+    contractSellKeys({args: [wallet, 1], from: address})
   }
 
   const calculateBuyPrice = () => {
@@ -137,6 +169,11 @@ export function Overview({
       return "Your first share is free."
     }
 
+    // @ts-ignore
+    if (supporterNumber == 0 && supporterKeys > 0) {
+      return 'You are holder #0';
+    }
+    // @ts-ignore
     if (supporterNumber > 0) {
       return `You are holder #${supporterNumber}`;
     } else {
