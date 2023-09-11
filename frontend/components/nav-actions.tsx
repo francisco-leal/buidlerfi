@@ -30,13 +30,13 @@ export function NavActions() {
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
           <DropdownMenuItem onSelect={() => router.push("/")}>
-            Home
+            Explore
           </DropdownMenuItem>
           {address && <DropdownMenuItem onSelect={() => router.push(`/${address}`)}>
             Profile
           </DropdownMenuItem>}
-          <DropdownMenuItem onSelect={() => router.push("/explore")}>
-            Explore
+          <DropdownMenuItem onSelect={() => router.push("/chats")}>
+            Chats
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem

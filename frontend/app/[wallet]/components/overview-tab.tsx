@@ -48,7 +48,6 @@ export function OverviewTab({ wallet }: { wallet: string }) {
       getEnsName(publicClient, { address: wallet })
         .then((name) => {
           if (name) {
-            console.log("ENS Name of profile that is being viewed: ", name);
             setENSName(name);
           }
         });
@@ -111,7 +110,7 @@ export function OverviewTab({ wallet }: { wallet: string }) {
                       Price per share
                     </p>
                     <p className="text-sm text-muted-foreground">
-                      {price} ETH
+                      {price} MATIC
                     </p>
                   </div>
                   <div className="flex items-center justify-between">
@@ -119,7 +118,7 @@ export function OverviewTab({ wallet }: { wallet: string }) {
                       Total 
                     </p>
                     <p className="text-sm text-muted-foreground">
-                      {calculateBuyPrice()} ETH + gas
+                      {calculateBuyPrice()} MATIC + gas
                     </p>
                   </div>
                 </div>
@@ -159,7 +158,7 @@ export function OverviewTab({ wallet }: { wallet: string }) {
     </div>
     <div className="flex items-center space-x-2 mt-4">
       <p className="text-sm text-muted-foreground">Current Price:</p>
-      <p className="text-sm font-medium">{price} ETH</p>
+      <p className="text-sm font-medium">{price} MATIc</p>
     </div>
     <div className="flex items-center space-x-4 mt-4">
       <p className="text-sm text-muted-foreground">{holders} holders</p>

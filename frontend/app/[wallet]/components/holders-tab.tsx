@@ -51,7 +51,7 @@ export function HoldersTab() {
               </p>
             </div>
           </div>
-          <Button onClick={() => router.push(`/${item.wallet}`)}>Buy {price(item)} ETH</Button>
+          <Button onClick={() => router.push(`/${item.wallet}`)}>Buy {price(item)} MATIC</Button>
         </div>
       )}
     </>

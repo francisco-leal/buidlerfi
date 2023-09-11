@@ -5,7 +5,6 @@ import { HoldingTab } from './components/holding-tab';
 import { HoldersTab } from './components/holders-tab';
 
 export default function ProfilePage({ params }: { params: { wallet: string } }) {
-  
   return (
     <main className="py-4 px-2">
       <Tabs defaultValue="overview" className="space-y-4">
