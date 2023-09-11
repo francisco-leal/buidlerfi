@@ -6,20 +6,13 @@ import { getEnsName } from 'viem/ens';
 import { isAddress } from 'viem';
 import {
   AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
   AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { Icons } from '@/components/ui/icons'
-import { Label } from '@/components/ui/label'
-import { Input } from '@/components/ui/input'
 import { useToast } from "@/components/ui/use-toast"
-import { Separator } from '@/components/ui/separator';
 
 export function Overview({ wallet }: { wallet: string }) {
   const publicClient = usePublicClient()
@@ -29,8 +22,8 @@ export function Overview({ wallet }: { wallet: string }) {
   const [holders, setHolders] = useState("10");
   const [holdings, setHoldings] = useState("1");
   const [supporterNumber, setSupporterNumber] = useState(1);
-  const [supporterKeys, setSupporterKeys] = useState(3);
-  const [isSupporting, setIsSupporting] = useState(true);
+  const [supporterKeys, setSupporterKeys] = useState(0);
+  const [isSupporting, setIsSupporting] = useState(false);
   const [buyingKeys, setBuyingKeys] = useState(false);
   const [sellingKeys, setSellingKeys] = useState(false);
   const [openBuy, setOpenBuy] = useState(false);
@@ -97,7 +90,7 @@ export function Overview({ wallet }: { wallet: string }) {
     if (supporterNumber > 0) {
       return `You are holder #${supporterNumber}`;
     } else {
-      return "You do not own any keys.";
+      return "You don't hold any key";
     }
   }
 

@@ -5,14 +5,12 @@ import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useRouter } from 'next/navigation'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ChevronRight } from "lucide-react"
+import { ChevronRight, Wallet } from "lucide-react"
+import { Icons } from '@/components/ui/icons';
 
 export default function Home() {
   const router = useRouter();
   const { address, isConnecting, isDisconnected } = useAccount()
-  const { data: ensName, isError, isLoading } = useEnsName({
-    address,
-  });
 
   const builderName = (item: { wallet: string, ens_name: string}) => {
     if (!item.wallet) return ("Buidler");
@@ -22,8 +20,23 @@ export default function Home() {
 
   const price = (item: { number_of_holders: number}) => (item.number_of_holders * 0.013).toFixed(3);
 
-  if (isConnecting) return <h1 className="text-lg font-large leading-none p-8">Connecting...</h1>
-  if (isDisconnected) return <h1 className="text-lg font-large leading-none p-8">Please connect your wallet to proceed</h1>
+  if (isConnecting) {
+    return (
+      <div className="flex flex-col items-center justify-center mt-24">
+        <Icons.spinner className="text-muted-foreground h-32 w-32 animate-spin mb-6" />
+        <p>Connecting...</p>
+      </div>
+    )
+  }
+
+  if (isDisconnected) {
+    return (
+      <div className="flex flex-col items-center justify-center mt-24">
+        <Wallet className="text-muted-foreground h-32 w-32 mb-6" />
+        <p>Please connect your wallet to proceed.</p>
+      </div>
+    )
+  }
 
   const sortUsers = (a: { number_of_holders: number }, b: { number_of_holders: number }) => (a.number_of_holders > b.number_of_holders) ? -1 : 1;
 
