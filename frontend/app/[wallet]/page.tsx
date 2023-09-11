@@ -1,16 +1,18 @@
 'use client'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { OverviewTab } from './components/overview-tab';
+import { Overview } from './components/overview';
 import { HoldingTab } from './components/holding-tab';
 import { HoldersTab } from './components/holders-tab';
+import { ChatTab } from './components/chat-tab';
 
 export default function ProfilePage({ params }: { params: { wallet: string } }) {
   return (
     <main className="py-4 px-2">
-      <Tabs defaultValue="overview" className="space-y-4">
+      <Overview wallet={params.wallet}/>
+      <Tabs defaultValue="chat" className="space-y-4 mt-4">
         <TabsList className="grid w-full grid-cols-3 mb-8">
-          <TabsTrigger value="overview">
-            Overview
+          <TabsTrigger value="chat">
+            Chat
           </TabsTrigger>
           <TabsTrigger value="holding">
             Holding
@@ -19,8 +21,8 @@ export default function ProfilePage({ params }: { params: { wallet: string } }) 
             Holders
           </TabsTrigger>
         </TabsList>
-        <TabsContent value="overview" className="space-y-4">
-          <OverviewTab wallet={params.wallet}/>
+        <TabsContent value="chat" className="space-y-4">
+          <ChatTab wallet={params.wallet}/>
         </TabsContent>
         <TabsContent value="holding" className="space-y-4">
           <HoldingTab />
