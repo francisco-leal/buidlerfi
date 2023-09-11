@@ -172,6 +172,7 @@ export function Overview({
   }
 
   useEffect(() => {
+    if (!walletDetails) return;
     let primaryName = walletDetails.Wallet.primaryDomain?.name;
     setENSName(primaryName);
   }, [walletDetails])
