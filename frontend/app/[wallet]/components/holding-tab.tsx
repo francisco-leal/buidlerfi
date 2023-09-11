@@ -5,6 +5,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from "react"
 import { Icons } from "@/components/ui/icons"
+import { ChevronRight } from "lucide-react"
 
 export function HoldingTab() {
   const router = useRouter();
@@ -47,11 +48,13 @@ export function HoldingTab() {
             <div className="space-y-1">
               <p className="text-sm font-medium leading-none">{builderName(item)}</p>
               <p className="text-sm text-muted-foreground">
-                {item.number_of_holders} holders | {item.number_of_votes} Votes
+                {item.number_of_holders} holders | Price {price(item)} MATIC
               </p>
             </div>
           </div>
-          <Button onClick={() => router.push(`/${item.wallet}`)}>Buy {price(item)} MATIC</Button>
+          <Button variant="ghost" size="icon" onClick={() => router.push(`/${item.wallet}`)}>
+            <ChevronRight className="h-4 w-4" />
+          </Button>
         </div>
       )}
     </>
