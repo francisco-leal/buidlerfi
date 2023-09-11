@@ -22,7 +22,7 @@ import { Badge } from '@/components/ui/badge';
 // @ts-ignore
 init(process.env.NEXT_PUBLIC_AIRSTACK_TOKEN);
 
-const QUERY = `query GetSocial($identity: Identity!) {
+const QUERY = `query GetWallet($identity: Identity!) {
   Wallet(input: {identity: $identity, blockchain: ethereum}) {
     primaryDomain {
       name
