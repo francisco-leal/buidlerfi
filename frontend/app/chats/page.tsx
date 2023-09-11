@@ -21,7 +21,7 @@ export default function ChatsPage() {
 
     //@ts-ignore
     const allHolders = graphContext.graphData.shareRelationships.filter((item: any) => {
-      return item.holder.id == address?.toLowerCase();
+      return item.holder.id == address?.toLowerCase() && (item.heldKeyNumber > 0);
     })
 
     let value = 0;
