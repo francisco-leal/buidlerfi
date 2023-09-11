@@ -12,11 +12,12 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { useRouter } from 'next/navigation'
-import { useDisconnect } from "wagmi";
+import { useDisconnect, useAccount } from "wagmi";
 
 export function NavActions() {
   const router = useRouter()
   const { disconnect } = useDisconnect()
+  const { address, isConnecting, isDisconnected } = useAccount();
 
   return (
     <>
@@ -31,12 +32,9 @@ export function NavActions() {
           <DropdownMenuItem onSelect={() => router.push("/")}>
             Home
           </DropdownMenuItem>
-          <DropdownMenuItem onSelect={() => router.push("/profile")}>
+          {address && <DropdownMenuItem onSelect={() => router.push(`/${address}`)}>
             Profile
-          </DropdownMenuItem>
-          <DropdownMenuItem onSelect={() => router.push("/portfolio")}>
-            Portfolio
-          </DropdownMenuItem>
+          </DropdownMenuItem>}
           <DropdownMenuItem onSelect={() => router.push("/explore")}>
             Explore
           </DropdownMenuItem>

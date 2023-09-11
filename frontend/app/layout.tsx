@@ -12,6 +12,7 @@ import { Separator } from "@/components/ui/separator"
 
 import { NavActions } from "@/components/nav-actions"
 import { NavWeb3Button } from "@/components/nav-web3-button"
+import { Toaster } from "@/components/ui/toaster"
 
 const chains = [arbitrum, mainnet, polygon]
 const projectId = '530148d9ddb07d128a40fc21cc9ffdd9'
@@ -36,7 +37,7 @@ export default function RootLayout({
       <body className={inter.className}>
         <WagmiConfig config={wagmiConfig}>
         <div className="h-full flex-col">
-          <div className="container flex items-center justify-between py-4 h-16">
+          <div className="container flex items-center justify-between py-4 h-16 px-4">
             <h2 className="text-lg font-semibold">BuidlerFi</h2>
             <div className="ml-auto flex w-full space-x-2 justify-end">
               <NavWeb3Button />
@@ -47,6 +48,7 @@ export default function RootLayout({
           {children}
         </div>
         </WagmiConfig>
+        <Toaster />
         <Web3Modal projectId={projectId} ethereumClient={ethereumClient} />
       </body>
     </html>
