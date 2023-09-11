@@ -9,7 +9,7 @@ export default function ProfilePage({ params }: { params: { wallet: string } }) 
   return (
     <main className="py-4 px-2">
       <Overview wallet={params.wallet}/>
-      <Tabs defaultValue="chat" className="space-y-4 mt-4">
+      <Tabs defaultValue="chat" className="space-y-4 mt-4 pb-16">
         <TabsList className="grid w-full grid-cols-3 mb-8">
           <TabsTrigger value="chat">
             Chat

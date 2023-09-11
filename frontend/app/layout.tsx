@@ -8,11 +8,9 @@ import { Web3Modal } from '@web3modal/react'
 import { configureChains, createConfig, WagmiConfig } from 'wagmi'
 import { arbitrum, mainnet, polygon } from 'wagmi/chains'
 
-import { Separator } from "@/components/ui/separator"
-
-import { NavActions } from "@/components/nav-actions"
 import { NavWeb3Button } from "@/components/nav-web3-button"
 import { Toaster } from "@/components/ui/toaster"
+import { BottomNav } from "@/components/bottom-nav"
 
 const chains = [arbitrum, mainnet, polygon]
 const projectId = '530148d9ddb07d128a40fc21cc9ffdd9'
@@ -33,19 +31,18 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body className={inter.className}>
+    <html lang="en" suppressHydrationWarning className='h-full'>
+      <body className={inter.className + " relative h-full"}>
         <WagmiConfig config={wagmiConfig}>
-        <div className="h-full flex-col">
-          <div className="container flex items-center justify-between py-4 h-16 px-4">
+        <div className="h-full flex-col pt-16">
+          <div className="container flex items-center justify-between py-4 h-16 px-4 fixed top-0 left-0 border-b bg-white z-10">
             <h2 className="text-lg font-semibold">BuidlerFi</h2>
             <div className="ml-auto flex w-full space-x-2 justify-end">
               <NavWeb3Button />
-              <NavActions />
             </div>
           </div>
-          <Separator />
           {children}
+          <BottomNav />
         </div>
         </WagmiConfig>
         <Toaster />

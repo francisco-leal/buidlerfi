@@ -38,7 +38,7 @@ export default function ChatsPage() {
   }
 
   return (
-    <main className="py-4 px-2">
+    <main className="pt-4 px-2 pb-16">
       <div className="grid gap-4 grid-cols-2 mb-6">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">

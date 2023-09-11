@@ -43,7 +43,7 @@ export function Overview({ wallet }: { wallet: string }) {
   }
 
   const shortAddress = () => {
-    if (!address) return "";
+    if (!address || !ensName) return "";
     return address.slice(0, 6) + "..." + address.slice(-4);
   }
 

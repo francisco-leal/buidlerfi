@@ -59,7 +59,7 @@ export default function Home() {
             </div>
           )}
         </TabsContent>
-        <TabsContent value="recommended" className="space-y-4">
+        <TabsContent value="recommended" className="space-y-4 pb-16">
           {DATA.sort(sortUsers).map((item) => 
             <div key={`home-${item.wallet}`} className="flex items-center justify-between w-full rounded-md p-2 transition-all hover:bg-accent hover:text-accent-foreground">
               <div className="space-x-4 flex items-center">
