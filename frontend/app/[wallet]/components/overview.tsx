@@ -17,7 +17,7 @@ import abi from "@/lib/abi/BuidlerFiV1.json";
 import { MUMBAI_ADDRESS } from '@/lib/address';
 import { GraphContext } from '@/lib/context';
 import { init, useQuery } from "@airstack/airstack-react";
-
+import { Badge } from '@/components/ui/badge';
 
 // @ts-ignore
 init(process.env.NEXT_PUBLIC_AIRSTACK_TOKEN);
@@ -58,6 +58,7 @@ export function Overview({
   const [ensName, setENSName] = useState("");
   const [holders, setHolders] = useState(0);
   const [holdings, setHoldings] = useState(0);
+  const [socialList, setSocialList] = useState([]);
   const [buyingKeys, setBuyingKeys] = useState(false);
   const [sellingKeys, setSellingKeys] = useState(false);
   const [openBuy, setOpenBuy] = useState(false);
@@ -173,8 +174,12 @@ export function Overview({
 
   useEffect(() => {
     if (!walletDetails) return;
+
     let primaryName = walletDetails.Wallet.primaryDomain?.name;
     setENSName(primaryName);
+
+    // @ts-ignore
+    setSocialList(walletDetails.Wallet.socials.map((i) => i.profileName))
   }, [walletDetails])
 
   const buyKeys = async () => {
@@ -285,6 +290,13 @@ export function Overview({
       </div>
       <p className="text-sm text-muted-foreground">Key price</p>
     </div>
+    {
+      socialList.length > 0 && (
+        <div className="flex flex-wrap space-x-2 mt-2">
+          {socialList.map((i: any) => <Badge key={`badge-${i}`} variant="outline">{i}</Badge>)}
+        </div>
+      )
+    }
     </>
   )
 }
