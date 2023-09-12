@@ -158,6 +158,7 @@ export function Overview({
         title: "Key sold!",
         description: `You sold a key of ${builderName()}.`,
       })
+      window.location.reload();
     },
   })
 
