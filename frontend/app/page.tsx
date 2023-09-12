@@ -90,7 +90,7 @@ export default function Home() {
 
   return (
     <main className="py-4 px-2">
-      <Tabs defaultValue="recommended" className="space-y-4">
+      <Tabs defaultValue="top" className="space-y-4">
         <TabsList className="grid w-full grid-cols-2 mb-8">
           <TabsTrigger value="top">
             Top
