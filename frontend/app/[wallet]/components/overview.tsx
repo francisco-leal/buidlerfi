@@ -178,8 +178,10 @@ export function Overview({
     let primaryName = walletDetails.Wallet.primaryDomain?.name;
     setENSName(primaryName);
 
-    // @ts-ignore
-    setSocialList(walletDetails.Wallet.socials.map((i) => i.profileName))
+    if (walletDetails.Wallet.socials?.length > 0) {
+      // @ts-ignore
+      setSocialList(walletDetails.Wallet.socials.map((i) => i.profileName))
+    }
   }, [walletDetails])
 
   const buyKeys = async () => {
