@@ -6,7 +6,7 @@ import { Inter } from 'next/font/google'
 import { EthereumClient, w3mConnectors, w3mProvider } from '@web3modal/ethereum'
 import { Web3Modal } from '@web3modal/react'
 import { configureChains, createConfig, WagmiConfig } from 'wagmi'
-import { polygon, polygonMumbai } from 'wagmi/chains'
+import { polygon, polygonMumbai, lineaTestnet } from 'wagmi/chains'
 
 import { NavWeb3Button } from "@/components/nav-web3-button"
 import { Toaster } from "@/components/ui/toaster"
@@ -17,7 +17,7 @@ import { fetchTheGraphData } from '@/lib/graphql'
 import { useEffect, useState } from 'react'
 import { GraphContext } from '@/lib/context'
 
-const chains = [polygonMumbai]
+const chains = [polygonMumbai, lineaTestnet, polygon]
 const projectId = '530148d9ddb07d128a40fc21cc9ffdd9'
 
 const { publicClient } = configureChains(chains, [w3mProvider({ projectId })])
@@ -41,7 +41,6 @@ export default function RootLayout({
   useEffect(() => {
     if (!refreshGraph) return;
 
-    console.log("REFRESHING DATA");
     fetchTheGraphData().then((data) => setGraphData(data));
   }, [refreshGraph])
 
