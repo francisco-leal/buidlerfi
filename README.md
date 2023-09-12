@@ -10,3 +10,19 @@ Our smart contract was deployed to the following chains:
 * POLYGON_ZKEVM_TESTNET: "0xa013cDBBE8c9b1325992e3D4Fc312bB990cC61F5"
 * TAIKO_TESTNET: "0xa013cDBBE8c9b1325992e3D4Fc312bB990cC61F5"
 * LINEA_TESTNET: "0xa013cDBBE8c9b1325992e3D4Fc312bB990cC61F5" ([link](https://explorer.goerli.linea.build/address/0xa013cDBBE8c9b1325992e3D4Fc312bB990cC61F5)) ([code](https://github.com/ysjprojects/eth-singapore/blob/main/frontend/app/layout.tsx#L20))
+
+## Running the app
+
+You only need to run the frontend locally in order to use the app. Start by cloning
+
+```shell
+$ git clone https://github.com/ysjprojects/eth-singapore
+```
+
+Install frontend dependencies and run the project
+
+```shell
+$ cd frontend
+$ npm install
+$ npm run dev
+```
