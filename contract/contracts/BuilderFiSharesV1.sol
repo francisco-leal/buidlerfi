@@ -1,8 +1,7 @@
 // SPDX-License-Identifier: MIT 
 
 pragma solidity ^0.8.19;
-import "openzeppelin/access/Ownable.sol";
-
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
 contract BuidlerFiSharesV1 is Ownable {
     error FundsTransferFailed();
