@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT 
 
 pragma solidity ^0.8.19;
-import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
 
-contract BuilderFiV1 is Ownable {
+contract BuilderFiV1 is AccessControl {
   error FundsTransferFailed();
   error OnlySharesSubjectCanBuyFirstShare();
   error CannotSellLastShare();
@@ -14,6 +14,7 @@ contract BuilderFiV1 is Ownable {
   uint256 public protocolFeePercent;
   uint256 public subjectFeePercent;
   uint256 public hodlerFeePercent;
+  bool public tradingEnabled;
 
   event Trade(
     address trader,
@@ -33,20 +34,40 @@ contract BuilderFiV1 is Ownable {
   // Builder => Supply
   mapping(address builder => uint256 supply) public builderCardsSupply;
 
-  function setFeeDestination(address _feeDestination) public onlyOwner {
+  constructor(address _owner) {
+    _grantRole(DEFAULT_ADMIN_ROLE, _owner);
+  }
+
+  function addAdmin(address _newAdmin) public onlyRole(DEFAULT_ADMIN_ROLE) {
+    _grantRole(DEFAULT_ADMIN_ROLE, _newAdmin);
+  }
+
+  function removeAdmin(address _newAdmin) public onlyRole(DEFAULT_ADMIN_ROLE) {
+    _revokeRole(DEFAULT_ADMIN_ROLE, _newAdmin);
+  }
+
+  function setFeeDestination(address _feeDestination) public onlyRole(DEFAULT_ADMIN_ROLE) {
     protocolFeeDestination = _feeDestination;
   }
 
-  function setProtocolFeePercent(uint256 _feePercent) public onlyOwner {
+  function setProtocolFeePercent(uint256 _feePercent) public onlyRole(DEFAULT_ADMIN_ROLE) {
     protocolFeePercent = _feePercent;
   }
 
-  function setSubjectFeePercent(uint256 _feePercent) public onlyOwner {
+  function setSubjectFeePercent(uint256 _feePercent) public onlyRole(DEFAULT_ADMIN_ROLE) {
     subjectFeePercent = _feePercent;
   }
 
-  function setHodlerFeePercent(uint256 _feePercent) public onlyOwner {
+  function setHodlerFeePercent(uint256 _feePercent) public onlyRole(DEFAULT_ADMIN_ROLE) {
     hodlerFeePercent = _feePercent;
+  }
+
+  function enableTrading() public onlyRole(DEFAULT_ADMIN_ROLE) {
+    tradingEnabled = true;
+  }
+
+  function disableTrading() public onlyRole(DEFAULT_ADMIN_ROLE) {
+    tradingEnabled = false;
   }
 
   function getPrice(uint256 supply, uint256 amount) public pure returns (uint256) {
@@ -85,6 +106,8 @@ contract BuilderFiV1 is Ownable {
 
   /// @notice Can only buy one share at a time
   function buyShares(address sharesSubject) public payable {
+    require(tradingEnabled == true, "Trading is not enabled");
+
     uint256 supply = builderCardsSupply[sharesSubject];
     if(supply == 0 && sharesSubject != msg.sender) revert OnlySharesSubjectCanBuyFirstShare();
 
@@ -115,6 +138,8 @@ contract BuilderFiV1 is Ownable {
   }
 
   function sellShares(address sharesSubject, uint256 amount) public payable {
+    require(tradingEnabled == true, "Trading is not enabled");
+
     uint256 supply = builderCardsSupply[sharesSubject];
     if(supply <= amount) revert CannotSellLastShare();
     if(builderCardsBalance[sharesSubject][msg.sender] < amount) revert InsufficientShares();
