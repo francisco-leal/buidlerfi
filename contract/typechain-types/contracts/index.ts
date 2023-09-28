@@ -3,3 +3,4 @@
 /* eslint-disable */
 import type * as builderFiSharesV1Sol from "./BuilderFiSharesV1.sol";
 export type { builderFiSharesV1Sol };
+export type { BuilderFiV1 } from "./BuilderFiV1";

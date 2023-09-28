@@ -10,3 +10,5 @@ export type { Ownable } from "./@openzeppelin/contracts/access/Ownable";
 export { Ownable__factory } from "./factories/@openzeppelin/contracts/access/Ownable__factory";
 export type { BuidlerFiSharesV1 } from "./contracts/BuilderFiSharesV1.sol/BuidlerFiSharesV1";
 export { BuidlerFiSharesV1__factory } from "./factories/contracts/BuilderFiSharesV1.sol/BuidlerFiSharesV1__factory";
+export type { BuilderFiV1 } from "./contracts/BuilderFiV1";
+export { BuilderFiV1__factory } from "./factories/contracts/BuilderFiV1__factory";

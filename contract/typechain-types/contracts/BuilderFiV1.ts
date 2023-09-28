@@ -26,12 +26,13 @@ import type {
   TypedListener,
   OnEvent,
   PromiseOrValue,
-} from "../../common";
+} from "../common";
 
 export interface BuilderFiV1Interface extends utils.Interface {
   functions: {
+    "builderCardsBalance(address,address)": FunctionFragment;
+    "builderCardsSupply(address)": FunctionFragment;
     "buyShares(address)": FunctionFragment;
-    "getAtMostTopTenSupporters(address)": FunctionFragment;
     "getBuyPrice(address)": FunctionFragment;
     "getBuyPriceAfterFee(address)": FunctionFragment;
     "getPrice(uint256,uint256)": FunctionFragment;
@@ -47,19 +48,15 @@ export interface BuilderFiV1Interface extends utils.Interface {
     "setHodlerFeePercent(uint256)": FunctionFragment;
     "setProtocolFeePercent(uint256)": FunctionFragment;
     "setSubjectFeePercent(uint256)": FunctionFragment;
-    "sharesBalance(address,address)": FunctionFragment;
-    "sharesSupply(address)": FunctionFragment;
     "subjectFeePercent()": FunctionFragment;
-    "supporterAddressArray(address,uint256)": FunctionFragment;
-    "supporterKeysArray(address,uint256)": FunctionFragment;
-    "supporterNumber(address,address)": FunctionFragment;
     "transferOwnership(address)": FunctionFragment;
   };
 
   getFunction(
     nameOrSignatureOrTopic:
+      | "builderCardsBalance"
+      | "builderCardsSupply"
       | "buyShares"
-      | "getAtMostTopTenSupporters"
       | "getBuyPrice"
       | "getBuyPriceAfterFee"
       | "getPrice"
@@ -75,21 +72,20 @@ export interface BuilderFiV1Interface extends utils.Interface {
       | "setHodlerFeePercent"
       | "setProtocolFeePercent"
       | "setSubjectFeePercent"
-      | "sharesBalance"
-      | "sharesSupply"
       | "subjectFeePercent"
-      | "supporterAddressArray"
-      | "supporterKeysArray"
-      | "supporterNumber"
       | "transferOwnership"
   ): FunctionFragment;
 
   encodeFunctionData(
-    functionFragment: "buyShares",
+    functionFragment: "builderCardsBalance",
+    values: [PromiseOrValue<string>, PromiseOrValue<string>]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "builderCardsSupply",
     values: [PromiseOrValue<string>]
   ): string;
   encodeFunctionData(
-    functionFragment: "getAtMostTopTenSupporters",
+    functionFragment: "buyShares",
     values: [PromiseOrValue<string>]
   ): string;
   encodeFunctionData(
@@ -150,39 +146,23 @@ export interface BuilderFiV1Interface extends utils.Interface {
     values: [PromiseOrValue<BigNumberish>]
   ): string;
   encodeFunctionData(
-    functionFragment: "sharesBalance",
-    values: [PromiseOrValue<string>, PromiseOrValue<string>]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "sharesSupply",
-    values: [PromiseOrValue<string>]
-  ): string;
-  encodeFunctionData(
     functionFragment: "subjectFeePercent",
     values?: undefined
-  ): string;
-  encodeFunctionData(
-    functionFragment: "supporterAddressArray",
-    values: [PromiseOrValue<string>, PromiseOrValue<BigNumberish>]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "supporterKeysArray",
-    values: [PromiseOrValue<string>, PromiseOrValue<BigNumberish>]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "supporterNumber",
-    values: [PromiseOrValue<string>, PromiseOrValue<string>]
   ): string;
   encodeFunctionData(
     functionFragment: "transferOwnership",
     values: [PromiseOrValue<string>]
   ): string;
 
-  decodeFunctionResult(functionFragment: "buyShares", data: BytesLike): Result;
   decodeFunctionResult(
-    functionFragment: "getAtMostTopTenSupporters",
+    functionFragment: "builderCardsBalance",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(
+    functionFragment: "builderCardsSupply",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(functionFragment: "buyShares", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "getBuyPrice",
     data: BytesLike
@@ -235,27 +215,7 @@ export interface BuilderFiV1Interface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "sharesBalance",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "sharesSupply",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
     functionFragment: "subjectFeePercent",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "supporterAddressArray",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "supporterKeysArray",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "supporterNumber",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -339,15 +299,21 @@ export interface BuilderFiV1 extends BaseContract {
   removeListener: OnEvent<this>;
 
   functions: {
+    builderCardsBalance(
+      builder: PromiseOrValue<string>,
+      holder: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<[BigNumber] & { balance: BigNumber }>;
+
+    builderCardsSupply(
+      builder: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<[BigNumber] & { supply: BigNumber }>;
+
     buyShares(
       sharesSubject: PromiseOrValue<string>,
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
-
-    getAtMostTopTenSupporters(
-      sharesSubject: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<[string[], BigNumber]>;
 
     getBuyPrice(
       sharesSubject: PromiseOrValue<string>,
@@ -415,36 +381,7 @@ export interface BuilderFiV1 extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
-    sharesBalance(
-      arg0: PromiseOrValue<string>,
-      arg1: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<[BigNumber]>;
-
-    sharesSupply(
-      arg0: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<[BigNumber]>;
-
     subjectFeePercent(overrides?: CallOverrides): Promise<[BigNumber]>;
-
-    supporterAddressArray(
-      arg0: PromiseOrValue<string>,
-      arg1: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<[string]>;
-
-    supporterKeysArray(
-      arg0: PromiseOrValue<string>,
-      arg1: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<[BigNumber]>;
-
-    supporterNumber(
-      arg0: PromiseOrValue<string>,
-      arg1: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<[BigNumber]>;
 
     transferOwnership(
       newOwner: PromiseOrValue<string>,
@@ -452,15 +389,21 @@ export interface BuilderFiV1 extends BaseContract {
     ): Promise<ContractTransaction>;
   };
 
+  builderCardsBalance(
+    builder: PromiseOrValue<string>,
+    holder: PromiseOrValue<string>,
+    overrides?: CallOverrides
+  ): Promise<BigNumber>;
+
+  builderCardsSupply(
+    builder: PromiseOrValue<string>,
+    overrides?: CallOverrides
+  ): Promise<BigNumber>;
+
   buyShares(
     sharesSubject: PromiseOrValue<string>,
     overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
-
-  getAtMostTopTenSupporters(
-    sharesSubject: PromiseOrValue<string>,
-    overrides?: CallOverrides
-  ): Promise<[string[], BigNumber]>;
 
   getBuyPrice(
     sharesSubject: PromiseOrValue<string>,
@@ -528,36 +471,7 @@ export interface BuilderFiV1 extends BaseContract {
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
-  sharesBalance(
-    arg0: PromiseOrValue<string>,
-    arg1: PromiseOrValue<string>,
-    overrides?: CallOverrides
-  ): Promise<BigNumber>;
-
-  sharesSupply(
-    arg0: PromiseOrValue<string>,
-    overrides?: CallOverrides
-  ): Promise<BigNumber>;
-
   subjectFeePercent(overrides?: CallOverrides): Promise<BigNumber>;
-
-  supporterAddressArray(
-    arg0: PromiseOrValue<string>,
-    arg1: PromiseOrValue<BigNumberish>,
-    overrides?: CallOverrides
-  ): Promise<string>;
-
-  supporterKeysArray(
-    arg0: PromiseOrValue<string>,
-    arg1: PromiseOrValue<BigNumberish>,
-    overrides?: CallOverrides
-  ): Promise<BigNumber>;
-
-  supporterNumber(
-    arg0: PromiseOrValue<string>,
-    arg1: PromiseOrValue<string>,
-    overrides?: CallOverrides
-  ): Promise<BigNumber>;
 
   transferOwnership(
     newOwner: PromiseOrValue<string>,
@@ -565,15 +479,21 @@ export interface BuilderFiV1 extends BaseContract {
   ): Promise<ContractTransaction>;
 
   callStatic: {
+    builderCardsBalance(
+      builder: PromiseOrValue<string>,
+      holder: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
+    builderCardsSupply(
+      builder: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
     buyShares(
       sharesSubject: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<void>;
-
-    getAtMostTopTenSupporters(
-      sharesSubject: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<[string[], BigNumber]>;
 
     getBuyPrice(
       sharesSubject: PromiseOrValue<string>,
@@ -639,36 +559,7 @@ export interface BuilderFiV1 extends BaseContract {
       overrides?: CallOverrides
     ): Promise<void>;
 
-    sharesBalance(
-      arg0: PromiseOrValue<string>,
-      arg1: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    sharesSupply(
-      arg0: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
     subjectFeePercent(overrides?: CallOverrides): Promise<BigNumber>;
-
-    supporterAddressArray(
-      arg0: PromiseOrValue<string>,
-      arg1: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<string>;
-
-    supporterKeysArray(
-      arg0: PromiseOrValue<string>,
-      arg1: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    supporterNumber(
-      arg0: PromiseOrValue<string>,
-      arg1: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
 
     transferOwnership(
       newOwner: PromiseOrValue<string>,
@@ -711,14 +602,20 @@ export interface BuilderFiV1 extends BaseContract {
   };
 
   estimateGas: {
+    builderCardsBalance(
+      builder: PromiseOrValue<string>,
+      holder: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
+    builderCardsSupply(
+      builder: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
     buyShares(
       sharesSubject: PromiseOrValue<string>,
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
-    getAtMostTopTenSupporters(
-      sharesSubject: PromiseOrValue<string>,
-      overrides?: CallOverrides
     ): Promise<BigNumber>;
 
     getBuyPrice(
@@ -787,36 +684,7 @@ export interface BuilderFiV1 extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
-    sharesBalance(
-      arg0: PromiseOrValue<string>,
-      arg1: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    sharesSupply(
-      arg0: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
     subjectFeePercent(overrides?: CallOverrides): Promise<BigNumber>;
-
-    supporterAddressArray(
-      arg0: PromiseOrValue<string>,
-      arg1: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    supporterKeysArray(
-      arg0: PromiseOrValue<string>,
-      arg1: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    supporterNumber(
-      arg0: PromiseOrValue<string>,
-      arg1: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
 
     transferOwnership(
       newOwner: PromiseOrValue<string>,
@@ -825,14 +693,20 @@ export interface BuilderFiV1 extends BaseContract {
   };
 
   populateTransaction: {
+    builderCardsBalance(
+      builder: PromiseOrValue<string>,
+      holder: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
+    builderCardsSupply(
+      builder: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
     buyShares(
       sharesSubject: PromiseOrValue<string>,
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    getAtMostTopTenSupporters(
-      sharesSubject: PromiseOrValue<string>,
-      overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
     getBuyPrice(
@@ -905,36 +779,7 @@ export interface BuilderFiV1 extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 
-    sharesBalance(
-      arg0: PromiseOrValue<string>,
-      arg1: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    sharesSupply(
-      arg0: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
     subjectFeePercent(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    supporterAddressArray(
-      arg0: PromiseOrValue<string>,
-      arg1: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    supporterKeysArray(
-      arg0: PromiseOrValue<string>,
-      arg1: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    supporterNumber(
-      arg0: PromiseOrValue<string>,
-      arg1: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
 
     transferOwnership(
       newOwner: PromiseOrValue<string>,

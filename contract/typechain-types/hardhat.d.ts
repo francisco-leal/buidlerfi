@@ -20,6 +20,10 @@ declare module "hardhat/types/runtime" {
       name: "BuidlerFiSharesV1",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.BuidlerFiSharesV1__factory>;
+    getContractFactory(
+      name: "BuilderFiV1",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.BuilderFiV1__factory>;
 
     getContractAt(
       name: "Ownable",
@@ -31,6 +35,11 @@ declare module "hardhat/types/runtime" {
       address: string,
       signer?: ethers.Signer
     ): Promise<Contracts.BuidlerFiSharesV1>;
+    getContractAt(
+      name: "BuilderFiV1",
+      address: string,
+      signer?: ethers.Signer
+    ): Promise<Contracts.BuilderFiV1>;
 
     // default types
     getContractFactory(

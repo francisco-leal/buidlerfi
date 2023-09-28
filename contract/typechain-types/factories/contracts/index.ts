@@ -2,3 +2,4 @@
 /* tslint:disable */
 /* eslint-disable */
 export * as builderFiSharesV1Sol from "./BuilderFiSharesV1.sol";
+export { BuilderFiV1__factory } from "./BuilderFiV1__factory";

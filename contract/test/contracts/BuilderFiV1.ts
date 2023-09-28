@@ -4,7 +4,7 @@ import { solidity } from "ethereum-waffle";
 
 import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 
-import type { BuidlerFiSharesV1 } from "../../typechain-types";
+import type { BuilderFiV1 } from "../../typechain-types";
 import { Artifacts } from "../shared";
 
 chai.use(solidity);
@@ -18,7 +18,7 @@ describe("BuilderFi", () => {
   let addr1: SignerWithAddress;
   let addr2: SignerWithAddress;
 
-  let builderFi: BuidlerFiSharesV1;
+  let builderFi: BuilderFiV1;
 
   beforeEach(async () => {
     [creator, addr1, addr2] = await ethers.getSigners();

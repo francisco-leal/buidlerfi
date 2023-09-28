@@ -1,5 +1,5 @@
 import { ethers, upgrades } from "hardhat";
-import type { BuidlerFiSharesV1 } from "../typechain-types";
+import type { BuilderFiV1 } from "../typechain-types";
 
 const { exit } = process;
 
@@ -7,8 +7,8 @@ async function main() {
   const [creator] = await ethers.getSigners();
   console.log(creator.address);
 
-  const BuidlerFiSharesV1Factory = await ethers.getContractFactory("BuidlerFiSharesV1");
-  const builderFi = (await upgrades.deployProxy(BuidlerFiSharesV1Factory, [])) as BuidlerFiSharesV1;
+  const BuilderFiV1Factory = await ethers.getContractFactory("BuilderFiV1");
+  const builderFi = (await upgrades.deployProxy(BuilderFiV1Factory, [])) as BuilderFiV1;
 
   console.log("BuilderFi address is: ", builderFi.address);
 }

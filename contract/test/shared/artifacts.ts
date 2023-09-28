@@ -1,4 +1,4 @@
-import BuilderFi from "../../artifacts/contracts/BuilderFiSharesV1.sol/BuidlerFiSharesV1.json";
+import BuilderFi from "../../artifacts/contracts/BuilderFiV1.sol/BuilderFiV1.json";
 
 export {
   BuilderFi,
