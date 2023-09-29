@@ -108,3 +108,4 @@ export const DATA = [
 ]
 
 export const DEFAULT_PROFILE_PICTURE = "/default-profile.png"
+export const LOGO = "/logo.png"

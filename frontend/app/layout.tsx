@@ -16,6 +16,8 @@ import { NavBalance } from '@/components/nav-balance'
 import { fetchTheGraphData } from '@/lib/graphql'
 import { useEffect, useState } from 'react'
 import { GraphContext } from '@/lib/context'
+import { LOGO } from '@/lib/mock';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 const chains = [polygonMumbai, lineaTestnet, polygon]
 const projectId = '530148d9ddb07d128a40fc21cc9ffdd9'
@@ -50,8 +52,11 @@ export default function RootLayout({
         <WagmiConfig config={wagmiConfig}>
         <GraphContext.Provider value={{graphData: graphData?.data, forceRefresh: () => setRefreshGraph(true)}}>
           <div className="h-full flex-col pt-16">
-            <div className="container flex items-center justify-between py-4 h-16 px-4 fixed top-0 left-0 border-b bg-white z-10">
-              <h2 className="text-lg font-semibold">BuidlerFi</h2>
+            <div className="flex items-center justify-between w-full py-4 h-16 px-4 fixed top-0 left-0 border-b bg-white z-10">
+              <Avatar className="h-28 w-28">
+                <AvatarImage src={LOGO} />
+                <AvatarFallback>LOGO</AvatarFallback>
+              </Avatar>
               <div className="ml-auto flex items-center w-full space-x-2 justify-end">
                 <NavBalance />
                 <NavWeb3Button />
