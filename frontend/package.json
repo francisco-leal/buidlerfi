@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@airstack/airstack-react": "^0.5.2",
+    "@prisma/client": "^5.3.1",
     "@radix-ui/react-alert-dialog": "^1.0.4",
     "@radix-ui/react-avatar": "^1.0.3",
     "@radix-ui/react-dialog": "^1.0.4",
@@ -45,5 +46,8 @@
     "typescript": "5.2.2",
     "viem": "^1.10.8",
     "wagmi": "^1.4.1"
+  },
+  "devDependencies": {
+    "prisma": "^5.3.1"
   }
 }
