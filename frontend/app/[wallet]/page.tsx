@@ -1,41 +1,40 @@
 'use client';
-import { useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Overview } from './components/overview';
-import { HoldingTab } from './components/holding-tab';
-import { HoldersTab } from './components/holders-tab';
-import { ChatTab } from './components/chat-tab';
-import { useContractRead } from 'wagmi';
-import abi from '@/lib/abi/BuidlerFiV1.json';
+import { builderFIV1Abi } from '@/lib/abi/BuidlerFiV1';
 import { MUMBAI_ADDRESS } from '@/lib/address';
+import { useContractRead } from 'wagmi';
+import { ChatTab } from './components/chat-tab';
+import { HoldersTab } from './components/holders-tab';
+import { HoldingTab } from './components/holding-tab';
+import { Overview } from './components/overview';
 
-export default function ProfilePage({ params }: { params: { wallet: string } }) {
-	const { data: totalSupply, isLoading: supplyLoading } = useContractRead({
+export default function ProfilePage({ params }: { params: { wallet: `0x${string}` } }) {
+	const { data: totalSupply } = useContractRead({
 		address: MUMBAI_ADDRESS,
-		abi: abi,
+		abi: builderFIV1Abi,
 		functionName: 'sharesSupply',
 		args: [params.wallet],
 	});
 
-	const { data: buyPrice, isLoading: priceLoading } = useContractRead({
+	const { data: buyPrice } = useContractRead({
 		address: MUMBAI_ADDRESS,
-		abi: abi,
+		abi: builderFIV1Abi,
 		functionName: 'getBuyPrice',
 		args: [params.wallet],
 	});
 
 	const { data: buyPriceAfterFee } = useContractRead({
 		address: MUMBAI_ADDRESS,
-		abi: abi,
+		abi: builderFIV1Abi,
 		functionName: 'getBuyPriceAfterFee',
 		args: [params.wallet],
 	});
 
 	const { data: sellPrice } = useContractRead({
 		address: MUMBAI_ADDRESS,
-		abi: abi,
+		abi: builderFIV1Abi,
 		functionName: 'getSellPrice',
-		args: [params.wallet, 1],
+		args: [params.wallet, BigInt(1)],
 	});
 
 	return (

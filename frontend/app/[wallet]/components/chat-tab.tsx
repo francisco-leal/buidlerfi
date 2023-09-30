@@ -1,33 +1,29 @@
 'use client';
-import { Lock, MessageSquare } from 'lucide-react';
-import { useContractRead, useAccount, usePublicClient } from 'wagmi';
-import abi from '@/lib/abi/BuidlerFiV1.json';
+import { builderFIV1Abi } from '@/lib/abi/BuidlerFiV1';
 import { MUMBAI_ADDRESS } from '@/lib/address';
-import { useEffect, useState } from 'react';
-import { getEnsName } from 'viem/ens';
+import { useQuery } from '@tanstack/react-query';
+import { Lock, MessageSquare } from 'lucide-react';
 import { isAddress } from 'viem';
+import { getEnsName } from 'viem/ens';
+import { useAccount, useContractRead, usePublicClient } from 'wagmi';
 
-export function ChatTab({ wallet }: { wallet: string }) {
-	const { address, isConnecting, isDisconnected } = useAccount();
-	const [ensName, setENSName] = useState('');
+export function ChatTab({ wallet }: { wallet: `0x${string}` }) {
+	const { address } = useAccount();
 	const { data: supporterKeys } = useContractRead({
 		address: MUMBAI_ADDRESS,
-		abi: abi,
+		abi: builderFIV1Abi,
 		functionName: 'sharesBalance',
-		args: [wallet, address],
+		args: [wallet, address!],
+		enabled: !!address,
 	});
-	const publicClient = usePublicClient();
+	console.log(supporterKeys);
 
-	useEffect(() => {
-		if (wallet && isAddress(wallet as string)) {
-			// @ts-ignore
-			getEnsName(publicClient, { address: wallet }).then((name) => {
-				if (name) {
-					setENSName(name);
-				}
-			});
-		}
-	}, [wallet]);
+	//ENS must be resolved from mainnet
+	const publicClient = usePublicClient({ chainId: 1 });
+
+	const { data: ensName } = useQuery(['getEnsName', wallet], () => getEnsName(publicClient, { address: wallet }), {
+		enabled: isAddress(wallet),
+	});
 
 	const builderName = () => {
 		if (!wallet) return 'Buidler';
@@ -35,7 +31,7 @@ export function ChatTab({ wallet }: { wallet: string }) {
 		return ensName;
 	};
 
-	if (supporterKeys == 0) {
+	if (supporterKeys === BigInt(0)) {
 		return (
 			<div className="flex flex-col items-center justify-center mt-24">
 				<Lock className="text-muted-foreground h-32 w-32 mb-6" />

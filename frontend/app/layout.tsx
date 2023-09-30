@@ -6,7 +6,7 @@ import './globals.css';
 import { EthereumClient, w3mConnectors, w3mProvider } from '@web3modal/ethereum';
 import { Web3Modal } from '@web3modal/react';
 import { WagmiConfig, configureChains, createConfig } from 'wagmi';
-import { lineaTestnet, polygon, polygonMumbai } from 'wagmi/chains';
+import { lineaTestnet, mainnet, polygon, polygonMumbai } from 'wagmi/chains';
 
 import { BottomNav } from '@/components/bottom-nav';
 import { NavBalance } from '@/components/nav-balance';
@@ -14,12 +14,12 @@ import { NavWeb3Button } from '@/components/nav-web3-button';
 import { Toaster } from '@/components/ui/toaster';
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { GraphContext } from '@/lib/context';
-import { fetchTheGraphData } from '@/lib/graphql';
+import { appConfig } from '@/lib/appConfig';
 import { LOGO } from '@/lib/mock';
-import { useEffect, useState } from 'react';
+import { init } from '@airstack/airstack-react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
-const chains = [polygonMumbai, lineaTestnet, polygon];
+const chains = [mainnet, polygonMumbai, lineaTestnet, polygon];
 const projectId = '530148d9ddb07d128a40fc21cc9ffdd9';
 
 const { publicClient } = configureChains(chains, [w3mProvider({ projectId })]);
@@ -32,21 +32,22 @@ const ethereumClient = new EthereumClient(wagmiConfig, chains);
 
 const inter = Inter({ subsets: ['latin'] });
 
+const queryClient = new QueryClient({
+	defaultOptions: {
+		queries: {
+			refetchOnWindowFocus: false,
+		},
+	},
+});
+
+init(appConfig.publicAirstackToken);
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
-	const [refreshGraph, setRefreshGraph] = useState(true);
-	const [graphData, setGraphData] = useState({ data: null });
-
-	useEffect(() => {
-		if (!refreshGraph) return;
-
-		fetchTheGraphData().then((data) => setGraphData(data));
-	}, [refreshGraph]);
-
 	return (
 		<html lang="en" suppressHydrationWarning className="h-full">
 			<body className={inter.className + ' relative h-full'}>
 				<WagmiConfig config={wagmiConfig}>
-					<GraphContext.Provider value={{ graphData: graphData?.data, forceRefresh: () => setRefreshGraph(true) }}>
+					<QueryClientProvider client={queryClient}>
 						<div className="h-full flex-col pt-16">
 							<div className="flex items-center justify-between w-full py-4 h-16 px-4 fixed top-0 left-0 border-b bg-white z-10">
 								<Avatar className="h-28 w-28">
@@ -61,7 +62,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 							{children}
 							<BottomNav />
 						</div>
-					</GraphContext.Provider>
+					</QueryClientProvider>
 				</WagmiConfig>
 				<Toaster />
 				<Web3Modal

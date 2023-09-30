@@ -1,8 +1,4 @@
 'use client';
-import { useEffect, useState, useContext } from 'react';
-import { useAccount, usePublicClient } from 'wagmi';
-import { Button } from '@/components/ui/button';
-import { formatUnits } from 'viem';
 import {
 	AlertDialog,
 	AlertDialogContent,
@@ -10,95 +6,67 @@ import {
 	AlertDialogTitle,
 	AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Icons } from '@/components/ui/icons';
 import { useToast } from '@/components/ui/use-toast';
-import { useContractWrite, useWaitForTransaction, useContractRead } from 'wagmi';
-import abi from '@/lib/abi/BuidlerFiV1.json';
+import { useGetWalletDetails } from '@/hooks/useAirstackApi';
+import { useBuilderFIData } from '@/hooks/useBuilderFiApi';
+import { builderFIV1Abi } from '@/lib/abi/BuidlerFiV1';
 import { MUMBAI_ADDRESS } from '@/lib/address';
-import { GraphContext } from '@/lib/context';
-import { init, useQuery } from '@airstack/airstack-react';
-import { Badge } from '@/components/ui/badge';
+import { FC, useMemo, useState } from 'react';
+import { formatUnits } from 'viem';
+import { useAccount, useContractRead, useContractWrite, useWaitForTransaction } from 'wagmi';
 
-// @ts-ignore
-init(process.env.NEXT_PUBLIC_AIRSTACK_TOKEN);
-
-const QUERY = `query GetWallet($identity: Identity!) {
-  Wallet(input: {identity: $identity, blockchain: ethereum}) {
-    primaryDomain {
-      name
-    }
-    domains {
-      name
-    }
-    socials {
-      dappName
-      profileName
-    }
-    xmtp {
-      isXMTPEnabled
-    }
-  }
+interface Props {
+	wallet: `0x${string}`;
+	buyPrice?: bigint;
+	totalSupply?: bigint;
+	buyPriceAfterFee?: bigint;
+	sellPrice?: bigint;
 }
-`;
 
-export function Overview({
-	wallet,
-	buyPrice,
-	totalSupply,
-	buyPriceAfterFee,
-	sellPrice,
-}: {
-	wallet: string;
-	buyPrice: unknown;
-	totalSupply: unknown;
-	buyPriceAfterFee: unknown;
-	sellPrice: unknown;
-}) {
-	const { address, isConnecting, isDisconnected } = useAccount();
-	const [ensName, setENSName] = useState('');
-	const [holders, setHolders] = useState(0);
-	const [holdings, setHoldings] = useState(0);
-	const [socialList, setSocialList] = useState([]);
+export const Overview: FC<Props> = ({ wallet, buyPrice, totalSupply, buyPriceAfterFee, sellPrice }) => {
+	const { address } = useAccount();
 	const [buyingKeys, setBuyingKeys] = useState(false);
 	const [sellingKeys, setSellingKeys] = useState(false);
 	const [openBuy, setOpenBuy] = useState(false);
 	const { toast } = useToast();
-	const graphContext = useContext(GraphContext);
 
-	const { data: walletDetails, loading } = useQuery(QUERY, { identity: wallet });
+	const { data: walletDetails } = useGetWalletDetails(wallet);
+	const [ensName, socialList] = useMemo(() => {
+		return [
+			walletDetails?.data?.Wallet.primaryDomain?.name || '',
+			walletDetails?.data?.Wallet.socials?.map((i) => i.profileName) || [],
+		];
+	}, [walletDetails]);
 
-	useEffect(() => {
-		//@ts-ignore
-		if (!graphContext.graphData) return;
+	const { data: graphContext } = useBuilderFIData();
 
-		//@ts-ignore
-		const viewedUser = graphContext.graphData.shareParticipants.find((user) => user.owner == wallet.toLowerCase());
-
-		if (viewedUser) {
-			setHolders(viewedUser.numberOfHolders);
-			setHoldings(viewedUser.numberOfHoldings);
-		}
-
-		//@ts-ignore
-	}, [graphContext.graphData]);
+	const [holders, holdings] = useMemo(() => {
+		const viewedUser = graphContext?.shareParticipants.find((user) => user.owner == wallet.toLowerCase());
+		return [viewedUser?.numberOfHolders || 0, viewedUser?.numberOfHoldings || 0];
+	}, [graphContext?.shareParticipants, wallet]);
 
 	const { data: supporterKeys } = useContractRead({
 		address: MUMBAI_ADDRESS,
-		abi: abi,
+		abi: builderFIV1Abi,
 		functionName: 'sharesBalance',
-		args: [wallet, address],
+		args: [wallet, address!],
+		enabled: !!address,
 	});
 
 	const { data: supporterNumber } = useContractRead({
 		address: MUMBAI_ADDRESS,
-		abi: abi,
+		abi: builderFIV1Abi,
 		functionName: 'supporterNumber',
-		args: [wallet, address],
+		args: [wallet, address!],
+		enabled: !!address,
 	});
 
 	const { data: tx_buy, write: contractBuyKeys } = useContractWrite({
 		address: MUMBAI_ADDRESS,
-		abi: abi,
+		abi: builderFIV1Abi,
 		functionName: 'buyShares',
 		onSuccess: () => {
 			setOpenBuy(false);
@@ -118,7 +86,7 @@ export function Overview({
 		},
 	});
 
-	const { data: tx_data_buy } = useWaitForTransaction({
+	const {} = useWaitForTransaction({
 		hash: tx_buy?.hash,
 		onSuccess: () => {
 			toast({
@@ -131,7 +99,7 @@ export function Overview({
 
 	const { data: tx_sell, write: contractSellKeys } = useContractWrite({
 		address: MUMBAI_ADDRESS,
-		abi: abi,
+		abi: builderFIV1Abi,
 		functionName: 'sellShares',
 		onSuccess: () => {
 			setOpenBuy(false);
@@ -151,7 +119,7 @@ export function Overview({
 		},
 	});
 
-	const { data: tx_data_sell } = useWaitForTransaction({
+	const {} = useWaitForTransaction({
 		hash: tx_sell?.hash,
 		onSuccess: () => {
 			toast({
@@ -173,52 +141,36 @@ export function Overview({
 		return wallet.slice(0, 6) + '...' + wallet.slice(-4);
 	};
 
-	useEffect(() => {
-		if (!walletDetails) return;
-
-		let primaryName = walletDetails.Wallet.primaryDomain?.name;
-		setENSName(primaryName);
-
-		if (walletDetails.Wallet.socials?.length > 0) {
-			// @ts-ignore
-			setSocialList(walletDetails.Wallet.socials.map((i) => i.profileName));
-		}
-	}, [walletDetails]);
-
 	const buyKeys = async () => {
 		setBuyingKeys(true);
-		// @ts-ignore
-		contractBuyKeys({ args: [wallet], from: address, value: buyPriceAfterFee });
+		contractBuyKeys({ args: [wallet], value: buyPriceAfterFee });
 	};
 
 	const sellKeys = async () => {
 		setSellingKeys(true);
 
-		// @ts-ignore
-		contractSellKeys({ args: [wallet, 1], from: address });
+		contractSellKeys({ args: [wallet, BigInt(1)] });
 	};
 
 	const calculateBuyPrice = () => {
-		//@ts-ignore
-		return `${formatUnits(buyPrice || 0, 18)}`;
+		return `${formatUnits(buyPrice || BigInt(0), 18)}`;
 	};
 
 	const calculateSellPrice = () => {
-		//@ts-ignore
-		return `${formatUnits(sellPrice || 0, 18)}`;
+		return `${formatUnits(sellPrice || BigInt(0), 18)}`;
 	};
 
 	const holderNumberText = () => {
-		if (totalSupply == 0 && address == wallet) {
+		if (totalSupply === undefined || supporterNumber === undefined || supporterKeys === undefined) return '...';
+
+		if (totalSupply === BigInt(0) && address == wallet) {
 			return 'Your first share is free.';
 		}
 
-		// @ts-ignore
-		if (supporterNumber == 0 && supporterKeys > 0) {
+		if (supporterNumber === BigInt(0) && supporterKeys > 0) {
 			return 'You are holder #0';
 		}
-		// @ts-ignore
-		if (supporterNumber > 0) {
+		if (supporterNumber && supporterNumber > 0) {
 			return `You are holder #${supporterNumber}`;
 		} else {
 			return "You don't hold any key";
@@ -226,8 +178,7 @@ export function Overview({
 	};
 
 	const hasKeys = () => {
-		// @ts-ignore
-		return supporterKeys > 0;
+		return !!supporterKeys && supporterKeys > 0;
 	};
 
 	return (
@@ -240,7 +191,7 @@ export function Overview({
 				<div className="space-x-2">
 					<AlertDialog open={openBuy} onOpenChange={() => setOpenBuy(true)}>
 						<AlertDialogTrigger>
-							<Button disabled={totalSupply == 0 && address != wallet}>{hasKeys() ? 'Trade' : 'Buy'}</Button>
+							<Button disabled={totalSupply === BigInt(0) && address != wallet}>{hasKeys() ? 'Trade' : 'Buy'}</Button>
 						</AlertDialogTrigger>
 						<AlertDialogContent className="w-11/12">
 							<AlertDialogHeader>
@@ -303,7 +254,7 @@ export function Overview({
 			</div>
 			{socialList.length > 0 && (
 				<div className="flex flex-wrap space-x-2 mt-2">
-					{socialList.map((i: any) => (
+					{socialList.map((i) => (
 						<Badge key={`badge-${i}`} variant="outline">
 							{i}
 						</Badge>
@@ -312,4 +263,4 @@ export function Overview({
 			)}
 		</>
 	);
-}
+};
