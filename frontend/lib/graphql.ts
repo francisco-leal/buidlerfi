@@ -39,18 +39,15 @@ const query = `
 `;
 
 export const fetchTheGraphData = async () => {
-  const data = await fetch(
-    "https://api.thegraph.com/subgraphs/name/francisco-leal/buidlerfi-eth-singapore",
-    {
-      method: "POST",
-      body: JSON.stringify({
-        query,
-      }),
-      headers: {
-        "Content-Type": "application/json",
-      },
-    }
-  ).then((res) => res.json());
+	const data = await fetch('https://api.thegraph.com/subgraphs/name/francisco-leal/buidlerfi-eth-singapore', {
+		method: 'POST',
+		body: JSON.stringify({
+			query,
+		}),
+		headers: {
+			'Content-Type': 'application/json',
+		},
+	}).then((res) => res.json());
 
-  return data;
-}
+	return data;
+};
