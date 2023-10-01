@@ -1,10 +1,10 @@
 export interface Share {
 	id: string;
-	owner: string;
+	owner: `0x${string}`;
 	supply: number;
 	numberOfHolders: number;
 	numberOfHoldings: number;
-	buyPrice: number;
-	sellPrice: number;
-	tradingFeesAmount: number;
+	buyPrice: bigint;
+	sellPrice: bigint;
+	tradingFeesAmount: bigint;
 }

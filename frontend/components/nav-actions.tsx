@@ -1,6 +1,5 @@
 'use client';
 
-import * as React from 'react';
 import { DotsHorizontalIcon } from '@radix-ui/react-icons';
 
 import { Button } from '@/components/ui/button';
@@ -12,12 +11,12 @@ import {
 	DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useRouter } from 'next/navigation';
-import { useDisconnect, useAccount } from 'wagmi';
+import { useAccount, useDisconnect } from 'wagmi';
 
 export function NavActions() {
 	const router = useRouter();
 	const { disconnect } = useDisconnect();
-	const { address, isConnecting, isDisconnected } = useAccount();
+	const { address } = useAccount();
 
 	return (
 		<>

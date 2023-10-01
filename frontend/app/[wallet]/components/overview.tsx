@@ -10,10 +10,12 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Icons } from '@/components/ui/icons';
 import { useToast } from '@/components/ui/use-toast';
-import { useGetWalletDetails } from '@/hooks/useAirstackApi';
 import { useBuilderFIData } from '@/hooks/useBuilderFiApi';
+import { useSocialData } from '@/hooks/useSocialData';
 import { builderFIV1Abi } from '@/lib/abi/BuidlerFiV1';
 import { MUMBAI_ADDRESS } from '@/lib/address';
+import { shortAddress } from '@/lib/utils';
+import Avatar from '@mui/joy/Avatar';
 import { FC, useMemo, useState } from 'react';
 import { formatUnits } from 'viem';
 import { useAccount, useContractRead, useContractWrite, useWaitForTransaction } from 'wagmi';
@@ -33,20 +35,14 @@ export const Overview: FC<Props> = ({ wallet, buyPrice, totalSupply, buyPriceAft
 	const [openBuy, setOpenBuy] = useState(false);
 	const { toast } = useToast();
 
-	const { data: walletDetails } = useGetWalletDetails(wallet);
-	const [ensName, socialList] = useMemo(() => {
-		return [
-			walletDetails?.data?.Wallet.primaryDomain?.name || '',
-			walletDetails?.data?.Wallet.socials?.map((i) => i.profileName) || [],
-		];
-	}, [walletDetails]);
-
 	const { data: graphContext } = useBuilderFIData();
 
 	const [holders, holdings] = useMemo(() => {
 		const viewedUser = graphContext?.shareParticipants.find((user) => user.owner == wallet.toLowerCase());
 		return [viewedUser?.numberOfHolders || 0, viewedUser?.numberOfHoldings || 0];
 	}, [graphContext?.shareParticipants, wallet]);
+
+	const socialData = useSocialData(wallet);
 
 	const { data: supporterKeys } = useContractRead({
 		address: MUMBAI_ADDRESS,
@@ -91,7 +87,7 @@ export const Overview: FC<Props> = ({ wallet, buyPrice, totalSupply, buyPriceAft
 		onSuccess: () => {
 			toast({
 				title: 'Key bought!',
-				description: `You bought a key of ${builderName()}.`,
+				description: `You bought a key of ${socialData.name}.`,
 			});
 			window.location.reload();
 		},
@@ -124,22 +120,11 @@ export const Overview: FC<Props> = ({ wallet, buyPrice, totalSupply, buyPriceAft
 		onSuccess: () => {
 			toast({
 				title: 'Key sold!',
-				description: `You sold a key of ${builderName()}.`,
+				description: `You sold a key of ${socialData.name}.`,
 			});
 			window.location.reload();
 		},
 	});
-
-	const builderName = () => {
-		if (!wallet) return 'Buidler';
-		if (!ensName) return wallet.slice(0, 4) + '...' + wallet.slice(-2);
-		return ensName;
-	};
-
-	const shortAddress = () => {
-		if (!wallet || !ensName) return '';
-		return wallet.slice(0, 6) + '...' + wallet.slice(-4);
-	};
 
 	const buyKeys = async () => {
 		setBuyingKeys(true);
@@ -184,9 +169,14 @@ export const Overview: FC<Props> = ({ wallet, buyPrice, totalSupply, buyPriceAft
 	return (
 		<>
 			<div className="flex items-center justify-between">
-				<div className="flex flex-col">
-					<h2 className="text-xl font-bold	 leading-none">{builderName()}</h2>
-					<p className="text-xs text-muted-foreground">{shortAddress()}</p>
+				<div className="flex flex-row space-x-3 items-center">
+					<Avatar src={socialData.avatar} />
+					<div className="flex flex-col">
+						<h2 className="text-xl font-bold	 leading-none">{socialData.name}</h2>
+						{!socialData.name.startsWith('0x') && (
+							<p className="text-xs text-muted-foreground">{shortAddress(wallet)}</p>
+						)}
+					</div>
 				</div>
 				<div className="space-x-2">
 					<AlertDialog open={openBuy} onOpenChange={() => setOpenBuy(true)}>
@@ -198,7 +188,7 @@ export const Overview: FC<Props> = ({ wallet, buyPrice, totalSupply, buyPriceAft
 								<AlertDialogTitle>{hasKeys() ? 'Trade' : 'Buy'} Keys</AlertDialogTitle>
 								<div className="flex flex-col pt-8">
 									<div className="flex items-center justify-between">
-										<p className="font-medium leading-none">{builderName()}</p>
+										<p className="font-medium leading-none">{socialData.name}</p>
 										<p className="leading-none">{calculateBuyPrice() || '0'} MATIC</p>
 									</div>
 									<div className="flex items-center justify-between mt-2">
@@ -252,9 +242,9 @@ export const Overview: FC<Props> = ({ wallet, buyPrice, totalSupply, buyPriceAft
 				</div>
 				<p className="text-sm text-muted-foreground">Key price</p>
 			</div>
-			{socialList.length > 0 && (
+			{socialData.socialsList.length > 0 && (
 				<div className="flex flex-wrap space-x-2 mt-2">
-					{socialList.map((i) => (
+					{socialData.socialsList.map((i) => (
 						<Badge key={`badge-${i}`} variant="outline">
 							{i}
 						</Badge>

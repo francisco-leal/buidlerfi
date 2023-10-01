@@ -27,7 +27,7 @@ export default function Home() {
 	const { data: socialFollowers } = useGetSocialFollowers(address);
 	const followers = useMemo(
 		() =>
-			socialFollowers?.data?.SocialFollowers.Follower.map((follower) => ({
+			socialFollowers?.Follower.map((follower) => ({
 				id: follower.followerAddress.identity,
 				name:
 					follower.followerAddress.domains.find((domain) => domain.isPrimary)?.name ||
@@ -63,8 +63,13 @@ export default function Home() {
 					<TabsTrigger value="recommended">Recommended</TabsTrigger>
 				</TabsList>
 				<TabsContent value="top" className="space-y-4">
-					{users.map((item) => (
-						<UserItem item={item} key={`home-${item.owner}`} />
+					{users.map((user) => (
+						<UserItem
+							address={user.owner}
+							buyPrice={user.buyPrice}
+							numberOfHolders={user.numberOfHolders}
+							key={`home-${user.owner}`}
+						/>
 					))}
 				</TabsContent>
 				<TabsContent value="recommended" className="space-y-4 pb-16">

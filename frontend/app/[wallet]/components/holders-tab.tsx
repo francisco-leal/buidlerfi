@@ -9,9 +9,11 @@ export function HoldersTab({ wallet }: { wallet: string }) {
 
 	const holders = useMemo(
 		() =>
-			builderFiData?.shareRelationships.filter((item) => {
-				return item.owner.id == wallet?.toLowerCase() && item.heldKeyNumber > 0;
-			}) || [],
+			builderFiData?.shareRelationships
+				.filter((item) => {
+					return item.owner.id == wallet?.toLowerCase() && item.heldKeyNumber > 0;
+				})
+				.map((item) => item.holder) || [],
 		[builderFiData?.shareRelationships, wallet]
 	);
 
@@ -25,8 +27,13 @@ export function HoldersTab({ wallet }: { wallet: string }) {
 
 	return (
 		<>
-			{holders.map((item) => (
-				<UserItem item={item} key={`home-${item.owner}`} />
+			{holders.map((holder) => (
+				<UserItem
+					address={holder.owner}
+					buyPrice={holder.buyPrice}
+					numberOfHolders={holder.numberOfHolders}
+					key={`home-${holder.owner}`}
+				/>
 			))}
 		</>
 	);

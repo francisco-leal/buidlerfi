@@ -1,63 +1,34 @@
 'use client';
-import { useEffect, useState, useContext } from 'react';
-import { Icons } from '@/components/ui/icons';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { useAccount } from 'wagmi';
-import { GraphContext } from '@/lib/context';
+import { Icons } from '@/components/ui/icons';
 import { UserItem } from '@/components/user-item';
+import { useBuilderFIData } from '@/hooks/useBuilderFiApi';
+import { useMemo } from 'react';
 import { formatUnits } from 'viem';
+import { useAccount } from 'wagmi';
 
 export default function ChatsPage() {
 	const { address } = useAccount();
-	const [holding, setHolding] = useState<any>([]);
-	const [portfolio, setPortfolioValue] = useState(0);
-	const [tradingFees, setTradingFees] = useState(0);
-	const [loading, setLoading] = useState(true);
-	const graphContext = useContext(GraphContext);
+	const { data: graphContext, isLoading } = useBuilderFIData();
 
-	useEffect(() => {
-		//@ts-ignore
-		if (!graphContext.graphData) return;
+	const [portfolio, holding, tradingFees] = useMemo(() => {
+		const allHolders =
+			graphContext?.shareRelationships.filter((item) => {
+				return item.holder.id == address?.toLowerCase() && item.heldKeyNumber > 0;
+			}) || [];
 
-		//@ts-ignore
-		const allHolders = graphContext.graphData.shareRelationships.filter((item: any) => {
-			return item.holder.id == address?.toLowerCase() && item.heldKeyNumber > 0;
-		});
+		return [
+			allHolders.reduce((prev, curr) => prev + curr.owner.buyPrice, BigInt(0)),
+			allHolders.map((item) => item.owner),
+			graphContext?.shareParticipants.find((user) => user.owner == address?.toLowerCase())?.tradingFeesAmount,
+		];
+	}, [address, graphContext]);
 
-		let value = 0;
+	const tradingFeesValue = () => (!tradingFees ? 'undefined' : formatUnits(tradingFees, 18));
 
-		allHolders.forEach((item: any) => {
-			value += parseFloat(item.owner.buyPrice);
-		});
-		setPortfolioValue(value);
+	const portfolioValue = () => formatUnits(BigInt(portfolio), 18);
 
-		setHolding(allHolders.map((item: any) => item.owner));
-		setLoading(false);
-
-		//@ts-ignore
-	}, [graphContext.graphData, address]);
-
-	useEffect(() => {
-		//@ts-ignore
-		if (!graphContext.graphData) return;
-
-		//@ts-ignore
-		const viewedUser = graphContext.graphData.shareParticipants.find((user) => user.owner == address?.toLowerCase());
-
-		if (viewedUser) {
-			setTradingFees(viewedUser.tradingFeesAmount);
-		}
-
-		//@ts-ignore
-	}, [graphContext.graphData, address]);
-
-	// @ts-ignore
-	const tradingFeesValue = () => formatUnits(tradingFees, 18);
-
-	// @ts-ignore
-	const portfolioValue = () => formatUnits(portfolio.toString(), 18);
-
-	if (loading) {
+	if (isLoading) {
 		return (
 			<div className="flex items-center justify-center w-full mt-24">
 				<Icons.spinner className="h-4 w-4 animate-spin" />
@@ -85,8 +56,13 @@ export default function ChatsPage() {
 					</CardContent>
 				</Card>
 			</div>
-			{holding.map((item: any) => (
-				<UserItem item={item} key={`home-${item.owner}`} />
+			{holding.map((item) => (
+				<UserItem
+					address={item.owner}
+					buyPrice={item.buyPrice}
+					numberOfHolders={item.numberOfHolders}
+					key={`home-${item.owner}`}
+				/>
 			))}
 		</main>
 	);
