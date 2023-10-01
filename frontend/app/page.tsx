@@ -7,7 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { UserItem } from '@/components/user-item';
 import { useGetSocialFollowers } from '@/hooks/useAirstackApi';
 import { useBuilderFIData } from '@/hooks/useBuilderFiApi';
-import { DEFAULT_PROFILE_PICTURE } from '@/lib/mock';
+import { DEFAULT_PROFILE_PICTURE } from '@/lib/assets';
 import { ChevronRight, Wallet } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useMemo } from 'react';
@@ -18,7 +18,10 @@ export default function Home() {
 	const builderfiData = useBuilderFIData();
 
 	const users = useMemo(
-		() => builderfiData.data?.shareParticipants.sort((a, b) => (a.numberOfHolders > b.numberOfHolders ? -1 : 1)) || [],
+		() =>
+			[...(builderfiData.data?.shareParticipants || [])].sort((a, b) =>
+				a.numberOfHolders > b.numberOfHolders ? -1 : 1
+			),
 		[builderfiData]
 	);
 
@@ -65,7 +68,7 @@ export default function Home() {
 				<TabsContent value="top" className="space-y-4">
 					{users.map((user) => (
 						<UserItem
-							address={user.owner}
+							address={user.owner as `0x${string}`}
 							buyPrice={user.buyPrice}
 							numberOfHolders={user.numberOfHolders}
 							key={`home-${user.owner}`}

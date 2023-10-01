@@ -15,7 +15,7 @@ import { Toaster } from '@/components/ui/toaster';
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { appConfig } from '@/lib/appConfig';
-import { LOGO } from '@/lib/mock';
+import { LOGO } from '@/lib/assets';
 import { init } from '@airstack/airstack-react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 

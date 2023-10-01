@@ -6,7 +6,6 @@ import {
 	AlertDialogTitle,
 	AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Icons } from '@/components/ui/icons';
 import { useToast } from '@/components/ui/use-toast';
@@ -14,8 +13,9 @@ import { useBuilderFIData } from '@/hooks/useBuilderFiApi';
 import { useSocialData } from '@/hooks/useSocialData';
 import { builderFIV1Abi } from '@/lib/abi/BuidlerFiV1';
 import { MUMBAI_ADDRESS } from '@/lib/address';
+import { FARCASTER_LOGO, LENS_LOGO } from '@/lib/assets';
 import { shortAddress } from '@/lib/utils';
-import Avatar from '@mui/joy/Avatar';
+import { Avatar, Chip, Tooltip } from '@mui/joy';
 import { FC, useMemo, useState } from 'react';
 import { formatUnits } from 'viem';
 import { useAccount, useContractRead, useContractWrite, useWaitForTransaction } from 'wagmi';
@@ -146,6 +146,7 @@ export const Overview: FC<Props> = ({ wallet, buyPrice, totalSupply, buyPriceAft
 	};
 
 	const holderNumberText = () => {
+		console.log({ totalSupply, supporterNumber, supporterKeys });
 		if (totalSupply === undefined || supporterNumber === undefined || supporterKeys === undefined) return '...';
 
 		if (totalSupply === BigInt(0) && address == wallet) {
@@ -244,10 +245,23 @@ export const Overview: FC<Props> = ({ wallet, buyPrice, totalSupply, buyPriceAft
 			</div>
 			{socialData.socialsList.length > 0 && (
 				<div className="flex flex-wrap space-x-2 mt-2">
-					{socialData.socialsList.map((i) => (
-						<Badge key={`badge-${i}`} variant="outline">
-							{i}
-						</Badge>
+					{socialData.socialsList.map((social) => (
+						<Tooltip key={social.dappName} title={social.dappName} placement="top">
+							<Chip
+								variant="outlined"
+								color="neutral"
+								size="lg"
+								startDecorator={
+									social.dappName === 'lens' ? (
+										<Avatar size="md" src={LENS_LOGO} />
+									) : (
+										<Avatar sx={{ p: 0.4 }} size="md" src={FARCASTER_LOGO} />
+									)
+								}
+							>
+								{social.profileName}
+							</Chip>
+						</Tooltip>
 					))}
 				</div>
 			)}

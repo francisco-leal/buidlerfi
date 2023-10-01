@@ -106,6 +106,3 @@ export const DATA = [
 		number_of_votes: 0,
 	},
 ];
-
-export const DEFAULT_PROFILE_PICTURE = '/default-profile.png';
-export const LOGO = '/logo.png';

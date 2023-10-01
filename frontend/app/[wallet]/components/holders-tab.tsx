@@ -29,7 +29,7 @@ export function HoldersTab({ wallet }: { wallet: string }) {
 		<>
 			{holders.map((holder) => (
 				<UserItem
-					address={holder.owner}
+					address={holder.owner as `0x${string}`}
 					buyPrice={holder.buyPrice}
 					numberOfHolders={holder.numberOfHolders}
 					key={`home-${holder.owner}`}

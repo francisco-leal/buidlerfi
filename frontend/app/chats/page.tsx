@@ -9,24 +9,20 @@ import { useAccount } from 'wagmi';
 
 export default function ChatsPage() {
 	const { address } = useAccount();
-	const { data: graphContext, isLoading } = useBuilderFIData();
+	const { data: builderFiData, isLoading } = useBuilderFIData();
 
 	const [portfolio, holding, tradingFees] = useMemo(() => {
 		const allHolders =
-			graphContext?.shareRelationships.filter((item) => {
+			builderFiData?.shareRelationships.filter((item) => {
 				return item.holder.id == address?.toLowerCase() && item.heldKeyNumber > 0;
 			}) || [];
 
 		return [
-			allHolders.reduce((prev, curr) => prev + curr.owner.buyPrice, BigInt(0)),
+			allHolders.reduce((prev, curr) => prev + BigInt(curr.owner.buyPrice), BigInt(0)),
 			allHolders.map((item) => item.owner),
-			graphContext?.shareParticipants.find((user) => user.owner == address?.toLowerCase())?.tradingFeesAmount,
+			builderFiData?.shareParticipants.find((user) => user.owner == address?.toLowerCase())?.tradingFeesAmount,
 		];
-	}, [address, graphContext]);
-
-	const tradingFeesValue = () => (!tradingFees ? 'undefined' : formatUnits(tradingFees, 18));
-
-	const portfolioValue = () => formatUnits(BigInt(portfolio), 18);
+	}, [address, builderFiData]);
 
 	if (isLoading) {
 		return (
@@ -44,7 +40,7 @@ export default function ChatsPage() {
 						<CardTitle className="text-sm font-medium">Portfolio Value</CardTitle>
 					</CardHeader>
 					<CardContent>
-						<div className="text-lg font-bold">{portfolioValue()} MATIC</div>
+						<div className="text-lg font-bold">{formatUnits(portfolio, 18)} MATIC</div>
 					</CardContent>
 				</Card>
 				<Card>
@@ -52,13 +48,13 @@ export default function ChatsPage() {
 						<CardTitle className="text-sm font-medium">Trading fees</CardTitle>
 					</CardHeader>
 					<CardContent>
-						<div className="text-lg font-bold">{tradingFeesValue()} MATIC</div>
+						<div className="text-lg font-bold">{!tradingFees ? 'undefined' : formatUnits(tradingFees, 18)} MATIC</div>
 					</CardContent>
 				</Card>
 			</div>
 			{holding.map((item) => (
 				<UserItem
-					address={item.owner}
+					address={item.owner as `0x${string}`}
 					buyPrice={item.buyPrice}
 					numberOfHolders={item.numberOfHolders}
 					key={`home-${item.owner}`}
