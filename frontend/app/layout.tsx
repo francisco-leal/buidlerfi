@@ -13,11 +13,12 @@ import { NavBalance } from '@/components/nav-balance';
 import { NavWeb3Button } from '@/components/nav-web3-button';
 import { Toaster } from '@/components/ui/toaster';
 
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { appConfig } from '@/lib/appConfig';
-import { LOGO } from '@/lib/assets';
+import { LOGO, LOGO_SMALL } from '@/lib/assets';
 import { init } from '@airstack/airstack-react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 
 const chains = [mainnet, polygonMumbai, lineaTestnet, polygon];
 const projectId = '530148d9ddb07d128a40fc21cc9ffdd9';
@@ -43,6 +44,8 @@ const queryClient = new QueryClient({
 init(appConfig.publicAirstackToken);
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
+	const router = useRouter();
+
 	return (
 		<html lang="en" suppressHydrationWarning className="h-full">
 			<body className={inter.className + ' relative h-full'}>
@@ -50,10 +53,22 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 					<QueryClientProvider client={queryClient}>
 						<div className="h-full flex-col pt-16">
 							<div className="flex items-center justify-between w-full py-4 h-16 px-4 fixed top-0 left-0 border-b bg-white z-10">
-								<Avatar className="h-28 w-28">
-									<AvatarImage src={LOGO} />
-									<AvatarFallback>LOGO</AvatarFallback>
-								</Avatar>
+								<Image
+									className="hidden md:block cursor-pointer"
+									onClick={() => router.push('/')}
+									alt="App logo"
+									src={LOGO}
+									height={80}
+									width={150}
+								/>
+								<Image
+									className="md:hidden cursor-pointer"
+									onClick={() => router.push('/')}
+									alt="App logo"
+									src={LOGO_SMALL}
+									height={50}
+									width={50}
+								/>
 								<div className="ml-auto flex items-center w-full space-x-2 justify-end">
 									<NavBalance />
 									<NavWeb3Button />

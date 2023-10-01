@@ -16,6 +16,7 @@ import { MUMBAI_ADDRESS } from '@/lib/address';
 import { FARCASTER_LOGO, LENS_LOGO } from '@/lib/assets';
 import { shortAddress } from '@/lib/utils';
 import { Avatar, Chip, Tooltip } from '@mui/joy';
+import Image from 'next/image';
 import { FC, useMemo, useState } from 'react';
 import { formatUnits } from 'viem';
 import { useAccount, useContractRead, useContractWrite, useWaitForTransaction } from 'wagmi';
@@ -253,9 +254,9 @@ export const Overview: FC<Props> = ({ wallet, buyPrice, totalSupply, buyPriceAft
 								size="lg"
 								startDecorator={
 									social.dappName === 'lens' ? (
-										<Avatar size="md" src={LENS_LOGO} />
+										<Image width={20} height={20} src={LENS_LOGO} alt="Lens logo" />
 									) : (
-										<Avatar sx={{ p: 0.4 }} size="md" src={FARCASTER_LOGO} />
+										<Image width={20} height={20} src={FARCASTER_LOGO} alt="Farcaster logo" />
 									)
 								}
 							>
