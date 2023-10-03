@@ -50,7 +50,7 @@ export const fetchBuilderfiData = async () => {
 				'Content-Type': 'application/json',
 			},
 		}
-	).then((res) => res.json());
+	).then(res => res.json());
 
 	return res.data;
 };
