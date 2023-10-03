@@ -25,10 +25,7 @@ describe("BuilderFi", () => {
   });
 
   it("can be deployed", async () => {
-    const action = deployContract(creator, Artifacts.BuilderFi, [
-      creator.address,
-      "TALMEMBERS1"
-    ]);
+    const action = deployContract(creator, Artifacts.BuilderFi, [creator.address, "TALMEMBERS1"]);
 
     await expect(action).not.to.be.reverted;
   });

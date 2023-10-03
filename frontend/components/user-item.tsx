@@ -1,47 +1,39 @@
-'use client'
-import {Avatar, AvatarFallback, AvatarImage} from "@/components/ui/avatar"
-import { DEFAULT_PROFILE_PICTURE } from '@/lib/mock';
-import { useRouter } from 'next/navigation'
+'use client';
 import { Button } from '@/components/ui/button';
-import { ChevronRight } from "lucide-react"
-import { useEnsName, useEnsAvatar } from 'wagmi'
-import { formatUnits } from "viem";
+import { useSocialData } from '@/hooks/useSocialData';
+import Avatar from '@mui/joy/Avatar';
+import { ChevronRight } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { formatUnits } from 'viem';
 
-export function UserItem({ item }: any) {
-  const { data: ensName } = useEnsName({
-    address: item.owner,
-  })
-  const { data: ensAvatar } = useEnsAvatar({
-    name: ensName,
-  })
+interface Props {
+	address: `0x${string}`;
+	numberOfHolders: number;
+	buyPrice: bigint;
+}
 
-  const router = useRouter()
-  
-  const builderName = (item: { owner: string }) => {
-    if (!item.owner) return ("Buidler");
-    if (!ensName) return (item.owner.slice(0, 9) + "..." + item.owner.slice(-5));
-    return ensName;
-  }
+export function UserItem({ address, numberOfHolders, buyPrice }: Props) {
+	const router = useRouter();
 
-  const price = (item: any) => formatUnits(item.buyPrice || 0, 18);
+	const socialData = useSocialData(address);
 
-  return (
-    <div className="flex items-center justify-between w-full rounded-md p-2 transition-all hover:bg-accent hover:text-accent-foreground" onClick={() => router.push(`/${item.owner}`)}>
-      <div className="space-x-4 flex items-center">
-        <Avatar className="mt-px h-5 w-5">
-          <AvatarImage src={ensAvatar || DEFAULT_PROFILE_PICTURE} />
-          <AvatarFallback>OM</AvatarFallback>
-        </Avatar>
-        <div className="space-y-1">
-          <p className="text-sm font-medium leading-none">{builderName(item)}</p>
-          <p className="text-sm text-muted-foreground">
-            {item.numberOfHolders} holders | Price {price(item)} MATIC
-          </p>
-        </div>
-      </div>
-      <Button variant="ghost" size="icon" onClick={() => router.push(`/${item.owner}`)}>
-        <ChevronRight className="h-4 w-4" />
-      </Button>
-    </div>
-  )
+	return (
+		<div
+			className="flex items-center justify-between w-full rounded-md p-2 transition-all hover:bg-accent hover:text-accent-foreground cursor-pointer"
+			onClick={() => router.push(`/${address}`)}
+		>
+			<div className="space-x-4 flex items-center">
+				<Avatar size="sm" src={socialData.avatar} />
+				<div className="space-y-1">
+					<p className="text-sm font-medium leading-none">{socialData.name}</p>
+					<p className="text-sm text-muted-foreground">
+						{numberOfHolders.toString()} holders | Price {formatUnits(BigInt(buyPrice || 0), 18)} MATIC
+					</p>
+				</div>
+			</div>
+			<Button variant="ghost" size="icon" onClick={() => router.push(`/${address}`)}>
+				<ChevronRight className="h-4 w-4" />
+			</Button>
+		</div>
+	);
 }
