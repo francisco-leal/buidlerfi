@@ -2,6 +2,12 @@ This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next
 
 ## Getting Started
 
+Database setup:
+
+```bash
+npx prisma migrate dev --name init
+```
+
 First, run the development server:
 
 ```bash

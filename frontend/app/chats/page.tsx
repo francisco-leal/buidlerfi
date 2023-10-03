@@ -1,11 +1,11 @@
-'use client'
-import { useEffect, useState, useContext } from 'react';
-import { Icons } from "@/components/ui/icons"
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { useAccount } from 'wagmi'
-import { GraphContext } from '@/lib/context';
-import { UserItem } from '@/components/user-item';
-import { formatUnits } from 'viem';
+"use client";
+import { useEffect, useState, useContext } from "react";
+import { Icons } from "@/components/ui/icons";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useAccount } from "wagmi";
+import { GraphContext } from "@/lib/context";
+import { UserItem } from "@/components/user-item";
+import { formatUnits } from "viem";
 
 export default function ChatsPage() {
   const { address } = useAccount();
@@ -13,7 +13,7 @@ export default function ChatsPage() {
   const [portfolio, setPortfolioValue] = useState(0);
   const [tradingFees, setTradingFees] = useState(0);
   const [loading, setLoading] = useState(true);
-  const graphContext = useContext(GraphContext)
+  const graphContext = useContext(GraphContext);
 
   useEffect(() => {
     //@ts-ignore
@@ -21,8 +21,8 @@ export default function ChatsPage() {
 
     //@ts-ignore
     const allHolders = graphContext.graphData.shareRelationships.filter((item: any) => {
-      return item.holder.id == address?.toLowerCase() && (item.heldKeyNumber > 0);
-    })
+      return item.holder.id == address?.toLowerCase() && item.heldKeyNumber > 0;
+    });
 
     let value = 0;
 
@@ -35,21 +35,21 @@ export default function ChatsPage() {
     setLoading(false);
 
     //@ts-ignore
-  }, [graphContext.graphData, address])
+  }, [graphContext.graphData, address]);
 
   useEffect(() => {
     //@ts-ignore
     if (!graphContext.graphData) return;
 
     //@ts-ignore
-    const viewedUser = graphContext.graphData.shareParticipants.find((user) => user.owner == address?.toLowerCase());
+    const viewedUser = graphContext.graphData.shareParticipants.find(user => user.owner == address?.toLowerCase());
 
-    if(viewedUser) {
+    if (viewedUser) {
       setTradingFees(viewedUser.tradingFeesAmount);
     }
 
     //@ts-ignore
-  }, [graphContext.graphData, address])
+  }, [graphContext.graphData, address]);
 
   // @ts-ignore
   const tradingFeesValue = () => formatUnits(tradingFees, 18);
@@ -62,7 +62,7 @@ export default function ChatsPage() {
       <div className="flex items-center justify-center w-full mt-24">
         <Icons.spinner className="h-4 w-4 animate-spin" />
       </div>
-    )
+    );
   }
 
   return (
@@ -70,9 +70,7 @@ export default function ChatsPage() {
       <div className="grid gap-4 grid-cols-2 mb-6">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Portfolio Value
-            </CardTitle>
+            <CardTitle className="text-sm font-medium">Portfolio Value</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-lg font-bold">{portfolioValue()} MATIC</div>
@@ -80,18 +78,16 @@ export default function ChatsPage() {
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Trading fees
-            </CardTitle>
+            <CardTitle className="text-sm font-medium">Trading fees</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-lg font-bold">{tradingFeesValue()} MATIC</div>
           </CardContent>
         </Card>
       </div>
-      {holding.map((item: any) => 
+      {holding.map((item: any) => (
         <UserItem item={item} key={`home-${item.owner}`} />
-      )}
+      ))}
     </main>
-  )
+  );
 }
