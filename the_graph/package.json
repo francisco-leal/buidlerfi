@@ -1,20 +1,20 @@
 {
-	"name": "buidlerfi-eth-singapore",
-	"license": "UNLICENSED",
-	"scripts": {
-		"codegen": "graph codegen",
-		"build": "graph build",
-		"deploy": "graph deploy --node https://api.thegraph.com/deploy/ francisco-leal/buidlerfi-eth-singapore",
-		"create-local": "graph create --node http://localhost:8020/ francisco-leal/buidlerfi-eth-singapore",
-		"remove-local": "graph remove --node http://localhost:8020/ francisco-leal/buidlerfi-eth-singapore",
-		"deploy-local": "graph deploy --node http://localhost:8020/ --ipfs http://localhost:5001 francisco-leal/buidlerfi-eth-singapore",
-		"test": "graph test"
-	},
-	"dependencies": {
-		"@graphprotocol/graph-cli": "0.53.0",
-		"@graphprotocol/graph-ts": "0.30.0"
-	},
-	"devDependencies": {
-		"matchstick-as": "0.5.0"
-	}
+  "name": "buidlerfi-eth-singapore",
+  "license": "UNLICENSED",
+  "scripts": {
+    "codegen": "graph codegen",
+    "build": "graph build",
+    "deploy": "graph deploy --node https://api.thegraph.com/deploy/ francisco-leal/buidlerfi-eth-singapore",
+    "create-local": "graph create --node http://localhost:8020/ francisco-leal/buidlerfi-eth-singapore",
+    "remove-local": "graph remove --node http://localhost:8020/ francisco-leal/buidlerfi-eth-singapore",
+    "deploy-local": "graph deploy --node http://localhost:8020/ --ipfs http://localhost:5001 francisco-leal/buidlerfi-eth-singapore",
+    "test": "graph test"
+  },
+  "dependencies": {
+    "@graphprotocol/graph-cli": "0.53.0",
+    "@graphprotocol/graph-ts": "0.30.0"
+  },
+  "devDependencies": {
+    "matchstick-as": "0.5.0"
+  }
 }
