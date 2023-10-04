@@ -1,6 +1,4 @@
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import prisma from '@/lib/prisma';
 
 const call = async (wallet: string) => {
 	let user = await prisma.user.findUnique({

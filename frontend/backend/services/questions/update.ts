@@ -1,6 +1,4 @@
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import prisma from '@/lib/prisma';
 
 const call = async (questionId: number, answerContent: string) => {
 	const question = await prisma.question.update({

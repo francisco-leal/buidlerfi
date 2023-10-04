@@ -1,7 +1,5 @@
-import { PrismaClient } from '@prisma/client';
+import prisma from '@/lib/prisma';
 import UpsertUser from '../users/upsert';
-
-const prisma = new PrismaClient();
 
 const call = async (questionerWallet: string, replierWallet: string, questionContent: string) => {
 	// Temp fix to create user records for users with the wallet already connected
