@@ -13,14 +13,14 @@ export default function ChatsPage() {
 
 	const [portfolio, holding, tradingFees] = useMemo(() => {
 		const allHolders =
-			builderFiData?.shareRelationships.filter((item) => {
+			builderFiData?.shareRelationships.filter(item => {
 				return item.holder.id == address?.toLowerCase() && item.heldKeyNumber > 0;
 			}) || [];
 
 		return [
 			allHolders.reduce((prev, curr) => prev + BigInt(curr.owner.buyPrice), BigInt(0)),
-			allHolders.map((item) => item.owner),
-			builderFiData?.shareParticipants.find((user) => user.owner == address?.toLowerCase())?.tradingFeesAmount,
+			allHolders.map(item => item.owner),
+			builderFiData?.shareParticipants.find(user => user.owner == address?.toLowerCase())?.tradingFeesAmount,
 		];
 	}, [address, builderFiData]);
 
@@ -52,7 +52,7 @@ export default function ChatsPage() {
 					</CardContent>
 				</Card>
 			</div>
-			{holding.map((item) => (
+			{holding.map(item => (
 				<UserItem
 					address={item.owner as `0x${string}`}
 					buyPrice={item.buyPrice}

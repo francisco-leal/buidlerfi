@@ -9,7 +9,7 @@ export function HoldingTab({ wallet }: { wallet: string }) {
 
 	const holding = useMemo(
 		() =>
-			builderFiData?.shareRelationships.filter((item) => {
+			builderFiData?.shareRelationships.filter(item => {
 				return item.holder.id == wallet?.toLowerCase() && item.heldKeyNumber > 0;
 			}) || [],
 		[builderFiData?.shareRelationships, wallet]
@@ -25,7 +25,7 @@ export function HoldingTab({ wallet }: { wallet: string }) {
 
 	return (
 		<>
-			{holding.map((holdingItem) => (
+			{holding.map(holdingItem => (
 				<UserItem
 					address={holdingItem.owner.owner as `0x${string}`}
 					buyPrice={holdingItem.owner.buyPrice}
