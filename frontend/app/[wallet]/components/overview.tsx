@@ -44,7 +44,7 @@ export const Overview: FC<Props> = ({ socialData, buyPrice, totalSupply, buyPric
   const { address } = useAccount();
   const [buyingKeys, setBuyingKeys] = useState(false);
   const [sellingKeys, setSellingKeys] = useState(false);
-  const [user, setUser] = useState({} as User);
+  const [user, setUser] = useState<User>();
   const [openBuy, setOpenBuy] = useState(false);
   const { toast } = useToast();
 
