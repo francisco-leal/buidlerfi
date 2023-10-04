@@ -1,27 +1,27 @@
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
 const call = async (wallet: string) => {
-  let user = await prisma.user.findUnique({
-    where: {
-      wallet: wallet.toLowerCase()
-    }
-  });
+	let user = await prisma.user.findUnique({
+		where: {
+			wallet: wallet.toLowerCase(),
+		},
+	});
 
-  if (!user) {
-    user = await prisma.user.create({
-      data: {
-        wallet: wallet.toLowerCase()
-      }
-    });
-  }
+	if (!user) {
+		user = await prisma.user.create({
+			data: {
+				wallet: wallet.toLowerCase(),
+			},
+		});
+	}
 
-  return user;
+	return user;
 };
 
 const UpsertUser = {
-  call
+	call,
 };
 
 export default UpsertUser;
