@@ -1,4 +1,5 @@
 'use client';
+import { Flex } from '@/components/flex';
 import {
 	AlertDialog,
 	AlertDialogContent,
@@ -6,30 +7,29 @@ import {
 	AlertDialogTitle,
 	AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
-import { Button } from '@/components/ui/button';
 import { Icons } from '@/components/ui/icons';
 import { useToast } from '@/components/ui/use-toast';
 import { useBuilderFIData } from '@/hooks/useBuilderFiApi';
-import { useSocialData } from '@/hooks/useSocialData';
+import { SocialData } from '@/hooks/useSocialData';
 import { builderFIV1Abi } from '@/lib/abi/BuidlerFiV1';
 import { MUMBAI_ADDRESS } from '@/lib/address';
 import { FARCASTER_LOGO, LENS_LOGO } from '@/lib/assets';
 import { shortAddress } from '@/lib/utils';
-import { Avatar, Chip, Tooltip } from '@mui/joy';
+import { Avatar, Button, Chip, Tooltip, Typography } from '@mui/joy';
 import Image from 'next/image';
 import { FC, useMemo, useState } from 'react';
 import { formatUnits } from 'viem';
 import { useAccount, useContractRead, useContractWrite, useWaitForTransaction } from 'wagmi';
 
 interface Props {
-	wallet: `0x${string}`;
+	socialData: SocialData;
 	buyPrice?: bigint;
 	totalSupply?: bigint;
 	buyPriceAfterFee?: bigint;
 	sellPrice?: bigint;
 }
 
-export const Overview: FC<Props> = ({ wallet, buyPrice, totalSupply, buyPriceAfterFee, sellPrice }) => {
+export const Overview: FC<Props> = ({ socialData, buyPrice, totalSupply, buyPriceAfterFee, sellPrice }) => {
 	const { address } = useAccount();
 	const [buyingKeys, setBuyingKeys] = useState(false);
 	const [sellingKeys, setSellingKeys] = useState(false);
@@ -39,17 +39,15 @@ export const Overview: FC<Props> = ({ wallet, buyPrice, totalSupply, buyPriceAft
 	const { data: graphContext } = useBuilderFIData();
 
 	const [holders, holdings] = useMemo(() => {
-		const viewedUser = graphContext?.shareParticipants.find((user) => user.owner == wallet.toLowerCase());
+		const viewedUser = graphContext?.shareParticipants.find(user => user.owner == socialData.address.toLowerCase());
 		return [viewedUser?.numberOfHolders || 0, viewedUser?.numberOfHoldings || 0];
-	}, [graphContext?.shareParticipants, wallet]);
-
-	const socialData = useSocialData(wallet);
+	}, [graphContext?.shareParticipants, socialData.address]);
 
 	const { data: supporterKeys } = useContractRead({
 		address: MUMBAI_ADDRESS,
 		abi: builderFIV1Abi,
 		functionName: 'sharesBalance',
-		args: [wallet, address!],
+		args: [socialData.address, address!],
 		enabled: !!address,
 	});
 
@@ -57,7 +55,7 @@ export const Overview: FC<Props> = ({ wallet, buyPrice, totalSupply, buyPriceAft
 		address: MUMBAI_ADDRESS,
 		abi: builderFIV1Abi,
 		functionName: 'supporterNumber',
-		args: [wallet, address!],
+		args: [socialData.address, address!],
 		enabled: !!address,
 	});
 
@@ -129,13 +127,13 @@ export const Overview: FC<Props> = ({ wallet, buyPrice, totalSupply, buyPriceAft
 
 	const buyKeys = async () => {
 		setBuyingKeys(true);
-		contractBuyKeys({ args: [wallet], value: buyPriceAfterFee });
+		contractBuyKeys({ args: [socialData.address], value: buyPriceAfterFee });
 	};
 
 	const sellKeys = async () => {
 		setSellingKeys(true);
 
-		contractSellKeys({ args: [wallet, BigInt(1)] });
+		contractSellKeys({ args: [socialData.address, BigInt(1)] });
 	};
 
 	const calculateBuyPrice = () => {
@@ -150,7 +148,7 @@ export const Overview: FC<Props> = ({ wallet, buyPrice, totalSupply, buyPriceAft
 		console.log({ totalSupply, supporterNumber, supporterKeys });
 		if (totalSupply === undefined || supporterNumber === undefined || supporterKeys === undefined) return '...';
 
-		if (totalSupply === BigInt(0) && address == wallet) {
+		if (totalSupply === BigInt(0) && address == socialData.address) {
 			return 'Your first share is free.';
 		}
 
@@ -169,21 +167,25 @@ export const Overview: FC<Props> = ({ wallet, buyPrice, totalSupply, buyPriceAft
 	};
 
 	return (
-		<>
-			<div className="flex items-center justify-between">
-				<div className="flex flex-row space-x-3 items-center">
+		<Flex y>
+			<Flex x yc xsb>
+				<Flex x yc gap2>
 					<Avatar src={socialData.avatar} />
-					<div className="flex flex-col">
-						<h2 className="text-xl font-bold	 leading-none">{socialData.name}</h2>
+					<Flex y>
+						<Typography level="h3" className="font-bold">
+							{socialData.name}
+						</Typography>
 						{!socialData.name.startsWith('0x') && (
-							<p className="text-xs text-muted-foreground">{shortAddress(wallet)}</p>
+							<Typography className="text-xs text-muted-foreground">{shortAddress(socialData.address)}</Typography>
 						)}
-					</div>
-				</div>
+					</Flex>
+				</Flex>
 				<div className="space-x-2">
 					<AlertDialog open={openBuy} onOpenChange={() => setOpenBuy(true)}>
 						<AlertDialogTrigger>
-							<Button disabled={totalSupply === BigInt(0) && address != wallet}>{hasKeys() ? 'Trade' : 'Buy'}</Button>
+							<Button disabled={totalSupply === BigInt(0) && address != socialData.address}>
+								{hasKeys() ? 'Trade' : 'Buy'}
+							</Button>
 						</AlertDialogTrigger>
 						<AlertDialogContent className="w-11/12">
 							<AlertDialogHeader>
@@ -206,7 +208,7 @@ export const Overview: FC<Props> = ({ wallet, buyPrice, totalSupply, buyPriceAft
 									{hasKeys() && (
 										<>
 											<Button
-												variant="outline"
+												variant="outlined"
 												onClick={() => sellKeys()}
 												disabled={buyingKeys || sellingKeys}
 												className="mt-2"
@@ -220,7 +222,7 @@ export const Overview: FC<Props> = ({ wallet, buyPrice, totalSupply, buyPriceAft
 										</>
 									)}
 									<Button
-										variant="ghost"
+										variant="plain"
 										onClick={() => setOpenBuy(false)}
 										disabled={buyingKeys || sellingKeys}
 										className="mt-2"
@@ -232,8 +234,8 @@ export const Overview: FC<Props> = ({ wallet, buyPrice, totalSupply, buyPriceAft
 						</AlertDialogContent>
 					</AlertDialog>
 				</div>
-			</div>
-			<div className="flex items-center justify-between mt-4">
+			</Flex>
+			<div className="flex items-center justify-between">
 				<p className="text-base font-medium">{holderNumberText()}</p>
 				<p className="text-base font-medium">{calculateBuyPrice()} MATIC</p>
 			</div>
@@ -245,8 +247,8 @@ export const Overview: FC<Props> = ({ wallet, buyPrice, totalSupply, buyPriceAft
 				<p className="text-sm text-muted-foreground">Key price</p>
 			</div>
 			{socialData.socialsList.length > 0 && (
-				<div className="flex flex-wrap space-x-2 mt-2">
-					{socialData.socialsList.map((social) => (
+				<div className="flex flex-wrap space-x-2">
+					{socialData.socialsList.map(social => (
 						<Tooltip key={social.dappName} title={social.dappName} placement="top">
 							<Chip
 								variant="outlined"
@@ -266,6 +268,6 @@ export const Overview: FC<Props> = ({ wallet, buyPrice, totalSupply, buyPriceAft
 					))}
 				</div>
 			)}
-		</>
+		</Flex>
 	);
 };

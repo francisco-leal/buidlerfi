@@ -3,11 +3,11 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Icons } from '@/components/ui/icons';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { UserItem } from '@/components/user-item';
 import { useGetSocialFollowers } from '@/hooks/useAirstackApi';
 import { useBuilderFIData } from '@/hooks/useBuilderFiApi';
 import { DEFAULT_PROFILE_PICTURE } from '@/lib/assets';
+import { Tab, TabList, TabPanel, Tabs } from '@mui/joy';
 import { ChevronRight, Wallet } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useMemo } from 'react';
@@ -58,13 +58,17 @@ export default function Home() {
 	}
 
 	return (
-		<main className="py-4 px-2">
+		<main className="flex-grow">
 			<Tabs defaultValue="top" className="space-y-4">
-				<TabsList className="grid w-full grid-cols-2 mb-8">
-					<TabsTrigger value="top">Top</TabsTrigger>
-					<TabsTrigger value="recommended">Recommended</TabsTrigger>
-				</TabsList>
-				<TabsContent value="top" className="space-y-4">
+				<TabList className="grid w-full grid-cols-2">
+					<Tab variant="soft" disableIndicator value="top">
+						Top
+					</Tab>
+					<Tab variant="soft" disableIndicator value="recommended">
+						Recommended
+					</Tab>
+				</TabList>
+				<TabPanel value="top" sx={{ p: 0 }} className="space-y-2">
 					{users.map(user => (
 						<UserItem
 							address={user.owner as `0x${string}`}
@@ -73,8 +77,8 @@ export default function Home() {
 							key={`home-${user.owner}`}
 						/>
 					))}
-				</TabsContent>
-				<TabsContent value="recommended" className="space-y-4 pb-16">
+				</TabPanel>
+				<TabPanel value="recommended" className="space-y-4">
 					{followers.length == 0 && (
 						<div className="flex flex-col items-center justify-center mt-24">
 							<Wallet className="text-muted-foreground h-32 w-32 mb-6" />
@@ -102,7 +106,7 @@ export default function Home() {
 							</Button>
 						</div>
 					))}
-				</TabsContent>
+				</TabPanel>
 			</Tabs>
 		</main>
 	);

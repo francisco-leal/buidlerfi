@@ -1,10 +1,11 @@
 'use client';
-import { Button } from '@/components/ui/button';
 import { useSocialData } from '@/hooks/useSocialData';
+import { Typography } from '@mui/joy';
 import Avatar from '@mui/joy/Avatar';
 import { ChevronRight } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { formatUnits } from 'viem';
+import { Flex } from './flex';
 
 interface Props {
 	address: `0x${string}`;
@@ -18,22 +19,29 @@ export function UserItem({ address, numberOfHolders, buyPrice }: Props) {
 	const socialData = useSocialData(address);
 
 	return (
-		<div
-			className="flex items-center justify-between w-full rounded-md p-2 transition-all hover:bg-accent hover:text-accent-foreground cursor-pointer"
+		<Flex
+			x
+			xsb
+			yc
+			fullwidth
+			px={4}
+			p={1}
+			sx={{ ':hover': { backgroundColor: 'neutral.100' } }}
+			className="transition-all cursor-pointer"
 			onClick={() => router.push(`/${address}`)}
 		>
-			<div className="space-x-4 flex items-center">
+			<Flex x yc gap2>
 				<Avatar size="sm" src={socialData.avatar} />
-				<div className="space-y-1">
-					<p className="text-sm font-medium leading-none">{socialData.name}</p>
-					<p className="text-sm text-muted-foreground">
+				<Flex y gap={0.5}>
+					<Typography fontWeight={700} level="body-sm">
+						{socialData.name}
+					</Typography>
+					<Typography textColor={'neutral.500'} level="body-sm">
 						{numberOfHolders.toString()} holders | Price {formatUnits(BigInt(buyPrice || 0), 18)} MATIC
-					</p>
-				</div>
-			</div>
-			<Button variant="ghost" size="icon" onClick={() => router.push(`/${address}`)}>
-				<ChevronRight className="h-4 w-4" />
-			</Button>
-		</div>
+					</Typography>
+				</Flex>
+			</Flex>
+			<ChevronRight className="h-4 w-4" />
+		</Flex>
 	);
 }

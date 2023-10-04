@@ -7,8 +7,8 @@ import { useEffect, useMemo } from 'react';
 import { useEnsAvatar } from 'wagmi';
 import { useGetWalletSocials } from './useAirstackApi';
 
-interface CachedSocialData {
-	cachedAt: Date;
+export interface SocialData {
+	address: `0x${string}`;
 	avatar: string;
 	name: string;
 	socialsList: {
@@ -17,9 +17,13 @@ interface CachedSocialData {
 	}[];
 }
 
+interface CachedSocialData extends SocialData {
+	cachedAt: Date;
+}
+
 const CACHE_VALIDITY_HOURS = 24;
 
-export const useSocialData = (address: `0x${string}`) => {
+export const useSocialData = (address: `0x${string}`): SocialData => {
 	const cachedData = useQuery<CachedSocialData>(['useSocialData', address], () => get(`social-data-${address}`));
 
 	const isNotInCache = useMemo(() => {
@@ -34,7 +38,7 @@ export const useSocialData = (address: `0x${string}`) => {
 	const { data: walletDetails, isLoading } = useGetWalletSocials(address, { enabled: isNotInCache });
 
 	const farcasterInfo = useMemo(
-		() => walletDetails?.socials?.find((social) => social.dappName === 'farcaster'),
+		() => walletDetails?.socials?.find(social => social.dappName === 'farcaster'),
 		[walletDetails?.socials]
 	);
 
@@ -47,11 +51,12 @@ export const useSocialData = (address: `0x${string}`) => {
 
 	const res = useMemo(
 		() => ({
+			address: address,
 			socialsList:
 				cachedData.data?.socialsList ||
 				walletDetails?.socials
-					?.filter((i) => i.profileName)
-					.map((i) => ({ dappName: i.dappName, profileName: i.profileName })) ||
+					?.filter(i => i.profileName)
+					.map(i => ({ dappName: i.dappName, profileName: i.profileName })) ||
 				[],
 			avatar: cachedData.data?.avatar || farcasterInfo?.profileImage || ensAvatar || DEFAULT_PROFILE_PICTURE,
 			name:

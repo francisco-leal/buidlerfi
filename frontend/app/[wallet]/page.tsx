@@ -1,7 +1,8 @@
 'use client';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useSocialData } from '@/hooks/useSocialData';
 import { builderFIV1Abi } from '@/lib/abi/BuidlerFiV1';
 import { MUMBAI_ADDRESS } from '@/lib/address';
+import { Tab, TabList, TabPanel, Tabs } from '@mui/joy';
 import { useContractRead } from 'wagmi';
 import { ChatTab } from './components/chat-tab';
 import { HoldersTab } from './components/holders-tab';
@@ -37,30 +38,38 @@ export default function ProfilePage({ params }: { params: { wallet: `0x${string}
 		args: [params.wallet, BigInt(1)],
 	});
 
+	const socialData = useSocialData(params.wallet);
+
 	return (
-		<main className="py-4 px-2">
+		<main className="flex flex-col py-4 px-2 flex-grow">
 			<Overview
-				wallet={params.wallet}
+				socialData={socialData}
 				buyPrice={buyPrice}
 				totalSupply={totalSupply}
 				buyPriceAfterFee={buyPriceAfterFee}
 				sellPrice={sellPrice}
 			/>
-			<Tabs defaultValue="chat" className="space-y-4 mt-4 pb-16">
-				<TabsList className="grid w-full grid-cols-3 mb-8">
-					<TabsTrigger value="chat">Chat</TabsTrigger>
-					<TabsTrigger value="holding">Holding</TabsTrigger>
-					<TabsTrigger value="holders">Holders</TabsTrigger>
-				</TabsList>
-				<TabsContent value="chat" className="space-y-4">
-					<ChatTab wallet={params.wallet} />
-				</TabsContent>
-				<TabsContent value="holding" className="space-y-4">
+			<Tabs defaultValue="chat">
+				<TabList className="grid w-full grid-cols-3 mb-8">
+					<Tab disableIndicator value="chat">
+						Chat
+					</Tab>
+					<Tab disableIndicator value="holding">
+						Holding
+					</Tab>
+					<Tab disableIndicator value="holders">
+						Holders
+					</Tab>
+				</TabList>
+				<TabPanel value="chat" className="flex flex-col flex-grow space-y-4">
+					<ChatTab socialData={socialData} />
+				</TabPanel>
+				<TabPanel value="holding" className="flex flex-col space-y-4">
 					<HoldingTab wallet={params.wallet} />
-				</TabsContent>
-				<TabsContent value="holders" className="space-y-4">
+				</TabPanel>
+				<TabPanel value="holders" className="space-y-4">
 					<HoldersTab wallet={params.wallet} />
-				</TabsContent>
+				</TabPanel>
 			</Tabs>
 		</main>
 	);
