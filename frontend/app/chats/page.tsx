@@ -1,97 +1,65 @@
-'use client'
-import { useEffect, useState, useContext } from 'react';
-import { Icons } from "@/components/ui/icons"
+'use client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { useAccount } from 'wagmi'
-import { GraphContext } from '@/lib/context';
+import { Icons } from '@/components/ui/icons';
 import { UserItem } from '@/components/user-item';
+import { useBuilderFIData } from '@/hooks/useBuilderFiApi';
+import { useMemo } from 'react';
 import { formatUnits } from 'viem';
+import { useAccount } from 'wagmi';
 
 export default function ChatsPage() {
-  const { address } = useAccount();
-  const [holding, setHolding] = useState<any>([]);
-  const [portfolio, setPortfolioValue] = useState(0);
-  const [tradingFees, setTradingFees] = useState(0);
-  const [loading, setLoading] = useState(true);
-  const graphContext = useContext(GraphContext)
+	const { address } = useAccount();
+	const { data: builderFiData, isLoading } = useBuilderFIData();
 
-  useEffect(() => {
-    //@ts-ignore
-    if (!graphContext.graphData) return;
+	const [portfolio, holding, tradingFees] = useMemo(() => {
+		const allHolders =
+			builderFiData?.shareRelationships.filter((item) => {
+				return item.holder.id == address?.toLowerCase() && item.heldKeyNumber > 0;
+			}) || [];
 
-    //@ts-ignore
-    const allHolders = graphContext.graphData.shareRelationships.filter((item: any) => {
-      return item.holder.id == address?.toLowerCase() && (item.heldKeyNumber > 0);
-    })
+		return [
+			allHolders.reduce((prev, curr) => prev + BigInt(curr.owner.buyPrice), BigInt(0)),
+			allHolders.map((item) => item.owner),
+			builderFiData?.shareParticipants.find((user) => user.owner == address?.toLowerCase())?.tradingFeesAmount,
+		];
+	}, [address, builderFiData]);
 
-    let value = 0;
+	if (isLoading) {
+		return (
+			<div className="flex items-center justify-center w-full mt-24">
+				<Icons.spinner className="h-4 w-4 animate-spin" />
+			</div>
+		);
+	}
 
-    allHolders.forEach((item: any) => {
-      value += parseFloat(item.owner.buyPrice);
-    });
-    setPortfolioValue(value);
-
-    setHolding(allHolders.map((item: any) => item.owner));
-    setLoading(false);
-
-    //@ts-ignore
-  }, [graphContext.graphData, address])
-
-  useEffect(() => {
-    //@ts-ignore
-    if (!graphContext.graphData) return;
-
-    //@ts-ignore
-    const viewedUser = graphContext.graphData.shareParticipants.find((user) => user.owner == address?.toLowerCase());
-
-    if(viewedUser) {
-      setTradingFees(viewedUser.tradingFeesAmount);
-    }
-
-    //@ts-ignore
-  }, [graphContext.graphData, address])
-
-  // @ts-ignore
-  const tradingFeesValue = () => formatUnits(tradingFees, 18);
-
-  // @ts-ignore
-  const portfolioValue = () => formatUnits(portfolio.toString(), 18);
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center w-full mt-24">
-        <Icons.spinner className="h-4 w-4 animate-spin" />
-      </div>
-    )
-  }
-
-  return (
-    <main className="pt-4 px-2 pb-16">
-      <div className="grid gap-4 grid-cols-2 mb-6">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Portfolio Value
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-lg font-bold">{portfolioValue()} MATIC</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Trading fees
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-lg font-bold">{tradingFeesValue()} MATIC</div>
-          </CardContent>
-        </Card>
-      </div>
-      {holding.map((item: any) => 
-        <UserItem item={item} key={`home-${item.owner}`} />
-      )}
-    </main>
-  )
+	return (
+		<main className="pt-4 px-2 pb-16">
+			<div className="grid gap-4 grid-cols-2 mb-6">
+				<Card>
+					<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+						<CardTitle className="text-sm font-medium">Portfolio Value</CardTitle>
+					</CardHeader>
+					<CardContent>
+						<div className="text-lg font-bold">{formatUnits(portfolio, 18)} MATIC</div>
+					</CardContent>
+				</Card>
+				<Card>
+					<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+						<CardTitle className="text-sm font-medium">Trading fees</CardTitle>
+					</CardHeader>
+					<CardContent>
+						<div className="text-lg font-bold">{!tradingFees ? 'undefined' : formatUnits(tradingFees, 18)} MATIC</div>
+					</CardContent>
+				</Card>
+			</div>
+			{holding.map((item) => (
+				<UserItem
+					address={item.owner as `0x${string}`}
+					buyPrice={item.buyPrice}
+					numberOfHolders={item.numberOfHolders}
+					key={`home-${item.owner}`}
+				/>
+			))}
+		</main>
+	);
 }

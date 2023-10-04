@@ -1,0 +1,31 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_DATABASE_URL")
+}
+
+model User {
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  wallet     String   @id @db.VarChar(50)
+  questioner Question[] @relation("questioner")
+  replier    Question[] @relation("replier")
+}
+
+model Question {
+  id               Int      @id @default(autoincrement())
+  questionContent  String   @db.VarChar
+  answerContent    String?  @db.VarChar
+  createdAt        DateTime @default(now())
+  questioner       User     @relation("questioner", fields: [questionerWallet], references: [wallet])
+  replier          User     @relation("replier", fields: [replierWallet], references: [wallet])
+  questionerWallet String   @db.VarChar(50)
+  replierWallet    String   @db.VarChar(50)
+}
