@@ -1,35 +1,47 @@
 'use client';
+import { useGetQuestions, usePostQuestion } from '@/hooks/useQuestionsApi';
+import { SocialData } from '@/hooks/useSocialData';
 import { builderFIV1Abi } from '@/lib/abi/BuidlerFiV1';
 import { MUMBAI_ADDRESS } from '@/lib/address';
-import { useQuery } from '@tanstack/react-query';
+import { Box, Button, Input, Typography } from '@mui/joy';
 import { Lock, MessageSquare } from 'lucide-react';
-import { isAddress } from 'viem';
-import { getEnsName } from 'viem/ens';
-import { useAccount, useContractRead, usePublicClient } from 'wagmi';
+import { FC, useState } from 'react';
+import { useAccount, useContractRead } from 'wagmi';
 
-export function ChatTab({ wallet }: { wallet: `0x${string}` }) {
+interface Props {
+	socialData: SocialData;
+}
+
+export const ChatTab: FC<Props> = ({ socialData }) => {
+	const [chatValue, setChatValue] = useState<string>('');
 	const { address } = useAccount();
 	const { data: supporterKeys } = useContractRead({
 		address: MUMBAI_ADDRESS,
 		abi: builderFIV1Abi,
 		functionName: 'sharesBalance',
-		args: [wallet, address!],
+		args: [socialData.address, address!],
 		enabled: !!address,
 	});
-	console.log(supporterKeys);
 
-	//ENS must be resolved from mainnet
-	const publicClient = usePublicClient({ chainId: 1 });
+	const { data: questions, refetch } = useGetQuestions(address, socialData.address);
+	const postQuestion = usePostQuestion();
 
-	const { data: ensName } = useQuery(['getEnsName', wallet], () => getEnsName(publicClient, { address: wallet }), {
-		enabled: isAddress(wallet),
-	});
-
-	const builderName = () => {
-		if (!wallet) return 'Buidler';
-		if (!ensName) return wallet.slice(0, 12) + '...' + wallet.slice(-10);
-		return ensName;
+	const sendQuestion = async () => {
+		await postQuestion.mutateAsync({
+			questionContent: chatValue,
+			questionerWallet: address,
+			replierWallet: socialData.address,
+		});
+		await refetch();
 	};
+
+	// const sendReply = async (questionId: number, questionAnswer: string) => {
+	// 	const response = await axios.put(`/api/questions/${questionId}`, {
+	// 		questionAnswer,
+	// 	});
+
+	// 	console.log(response.data);
+	// };
 
 	if (supporterKeys === BigInt(0)) {
 		return (
@@ -41,11 +53,37 @@ export function ChatTab({ wallet }: { wallet: `0x${string}` }) {
 	}
 
 	return (
-		<>
-			<div className="flex flex-col items-center justify-center mt-24">
-				<MessageSquare className="text-muted-foreground h-32 w-32 mb-6" />
-				<p className="text-center">Congratulations. You can now chat with {builderName()}</p>
-			</div>
-		</>
+		<Box className="flex flex-col flex-grow">
+			<Box className="flex flex-grow flex-col space-y-4">
+				{!questions?.length ? (
+					<div className="flex flex-col items-center justify-center mt-24">
+						<MessageSquare className="text-muted-foreground h-32 w-32 mb-6" />
+						<p className="text-center">Congratulations. You can now chat with {socialData.name}</p>
+					</div>
+				) : (
+					questions.map((question, i) => {
+						return (
+							<Box key={question.id}>
+								<Typography fontWeight={500} level="body-md">
+									{i + 1}. {question.questionContent}
+								</Typography>
+								<Typography level="body-sm">{question.answerContent || 'Waiting for answer ...'}</Typography>
+							</Box>
+						);
+					})
+				)}
+			</Box>
+			<Box className="flex flex-row space-x-3">
+				<Input
+					value={chatValue}
+					onChange={e => setChatValue(e.target.value)}
+					fullWidth
+					placeholder={`Ask a question to ${socialData.name}`}
+				/>
+				<Button className="appearance-none" loading={postQuestion.isLoading} onClick={() => sendQuestion()}>
+					Send message
+				</Button>
+			</Box>
+		</Box>
 	);
-}
+};
