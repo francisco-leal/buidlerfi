@@ -12,6 +12,7 @@
 	},
 	"dependencies": {
 		"@airstack/airstack-react": "^0.5.2",
+		"@airstack/node": "^0.0.5",
 		"@emotion/react": "^11.11.1",
 		"@emotion/styled": "^11.11.0",
 		"@mui/joy": "^5.0.0-beta.8",

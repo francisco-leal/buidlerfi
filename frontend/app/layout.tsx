@@ -14,10 +14,8 @@ import { NavWeb3Button } from '@/components/nav-web3-button';
 import { Toaster } from '@/components/ui/toaster';
 
 import { Flex } from '@/components/flex';
-import { appConfig } from '@/lib/appConfig';
 import { LOGO, LOGO_SMALL } from '@/lib/assets';
 import theme from '@/theme';
-import { init } from '@airstack/airstack-react';
 import { CssVarsProvider } from '@mui/joy';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import Image from 'next/image';
@@ -44,8 +42,6 @@ const queryClient = new QueryClient({
 	},
 });
 
-init(appConfig.publicAirstackToken);
-
 export default function RootLayout({ children }: { children: React.ReactNode }) {
 	const router = useRouter();
 
@@ -55,7 +51,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 				<CssVarsProvider theme={theme} defaultMode="light">
 					<WagmiConfig config={wagmiConfig}>
 						<QueryClientProvider client={queryClient}>
-							<Flex y py={6}>
+							<Flex y py={7}>
 								<Flex fullwidth x xsb yc p={2} className="h-8 fixed top-0 left-0 border-b bg-white z-10">
 									<Image
 										className="hidden md:block cursor-pointer"
