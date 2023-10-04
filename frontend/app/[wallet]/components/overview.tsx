@@ -1,49 +1,47 @@
 'use client';
+import { BuyShareModal } from '@/app/[wallet]/components/buy-share-modal';
 import { Flex } from '@/components/flex';
-import {
-	AlertDialog,
-	AlertDialogContent,
-	AlertDialogHeader,
-	AlertDialogTitle,
-	AlertDialogTrigger,
-} from '@/components/ui/alert-dialog';
-import { Icons } from '@/components/ui/icons';
-import { useToast } from '@/components/ui/use-toast';
-import { useBuilderFIData } from '@/hooks/useBuilderFiApi';
 import { SocialData } from '@/hooks/useSocialData';
 import { builderFIV1Abi } from '@/lib/abi/BuidlerFiV1';
 import { MUMBAI_ADDRESS } from '@/lib/address';
 import { FARCASTER_LOGO, LENS_LOGO } from '@/lib/assets';
-import { shortAddress } from '@/lib/utils';
-import { Avatar, Button, Chip, Tooltip, Typography } from '@mui/joy';
+import { formatEth, shortAddress } from '@/lib/utils';
+import { ContentCopy } from '@mui/icons-material';
+import { Avatar, Button, Chip, IconButton, Tooltip, Typography } from '@mui/joy';
 import Image from 'next/image';
-import { FC, useMemo, useState } from 'react';
-import { formatUnits } from 'viem';
-import { useAccount, useContractRead, useContractWrite, useWaitForTransaction } from 'wagmi';
+import { FC, useCallback, useMemo, useState } from 'react';
+import { useAccount, useContractRead } from 'wagmi';
 
 interface Props {
 	socialData: SocialData;
-	buyPrice?: bigint;
-	totalSupply?: bigint;
-	buyPriceAfterFee?: bigint;
-	sellPrice?: bigint;
 }
 
-export const Overview: FC<Props> = ({ socialData, buyPrice, totalSupply, buyPriceAfterFee, sellPrice }) => {
+export const Overview: FC<Props> = ({ socialData }) => {
 	const { address } = useAccount();
-	const [buyingKeys, setBuyingKeys] = useState(false);
-	const [sellingKeys, setSellingKeys] = useState(false);
 	const [openBuy, setOpenBuy] = useState(false);
-	const { toast } = useToast();
 
-	const { data: graphContext } = useBuilderFIData();
+	const { data: totalSupply, refetch: refetchTotalSupply } = useContractRead({
+		address: MUMBAI_ADDRESS,
+		abi: builderFIV1Abi,
+		functionName: 'sharesSupply',
+		args: [socialData.address],
+	});
 
-	const [holders, holdings] = useMemo(() => {
-		const viewedUser = graphContext?.shareParticipants.find(user => user.owner == socialData.address.toLowerCase());
-		return [viewedUser?.numberOfHolders || 0, viewedUser?.numberOfHoldings || 0];
-	}, [graphContext?.shareParticipants, socialData.address]);
+	const { data: buyPrice, refetch: refetchBuyPrice } = useContractRead({
+		address: MUMBAI_ADDRESS,
+		abi: builderFIV1Abi,
+		functionName: 'getBuyPrice',
+		args: [socialData.address],
+	});
 
-	const { data: supporterKeys } = useContractRead({
+	const { data: sellPrice, refetch: refetchSellprice } = useContractRead({
+		address: MUMBAI_ADDRESS,
+		abi: builderFIV1Abi,
+		functionName: 'getSellPrice',
+		args: [socialData.address, BigInt(1)],
+	});
+
+	const { data: supporterKeys, refetch: refetchKeys } = useContractRead({
 		address: MUMBAI_ADDRESS,
 		abi: builderFIV1Abi,
 		functionName: 'sharesBalance',
@@ -51,7 +49,7 @@ export const Overview: FC<Props> = ({ socialData, buyPrice, totalSupply, buyPric
 		enabled: !!address,
 	});
 
-	const { data: supporterNumber } = useContractRead({
+	const { data: supporterNumber, refetch: refetchSupporterNumber } = useContractRead({
 		address: MUMBAI_ADDRESS,
 		abi: builderFIV1Abi,
 		functionName: 'supporterNumber',
@@ -59,90 +57,13 @@ export const Overview: FC<Props> = ({ socialData, buyPrice, totalSupply, buyPric
 		enabled: !!address,
 	});
 
-	const { data: tx_buy, write: contractBuyKeys } = useContractWrite({
-		address: MUMBAI_ADDRESS,
-		abi: builderFIV1Abi,
-		functionName: 'buyShares',
-		onSuccess: () => {
-			setOpenBuy(false);
-			setBuyingKeys(false);
-			toast({
-				title: 'Transaction submitted!',
-				description: `Hash: ${tx_buy}`,
-			});
-		},
-		onError: () => {
-			setOpenBuy(false);
-			setBuyingKeys(false);
-			toast({
-				title: 'Unable to buy key',
-				description: `There was an error processing your transaction`,
-			});
-		},
-	});
-
-	const {} = useWaitForTransaction({
-		hash: tx_buy?.hash,
-		onSuccess: () => {
-			toast({
-				title: 'Key bought!',
-				description: `You bought a key of ${socialData.name}.`,
-			});
-			window.location.reload();
-		},
-	});
-
-	const { data: tx_sell, write: contractSellKeys } = useContractWrite({
-		address: MUMBAI_ADDRESS,
-		abi: builderFIV1Abi,
-		functionName: 'sellShares',
-		onSuccess: () => {
-			setOpenBuy(false);
-			setSellingKeys(false);
-			toast({
-				title: 'Transaction submitted!',
-				description: `Hash: ${tx_sell?.hash}`,
-			});
-		},
-		onError: () => {
-			setOpenBuy(false);
-			setSellingKeys(false);
-			toast({
-				title: 'Unable to sell key',
-				description: `There was an error processing your transaction`,
-			});
-		},
-	});
-
-	const {} = useWaitForTransaction({
-		hash: tx_sell?.hash,
-		onSuccess: () => {
-			toast({
-				title: 'Key sold!',
-				description: `You sold a key of ${socialData.name}.`,
-			});
-			window.location.reload();
-		},
-	});
-
-	const buyKeys = async () => {
-		setBuyingKeys(true);
-		contractBuyKeys({ args: [socialData.address], value: buyPriceAfterFee });
-	};
-
-	const sellKeys = async () => {
-		setSellingKeys(true);
-
-		contractSellKeys({ args: [socialData.address, BigInt(1)] });
-	};
-
-	const calculateBuyPrice = () => {
-		return `${formatUnits(buyPrice || BigInt(0), 18)}`;
-	};
-
-	const calculateSellPrice = () => {
-		return `${formatUnits(sellPrice || BigInt(0), 18)}`;
-	};
+	const refetchAll = useCallback(async () => {
+		refetchTotalSupply();
+		refetchBuyPrice();
+		refetchSellprice();
+		refetchKeys();
+		refetchSupporterNumber();
+	}, [refetchBuyPrice, refetchKeys, refetchSellprice, refetchSupporterNumber, refetchTotalSupply]);
 
 	const holderNumberText = () => {
 		console.log({ totalSupply, supporterNumber, supporterKeys });
@@ -162,12 +83,10 @@ export const Overview: FC<Props> = ({ socialData, buyPrice, totalSupply, buyPric
 		}
 	};
 
-	const hasKeys = () => {
-		return !!supporterKeys && supporterKeys > 0;
-	};
+	const hasKeys = useMemo(() => !!supporterKeys && supporterKeys > 0, [supporterKeys]);
 
 	return (
-		<Flex y>
+		<Flex y gap1>
 			<Flex x yc xsb>
 				<Flex x yc gap2>
 					<Avatar src={socialData.avatar} />
@@ -176,78 +95,64 @@ export const Overview: FC<Props> = ({ socialData, buyPrice, totalSupply, buyPric
 							{socialData.name}
 						</Typography>
 						{!socialData.name.startsWith('0x') && (
-							<Typography className="text-xs text-muted-foreground">{shortAddress(socialData.address)}</Typography>
+							<Flex x yc gap={0.5}>
+								<Typography level="body-sm" textColor="neutral.400">
+									{shortAddress(socialData.address)}
+								</Typography>
+								<IconButton size="sm" onClick={() => window.navigator.clipboard.writeText(socialData.address)}>
+									<ContentCopy sx={{ fontSize: '0.9rem' }} />
+								</IconButton>
+							</Flex>
 						)}
 					</Flex>
 				</Flex>
 				<div className="space-x-2">
-					<AlertDialog open={openBuy} onOpenChange={() => setOpenBuy(true)}>
-						<AlertDialogTrigger>
-							<Button disabled={totalSupply === BigInt(0) && address != socialData.address}>
-								{hasKeys() ? 'Trade' : 'Buy'}
-							</Button>
-						</AlertDialogTrigger>
-						<AlertDialogContent className="w-11/12">
-							<AlertDialogHeader>
-								<AlertDialogTitle>{hasKeys() ? 'Trade' : 'Buy'} Keys</AlertDialogTitle>
-								<div className="flex flex-col pt-8">
-									<div className="flex items-center justify-between">
-										<p className="font-medium leading-none">{socialData.name}</p>
-										<p className="leading-none">{calculateBuyPrice() || '0'} MATIC</p>
-									</div>
-									<div className="flex items-center justify-between mt-2">
-										<p className="text-sm text-muted-foreground">
-											{hasKeys() ? `You own ${supporterKeys} keys` : "You don't own any keys"}
-										</p>
-										<p className="text-sm text-muted-foreground">Key price</p>
-									</div>
-									<Button onClick={() => buyKeys()} disabled={buyingKeys || sellingKeys} className="mt-4">
-										{buyingKeys && <Icons.spinner className="mr-2 h-4 w-4 animate-spin" />}
-										Buy a key
-									</Button>
-									{hasKeys() && (
-										<>
-											<Button
-												variant="outlined"
-												onClick={() => sellKeys()}
-												disabled={buyingKeys || sellingKeys}
-												className="mt-2"
-											>
-												{sellingKeys && <Icons.spinner className="mr-2 h-4 w-4 animate-spin" />}
-												Sell a key
-											</Button>
-											<div className="flex items-center justify-center mt-2">
-												<p className="text-sm text-muted-foreground">Sell price: {calculateSellPrice()}</p>
-											</div>
-										</>
-									)}
-									<Button
-										variant="plain"
-										onClick={() => setOpenBuy(false)}
-										disabled={buyingKeys || sellingKeys}
-										className="mt-2"
-									>
-										Cancel
-									</Button>
-								</div>
-							</AlertDialogHeader>
-						</AlertDialogContent>
-					</AlertDialog>
+					<Button
+						onClick={() => setOpenBuy(true)}
+						disabled={totalSupply === BigInt(0) && address != socialData.address}
+					>
+						{hasKeys ? 'Trade' : 'Buy'}
+					</Button>
 				</div>
+				<BuyShareModal
+					open={openBuy}
+					socialData={socialData}
+					supporterKeysCount={supporterKeys}
+					hasKeys={hasKeys}
+					buyPrice={buyPrice}
+					sellPrice={sellPrice}
+					close={() => {
+						refetchAll();
+						setOpenBuy(false);
+					}}
+				/>
 			</Flex>
-			<div className="flex items-center justify-between">
-				<p className="text-base font-medium">{holderNumberText()}</p>
-				<p className="text-base font-medium">{calculateBuyPrice()} MATIC</p>
-			</div>
-			<div className="flex items-center justify-between">
-				<div className="flex items-center space-x-2">
-					<p className="text-sm text-muted-foreground">{holders} holders</p>
-					<p className="text-sm text-muted-foreground">{holdings} holding</p>
-				</div>
-				<p className="text-sm text-muted-foreground">Key price</p>
-			</div>
+			<Flex x yc xsb>
+				<Flex y>
+					<Typography className="text-base font-medium">{holderNumberText()}</Typography>
+					<Flex x yc gap2>
+						{/* <Typography level="body-sm" textColor={'neutral.400'}>
+							{holders} holders
+						</Typography>
+						<Typography level="body-sm" textColor={'neutral.400'}>
+							{holdings} holding
+						</Typography> */}
+						<Typography level="body-sm" textColor="neutral.400">
+							{hasKeys ? `You own ${supporterKeys} keys` : "You don't own any keys"}
+						</Typography>
+					</Flex>
+				</Flex>
+
+				<Flex y>
+					<Typography className="text-base font-medium">{formatEth(buyPrice)} MATIC</Typography>
+					<Typography level="body-sm" textColor="neutral.400">
+						Key price
+					</Typography>
+				</Flex>
+			</Flex>
+
 			{socialData.socialsList.length > 0 && (
-				<div className="flex flex-wrap space-x-2">
+				<Flex x gap2 wrap>
 					{socialData.socialsList.map(social => (
 						<Tooltip key={social.dappName} title={social.dappName} placement="top">
 							<Chip
@@ -266,7 +171,7 @@ export const Overview: FC<Props> = ({ socialData, buyPrice, totalSupply, buyPric
 							</Chip>
 						</Tooltip>
 					))}
-				</div>
+				</Flex>
 			)}
 		</Flex>
 	);

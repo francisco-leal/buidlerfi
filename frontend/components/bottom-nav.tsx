@@ -1,41 +1,54 @@
-import Link from 'next/link';
-import { Search, MessageSquare, User } from 'lucide-react';
+import { Link } from '@mui/joy';
+import { MessageSquare, Search, User } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import { useAccount } from 'wagmi';
+import { Flex } from './flex';
 
 export function BottomNav() {
 	const pathname = usePathname();
 	const { address } = useAccount();
-
+	console.log({ pathname });
 	return (
-		<nav className={'fixed flex items-center justify-around py-4 bottom-0 left-0 border-t w-full bg-white'}>
+		<Flex x yc xsa component="nav" className={'fixed bottom-0 left-0 border-t w-full bg-white'}>
 			<Link
 				href="/"
-				className={`text-sm font-medium transition-colors hover:text-primary flex flex-col items-center ${
-					pathname === '/' ? 'text-primary' : 'text-muted-foreground'
-				}`}
+				sx={{
+					py: 1.5,
+					display: 'flex',
+					flexDirection: 'column',
+					width: '100%',
+					backgroundColor: pathname === '/' ? 'neutral.100' : 'background',
+				}}
 			>
 				<Search className="h-4 w-4" />
 				Explore
 			</Link>
 			<Link
 				href="/chats"
-				className={`text-sm font-medium transition-colors hover:text-primary flex flex-col items-center ${
-					pathname === '/chats' ? 'text-primary' : 'text-muted-foreground'
-				}`}
+				sx={{
+					py: 1.5,
+					display: 'flex',
+					flexDirection: 'column',
+					width: '100%',
+					backgroundColor: pathname === '/chats' ? 'neutral.100' : 'background',
+				}}
 			>
 				<MessageSquare className="h-4 w-4" />
 				Chats
 			</Link>
 			<Link
 				href={address ? `/${address}` : `/`}
-				className={`text-sm font-medium transition-colors hover:text-primary flex flex-col items-center ${
-					pathname.length > 6 ? 'text-primary' : 'text-muted-foreground'
-				}`}
+				sx={{
+					py: 1.5,
+					display: 'flex',
+					flexDirection: 'column',
+					width: '100%',
+					backgroundColor: pathname.length > 6 ? 'neutral.100' : 'background',
+				}}
 			>
 				<User className="h-4 w-4" />
 				Profile
 			</Link>
-		</nav>
+		</Flex>
 	);
 }

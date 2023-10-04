@@ -1,14 +1,6 @@
+import { Question } from '@prisma/client';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import axios from 'axios';
-
-interface Question {
-	id: number;
-	questionContent: string;
-	answerContent: string | null;
-	createdAt: Date;
-	questionerWallet: string;
-	replierWallet: string;
-}
 
 export const useGetQuestions = (questionerWallet?: string, replierWallet?: string) => {
 	return useQuery(
@@ -28,5 +20,16 @@ interface PostQuestionParams {
 export const usePostQuestion = () => {
 	return useMutation((params: PostQuestionParams) => {
 		return axios.post('/api/questions', params);
+	});
+};
+
+interface PutQuestionParams {
+	id: number;
+	answerContent: string;
+}
+
+export const usePutQuestion = () => {
+	return useMutation((params: PutQuestionParams) => {
+		return axios.put(`/api/questions/${params.id}`, params);
 	});
 };

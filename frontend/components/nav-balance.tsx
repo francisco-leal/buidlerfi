@@ -1,4 +1,5 @@
 'use client';
+import { Typography } from '@mui/joy';
 import { useAccount, useBalance } from 'wagmi';
 
 export function NavBalance() {
@@ -9,9 +10,9 @@ export function NavBalance() {
 
 	if (balance) {
 		return (
-			<p className="">
+			<Typography>
 				{parseFloat(balance?.formatted).toFixed(3)} {balance?.symbol}
-			</p>
+			</Typography>
 		);
 	} else {
 		return <></>;

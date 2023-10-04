@@ -34,6 +34,9 @@ interface Props extends BoxProps {
 	gap3?: boolean;
 	sx?: SxProps;
 
+	wrap?: boolean;
+	grow?: boolean;
+
 	fullwidth?: boolean;
 }
 
@@ -57,6 +60,8 @@ export const Flex: FC<Props> = ({
 	xsa,
 	ysa,
 	fullwidth,
+	wrap,
+	grow,
 	...rest
 }) => {
 	const style: SxProps = { display: 'flex' };
@@ -98,8 +103,16 @@ export const Flex: FC<Props> = ({
 		style.width = '100%';
 	}
 
+	if (wrap) {
+		style.flexWrap = 'wrap';
+	}
+
+	if (grow) {
+		style.flexGrow = 1;
+	}
+
 	return (
-		<Box component={'span'} {...rest} sx={{ ...style, ...sx }}>
+		<Box {...rest} sx={{ ...style, ...sx }}>
 			{children}
 		</Box>
 	);
