@@ -25,11 +25,13 @@ export const ChatTab: FC<Props> = ({ socialData }) => {
     enabled: !!address
   });
 
-  const { data: questions, refetch } = useGetQuestions(address, socialData.address);
+  const { data: questions, refetch } = useGetQuestions(socialData.address);
 
   const postQuestion = usePostQuestion();
 
   const sendQuestion = async () => {
+    if (!address) return;
+
     await postQuestion.mutateAsync({
       questionContent: chatValue,
       questionerWallet: address,

@@ -52,7 +52,7 @@ export const BuyShareModal: FC<Props> = ({
     },
     onError: () => {
       toast({
-        title: "Unable to buy key",
+        title: "Unable to buy card",
         description: `There was an error processing your transaction`
       });
     }
@@ -74,7 +74,7 @@ export const BuyShareModal: FC<Props> = ({
     },
     onError: () => {
       toast({
-        title: "Unable to sell key",
+        title: "Unable to sell card",
         description: `There was an error processing your transaction`
       });
     }
@@ -84,8 +84,8 @@ export const BuyShareModal: FC<Props> = ({
     hash: tx_buy?.hash,
     onSuccess: () => {
       toast({
-        title: "Key bought!",
-        description: `You bought a key of ${socialData.name}.`
+        title: "Card bought!",
+        description: `You bought a card of ${socialData.name}.`
       });
       close();
     }
@@ -95,8 +95,8 @@ export const BuyShareModal: FC<Props> = ({
     hash: tx_sell?.hash,
     onSuccess: () => {
       toast({
-        title: "Key sold!",
-        description: `You sold a key of ${socialData.name}.`
+        title: "Card sold!",
+        description: `You sold a card of ${socialData.name}.`
       });
       close();
     }
@@ -114,13 +114,13 @@ export const BuyShareModal: FC<Props> = ({
             <Flex y>
               <Typography level="body-md">{socialData.name}</Typography>
               <Typography level="body-sm" textColor="neutral.400">
-                {hasKeys ? `You own ${supporterKeysCount} keys` : "You don't own any keys"}
+                {hasKeys ? `You own ${supporterKeysCount} cards` : "You don't own any cards"}
               </Typography>
             </Flex>
             <Flex y>
               <Typography level="body-md">{formatEth(buyPrice)} MATIC</Typography>
               <Typography level="body-sm" textColor="neutral.400">
-                Key price
+                Card price
               </Typography>
             </Flex>
           </Flex>
@@ -132,7 +132,7 @@ export const BuyShareModal: FC<Props> = ({
                 onClick={() => contractBuyKeys({ args: [socialData.address], value: buyPriceAfterFee })}
                 className="mt-4"
               >
-                Buy a key
+                Buy a card
               </Button>
               {hasKeys && (
                 <Button
@@ -142,7 +142,7 @@ export const BuyShareModal: FC<Props> = ({
                   disabled={buyIsLoading}
                   className="mt-2"
                 >
-                  Sell a key
+                  Sell a card
                 </Button>
               )}
             </Flex>

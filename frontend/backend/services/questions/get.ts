@@ -1,9 +1,9 @@
 import prisma from "@/lib/prisma";
 
-const call = async (questionerWallet: string, replierWallet: string) => {
+const call = async (replierWallet: string, questionerWallet?: string) => {
   return await prisma.question.findMany({
     where: {
-      questionerWallet: questionerWallet.toLowerCase(),
+      questionerWallet: questionerWallet?.toLowerCase(),
       replierWallet: replierWallet.toLowerCase()
     }
   });

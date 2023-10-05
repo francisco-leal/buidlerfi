@@ -70,7 +70,7 @@ export const Overview: FC<Props> = ({ socialData }) => {
     if (totalSupply === undefined || supporterNumber === undefined || supporterKeys === undefined) return "...";
 
     if (totalSupply === BigInt(0) && address == socialData.address) {
-      return "Your first share is free.";
+      return "Your first card is free.";
     }
 
     if (supporterNumber === BigInt(0) && supporterKeys > 0) {
@@ -79,7 +79,7 @@ export const Overview: FC<Props> = ({ socialData }) => {
     if (supporterNumber && supporterNumber > 0) {
       return `You are holder #${supporterNumber}`;
     } else {
-      return "You don't hold any key";
+      return "You don't own any cards";
     }
   };
 
@@ -138,7 +138,7 @@ export const Overview: FC<Props> = ({ socialData }) => {
 							{holdings} holding
 						</Typography> */}
             <Typography level="body-sm" textColor="neutral.400">
-              {hasKeys ? `You own ${supporterKeys} keys` : "You don't own any keys"}
+              {hasKeys ? `You own ${supporterKeys} cards` : "You don't own any cards"}
             </Typography>
           </Flex>
         </Flex>
@@ -146,7 +146,7 @@ export const Overview: FC<Props> = ({ socialData }) => {
         <Flex y>
           <Typography className="text-base font-medium">{formatEth(buyPrice)} MATIC</Typography>
           <Typography level="body-sm" textColor="neutral.400">
-            Key price
+            Card price
           </Typography>
         </Flex>
       </Flex>
