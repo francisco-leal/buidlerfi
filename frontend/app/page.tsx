@@ -1,4 +1,5 @@
 "use client";
+import { Flex } from "@/components/flex";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -58,9 +59,9 @@ export default function Home() {
   }
 
   return (
-    <main className="flex-grow">
+    <Flex component={"main"} y grow>
       <Tabs defaultValue="top" className="space-y-4">
-        <TabList className="grid w-full grid-cols-2">
+        <TabList tabFlex={1} className="grid w-full grid-cols-2">
           <Tab variant="soft" disableIndicator value="top">
             Top
           </Tab>
@@ -108,6 +109,6 @@ export default function Home() {
           ))}
         </TabPanel>
       </Tabs>
-    </main>
+    </Flex>
   );
 }

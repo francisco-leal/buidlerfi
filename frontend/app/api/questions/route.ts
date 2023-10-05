@@ -37,9 +37,10 @@ export async function GET(req: Request) {
 
     let errorMessage = "";
 
-    if (!questionerWallet) {
-      errorMessage += "QuestionerWallet field is mandatory.";
-    }
+    // if (!questionerWallet) {
+    //   errorMessage += "QuestionerWallet field is mandatory.";
+    // }
+
     if (!replierWallet) {
       errorMessage += " ReplierWallet field is mandatory.";
     }
@@ -47,7 +48,7 @@ export async function GET(req: Request) {
     if (errorMessage.length > 0) {
       return Response.json({ error: errorMessage }, { status: 409 });
     }
-    const questions = await GetQuestions.call(questionerWallet, replierWallet);
+    const questions = await GetQuestions.call(replierWallet, questionerWallet);
 
     return Response.json({ data: questions }, { status: 200 });
   } catch (error) {

@@ -23,9 +23,8 @@ export function UserItem({ address, numberOfHolders, buyPrice }: Props) {
       x
       xsb
       yc
-      fullwidth
-      px={4}
-      p={1}
+      px={{ xs: 0, sm: 2 }}
+      py={1}
       sx={{ ":hover": { backgroundColor: "neutral.100" } }}
       className="transition-all cursor-pointer"
       onClick={() => router.push(`/${address}`)}

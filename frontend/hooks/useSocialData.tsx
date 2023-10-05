@@ -35,9 +35,7 @@ export const useSocialData = (address: `0x${string}`): SocialData => {
   }, [cachedData]);
 
   //First try to fetch from farcaster with airstack
-  const { data: walletDetails, isLoading } = useGetWalletSocials(address, {
-    enabled: isNotInCache
-  });
+  const { data: walletDetails, isLoading } = useGetWalletSocials(address, { enabled: isNotInCache });
 
   const farcasterInfo = useMemo(
     () => walletDetails?.socials?.find(social => social.dappName === "farcaster"),

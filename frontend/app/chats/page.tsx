@@ -1,8 +1,9 @@
 "use client";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Flex } from "@/components/flex";
 import { Icons } from "@/components/ui/icons";
 import { UserItem } from "@/components/user-item";
 import { useBuilderFIData } from "@/hooks/useBuilderFiApi";
+import { Card, Typography } from "@mui/joy";
 import { useMemo } from "react";
 import { formatUnits } from "viem";
 import { useAccount } from "wagmi";
@@ -35,22 +36,14 @@ export default function ChatsPage() {
   return (
     <main className="pt-4 px-2 pb-16">
       <div className="grid gap-4 grid-cols-2 mb-6">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Portfolio Value</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-lg font-bold">{formatUnits(portfolio, 18)} MATIC</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Trading fees</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-lg font-bold">{!tradingFees ? "undefined" : formatUnits(tradingFees, 18)} MATIC</div>
-          </CardContent>
-        </Card>
+        <Flex component={Card}>
+          <Typography level={"body-lg"}>Portfolio Value</Typography>
+          <Typography>{formatUnits(portfolio, 18)} MATIC</Typography>
+        </Flex>
+        <Flex component={Card}>
+          <Typography level={"body-lg"}>Trading fees</Typography>
+          <Typography>{!tradingFees ? "undefined" : formatUnits(tradingFees, 18)} MATIC</Typography>
+        </Flex>
       </div>
       {holding.map(item => (
         <UserItem
