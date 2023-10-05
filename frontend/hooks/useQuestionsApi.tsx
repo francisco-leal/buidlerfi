@@ -1,3 +1,4 @@
+import { ApiResponse } from "@/models/apiResponse.model";
 import { Question } from "@prisma/client";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import axios from "axios";
@@ -6,7 +7,9 @@ export const useGetQuestions = (questionerWallet?: string, replierWallet?: strin
   return useQuery(
     ["useGetQuestions", questionerWallet, replierWallet],
     () =>
-      axios.get<Question[]>(`/api/questions`, { params: { questionerWallet, replierWallet } }).then(res => res.data),
+      axios
+        .get<ApiResponse<Question[]>>(`/api/questions`, { params: { questionerWallet, replierWallet } })
+        .then(res => res.data.data),
     { enabled: !!questionerWallet && !!replierWallet }
   );
 };

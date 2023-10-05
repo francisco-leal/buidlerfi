@@ -44,5 +44,5 @@ export interface GetWalletSocialsResponse {
 export const GET = async (req: Request) => {
   const { searchParams } = new URL(req.url);
   const res = await fetchQuery(getWalletSocialsQuery, { identity: searchParams.get("address") });
-  return Response.json(res.data.Wallet);
+  return Response.json({ data: res.data.Wallet });
 };

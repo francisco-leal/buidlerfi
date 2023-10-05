@@ -38,6 +38,5 @@ export interface GetFollowersResponse {
 export const GET = async (req: Request) => {
   const { searchParams } = new URL(req.url);
   const res = await fetchQuery(getSocialFollowersQuery, { identity: searchParams.get("address") });
-  console.log(res);
-  return Response.json(res.data.SocialFollowers);
+  return Response.json({ data: res.data.SocialFollowers });
 };
