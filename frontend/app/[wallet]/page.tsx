@@ -1,76 +1,50 @@
-'use client';
-import { useSocialData } from '@/hooks/useSocialData';
-import { builderFIV1Abi } from '@/lib/abi/BuidlerFiV1';
-import { MUMBAI_ADDRESS } from '@/lib/address';
-import { Tab, TabList, TabPanel, Tabs } from '@mui/joy';
-import { useContractRead } from 'wagmi';
-import { ChatTab } from './components/chat-tab';
-import { HoldersTab } from './components/holders-tab';
-import { HoldingTab } from './components/holding-tab';
-import { Overview } from './components/overview';
+"use client";
+import { Flex } from "@/components/flex";
+import { useBuilderFIData } from "@/hooks/useBuilderFiApi";
+import { useSocialData } from "@/hooks/useSocialData";
+import { Tab, TabList, TabPanel, Tabs } from "@mui/joy";
+import { useMemo, useState } from "react";
+import { ChatTab } from "./components/chat-tab";
+import { HoldersTab } from "./components/holders-tab";
+import { HoldingTab } from "./components/holding-tab";
+import { Overview } from "./components/overview";
 
 export default function ProfilePage({ params }: { params: { wallet: `0x${string}` } }) {
-	const { data: totalSupply } = useContractRead({
-		address: MUMBAI_ADDRESS,
-		abi: builderFIV1Abi,
-		functionName: 'sharesSupply',
-		args: [params.wallet],
-	});
+  const socialData = useSocialData(params.wallet);
+  const [selectedTab, setSelectedTab] = useState("chat");
 
-	const { data: buyPrice } = useContractRead({
-		address: MUMBAI_ADDRESS,
-		abi: builderFIV1Abi,
-		functionName: 'getBuyPrice',
-		args: [params.wallet],
-	});
+  const { data: graphContext } = useBuilderFIData();
 
-	const { data: buyPriceAfterFee } = useContractRead({
-		address: MUMBAI_ADDRESS,
-		abi: builderFIV1Abi,
-		functionName: 'getBuyPriceAfterFee',
-		args: [params.wallet],
-	});
+  const [holders, holdings] = useMemo(() => {
+    const viewedUser = graphContext?.shareParticipants.find(user => user.owner == socialData.address.toLowerCase());
+    return [viewedUser?.numberOfHolders || 0, viewedUser?.numberOfHoldings || 0];
+  }, [graphContext?.shareParticipants, socialData.address]);
 
-	const { data: sellPrice } = useContractRead({
-		address: MUMBAI_ADDRESS,
-		abi: builderFIV1Abi,
-		functionName: 'getSellPrice',
-		args: [params.wallet, BigInt(1)],
-	});
-
-	const socialData = useSocialData(params.wallet);
-
-	return (
-		<main className="flex flex-col py-4 px-2 flex-grow">
-			<Overview
-				socialData={socialData}
-				buyPrice={buyPrice}
-				totalSupply={totalSupply}
-				buyPriceAfterFee={buyPriceAfterFee}
-				sellPrice={sellPrice}
-			/>
-			<Tabs defaultValue="chat">
-				<TabList className="grid w-full grid-cols-3 mb-8">
-					<Tab disableIndicator value="chat">
-						Chat
-					</Tab>
-					<Tab disableIndicator value="holding">
-						Holding
-					</Tab>
-					<Tab disableIndicator value="holders">
-						Holders
-					</Tab>
-				</TabList>
-				<TabPanel value="chat" className="flex flex-col flex-grow space-y-4">
-					<ChatTab socialData={socialData} />
-				</TabPanel>
-				<TabPanel value="holding" className="flex flex-col space-y-4">
-					<HoldingTab wallet={params.wallet} />
-				</TabPanel>
-				<TabPanel value="holders" className="space-y-4">
-					<HoldersTab wallet={params.wallet} />
-				</TabPanel>
-			</Tabs>
-		</main>
-	);
+  return (
+    <Flex component={"main"} y grow gap2 sx={{ p: { sm: 0, md: 2 } }}>
+      <Overview socialData={socialData} />
+      <Tabs value={selectedTab} onChange={(_, val) => val && setSelectedTab(val as string)} sx={{ flexGrow: 1 }}>
+        <TabList tabFlex={1} className="grid w-full grid-cols-3">
+          <Tab disableIndicator value="chat">
+            Chat
+          </Tab>
+          <Tab disableIndicator value="holding">
+            Holding ({holdings})
+          </Tab>
+          <Tab disableIndicator value="holders">
+            Holders ({holders})
+          </Tab>
+        </TabList>
+        <TabPanel value="chat" sx={{ display: selectedTab === "chat" ? "flex" : "none", flexGrow: 1 }}>
+          <ChatTab socialData={socialData} />
+        </TabPanel>
+        <TabPanel value="holding">
+          <HoldingTab wallet={params.wallet} />
+        </TabPanel>
+        <TabPanel value="holders">
+          <HoldersTab wallet={params.wallet} />
+        </TabPanel>
+      </Tabs>
+    </Flex>
+  );
 }
