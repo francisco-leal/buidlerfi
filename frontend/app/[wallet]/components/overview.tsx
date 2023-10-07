@@ -23,7 +23,7 @@ export const Overview: FC<Props> = ({ socialData }) => {
   const { data: totalSupply, refetch: refetchTotalSupply } = useContractRead({
     address: BASE_GOERLI_TESTNET,
     abi: builderFIV1Abi,
-    functionName: "sharesSupply",
+    functionName: "builderCardsSupply",
     args: [socialData.address]
   });
 
@@ -44,7 +44,7 @@ export const Overview: FC<Props> = ({ socialData }) => {
   const { data: supporterKeys, refetch: refetchKeys } = useContractRead({
     address: BASE_GOERLI_TESTNET,
     abi: builderFIV1Abi,
-    functionName: "sharesBalance",
+    functionName: "builderCardsBalance",
     args: [socialData.address, address!],
     enabled: !!address
   });
