@@ -1,8 +1,7 @@
 import { BigInt } from "@graphprotocol/graph-ts";
-import { Trade as TradeEvent, BuidlerFiV1 } from "../generated/BuidlerFiV1/BuidlerFiV1";
-import { Trade, ShareParticipant, ShareRelationship } from "../generated/schema";
+import { Trade as TradeEvent } from "../generated/BuidlerFiV1/BuidlerFiV1";
+import { ShareParticipant, ShareRelationship, Trade } from "../generated/schema";
 
-const SHARES_CONTRACT = "0x7083d3c0B2c031dc62ecD14184eB61B6815b31ED";
 const ONE_BI = BigInt.fromI32(1);
 const ZERO_BI = BigInt.fromI32(0);
 
@@ -24,8 +23,6 @@ export function handleTrade(event: TradeEvent): void {
   entity.transactionHash = event.transaction.hash;
 
   entity.save();
-
-  let contract = BuidlerFiV1.bind(event.address);
 
   // CREATE BUYER INFO
 
@@ -60,8 +57,6 @@ export function handleTrade(event: TradeEvent): void {
     }
   }
 
-  subject.buyPrice = contract.getBuyPrice(event.params.subject);
-  subject.sellPrice = contract.getSellPrice(event.params.subject, ONE_BI);
   // edge case where we buy/sell from ourselves
   if (subject.id == buyer.id) {
     buyer.buyPrice = subject.buyPrice;
