@@ -69,10 +69,12 @@ export const Overview: FC<Props> = ({ socialData }) => {
     refetchKeys();
   }, [refetchBuyPrice, refetchKeys, refetchSellprice, refetchTotalSupply]);
 
+  const isOwnChat = address?.toLowerCase() === socialData.address.toLowerCase();
+
   const holderNumberText = () => {
     if (holders.isLoading || supporterKeys === undefined) return "...";
 
-    if (totalSupply === BigInt(0) && address?.toLowerCase() == socialData.address.toLowerCase()) {
+    if (totalSupply === BigInt(0) && isOwnChat) {
       return "Your first card is free.";
     }
 
@@ -87,7 +89,6 @@ export const Overview: FC<Props> = ({ socialData }) => {
   };
 
   const hasKeys = useMemo(() => !!supporterKeys && supporterKeys > 0, [supporterKeys]);
-
   return (
     <Flex y gap1>
       <Flex x yc xsb>
@@ -110,10 +111,7 @@ export const Overview: FC<Props> = ({ socialData }) => {
           </Flex>
         </Flex>
         <div className="space-x-2">
-          <Button
-            onClick={() => setOpenBuy(true)}
-            disabled={totalSupply === BigInt(0) && address != socialData.address}
-          >
+          <Button onClick={() => setOpenBuy(true)} disabled={totalSupply === BigInt(0) && !isOwnChat}>
             {hasKeys ? "Trade" : "Buy"}
           </Button>
         </div>
