@@ -31,6 +31,38 @@ const query = `
   }
 `;
 
+const getHoldingsQuery = `
+query RelationshipsQuery($address: ID = "owner") {
+  shareRelationships(where: {holder_: {owner: $address}}) {
+    heldKeyNumber
+    id
+    supporterNumber
+    owner {
+      ${gqlShare}
+    }
+    holder {
+      ${gqlShare}
+    }
+  }
+}
+`;
+
+const getHoldersQuery = `
+query MyQuery($address: ID = "owner") {
+  shareRelationships(where: {owner_: {owner: $address}}) {
+    heldKeyNumber
+    id
+    supporterNumber
+    owner {
+      ${gqlShare}
+    }
+    holder {
+      ${gqlShare}
+    }
+  }
+}
+`;
+
 interface BuilderFiDataResponse {
   data: {
     shareParticipants: Share[];
@@ -53,4 +85,50 @@ export const fetchBuilderfiData = async () => {
   ).then(res => res.json());
 
   return res.data;
+};
+
+interface BuilderFiHoldersResponse {
+  data: {
+    shareRelationships: ShareRelationship[];
+  };
+}
+
+export const fetchHoldings = async (address: string) => {
+  const res: BuilderFiHoldersResponse = await fetch(
+    "https://api.thegraph.com/subgraphs/name/francisco-leal/builder-fi-base-testnet",
+    {
+      method: "POST",
+      body: JSON.stringify({
+        query: getHoldingsQuery,
+        variables: {
+          address: address.toLowerCase()
+        }
+      }),
+      headers: {
+        "Content-Type": "application/json"
+      }
+    }
+  ).then(res => res.json());
+
+  return res.data.shareRelationships;
+};
+
+export const fetchHolders = async (address: string) => {
+  const res: BuilderFiHoldersResponse = await fetch(
+    "https://api.thegraph.com/subgraphs/name/francisco-leal/builder-fi-base-testnet",
+    {
+      method: "POST",
+      body: JSON.stringify({
+        query: getHoldersQuery,
+        variables: {
+          address: address.toLowerCase()
+        }
+      }),
+      headers: {
+        "Content-Type": "application/json"
+      }
+    }
+  ).then(res => res.json());
+
+  return res.data.shareRelationships;
 };

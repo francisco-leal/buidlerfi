@@ -20,7 +20,7 @@ export const ChatTab: FC<Props> = ({ socialData }) => {
   const { data: supporterKeys } = useContractRead({
     address: BASE_GOERLI_TESTNET,
     abi: builderFIV1Abi,
-    functionName: "sharesBalance",
+    functionName: "builderCardsBalance",
     args: [socialData.address, address!],
     enabled: !!address
   });
@@ -57,6 +57,8 @@ export const ChatTab: FC<Props> = ({ socialData }) => {
     );
   }
 
+  const isOwnChat = address?.toLowerCase() === socialData.address.toLowerCase();
+
   return (
     <Flex y grow>
       <Flex y grow gap2>
@@ -67,18 +69,11 @@ export const ChatTab: FC<Props> = ({ socialData }) => {
           </div>
         ) : (
           questions.map(question => {
-            return (
-              <QuestionEntry
-                key={question.id}
-                question={question}
-                isOwnChat={address === socialData.address}
-                refetch={refetch}
-              />
-            );
+            return <QuestionEntry key={question.id} question={question} isOwnChat={isOwnChat} refetch={refetch} />;
           })
         )}
       </Flex>
-      {address !== socialData.address && (
+      {!isOwnChat && (
         <Flex x gap2>
           <Input
             value={chatValue}

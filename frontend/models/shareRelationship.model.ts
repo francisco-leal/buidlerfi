@@ -4,6 +4,6 @@ export interface ShareRelationship {
   id: string;
   holder: Share;
   owner: Share;
-  supporterNumber: number;
-  heldKeyNumber: number;
+  supporterNumber: string;
+  heldKeyNumber: string;
 }

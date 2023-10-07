@@ -1,6 +1,7 @@
 "use client";
 import { BuyShareModal } from "@/app/[wallet]/components/buy-share-modal";
 import { Flex } from "@/components/flex";
+import { useGetHolders } from "@/hooks/useBuilderFiApi";
 import { SocialData } from "@/hooks/useSocialData";
 import { builderFIV1Abi } from "@/lib/abi/BuidlerFiV1";
 import { BASE_GOERLI_TESTNET } from "@/lib/address";
@@ -20,10 +21,20 @@ export const Overview: FC<Props> = ({ socialData }) => {
   const { address } = useAccount();
   const [openBuy, setOpenBuy] = useState(false);
 
+  const holders = useGetHolders(socialData.address);
+  const supporterNumber = useMemo(() => {
+    if (!holders?.data) return undefined;
+
+    const holder = holders.data.find(holder => holder.holder.owner.toLowerCase() === address?.toLowerCase());
+    if (!holder) return undefined;
+
+    return Number(holder.supporterNumber);
+  }, [address, holders.data]);
+
   const { data: totalSupply, refetch: refetchTotalSupply } = useContractRead({
     address: BASE_GOERLI_TESTNET,
     abi: builderFIV1Abi,
-    functionName: "sharesSupply",
+    functionName: "builderCardsSupply",
     args: [socialData.address]
   });
 
@@ -44,15 +55,7 @@ export const Overview: FC<Props> = ({ socialData }) => {
   const { data: supporterKeys, refetch: refetchKeys } = useContractRead({
     address: BASE_GOERLI_TESTNET,
     abi: builderFIV1Abi,
-    functionName: "sharesBalance",
-    args: [socialData.address, address!],
-    enabled: !!address
-  });
-
-  const { data: supporterNumber, refetch: refetchSupporterNumber } = useContractRead({
-    address: BASE_GOERLI_TESTNET,
-    abi: builderFIV1Abi,
-    functionName: "supporterNumber",
+    functionName: "builderCardsBalance",
     args: [socialData.address, address!],
     enabled: !!address
   });
@@ -62,17 +65,18 @@ export const Overview: FC<Props> = ({ socialData }) => {
     refetchBuyPrice();
     refetchSellprice();
     refetchKeys();
-    refetchSupporterNumber();
-  }, [refetchBuyPrice, refetchKeys, refetchSellprice, refetchSupporterNumber, refetchTotalSupply]);
+  }, [refetchBuyPrice, refetchKeys, refetchSellprice, refetchTotalSupply]);
+
+  const isOwnChat = address?.toLowerCase() === socialData.address.toLowerCase();
 
   const holderNumberText = () => {
-    if (totalSupply === undefined || supporterNumber === undefined || supporterKeys === undefined) return "...";
+    if (holders.isLoading || supporterKeys === undefined) return "...";
 
-    if (totalSupply === BigInt(0) && address == socialData.address) {
+    if (totalSupply === BigInt(0) && isOwnChat) {
       return "Your first card is free.";
     }
 
-    if (supporterNumber === BigInt(0) && supporterKeys > 0) {
+    if (supporterNumber === 0 && supporterKeys > 0) {
       return "You are holder #0";
     }
     if (supporterNumber && supporterNumber > 0) {
@@ -83,7 +87,6 @@ export const Overview: FC<Props> = ({ socialData }) => {
   };
 
   const hasKeys = useMemo(() => !!supporterKeys && supporterKeys > 0, [supporterKeys]);
-
   return (
     <Flex y gap1>
       <Flex x yc xsb>
@@ -106,10 +109,7 @@ export const Overview: FC<Props> = ({ socialData }) => {
           </Flex>
         </Flex>
         <div className="space-x-2">
-          <Button
-            onClick={() => setOpenBuy(true)}
-            disabled={totalSupply === BigInt(0) && address != socialData.address}
-          >
+          <Button onClick={() => setOpenBuy(true)} disabled={totalSupply === BigInt(0) && !isOwnChat}>
             {hasKeys ? "Trade" : "Buy"}
           </Button>
         </div>

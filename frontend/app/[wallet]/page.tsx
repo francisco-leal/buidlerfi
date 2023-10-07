@@ -1,24 +1,20 @@
 "use client";
 import { Flex } from "@/components/flex";
-import { useBuilderFIData } from "@/hooks/useBuilderFiApi";
+import { UserItem } from "@/components/user-item";
+import { useGetHolders, useGetHoldings } from "@/hooks/useBuilderFiApi";
 import { useSocialData } from "@/hooks/useSocialData";
+import { tryParseBigInt } from "@/lib/utils";
 import { Tab, TabList, TabPanel, Tabs } from "@mui/joy";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { ChatTab } from "./components/chat-tab";
-import { HoldersTab } from "./components/holders-tab";
-import { HoldingTab } from "./components/holding-tab";
 import { Overview } from "./components/overview";
 
 export default function ProfilePage({ params }: { params: { wallet: `0x${string}` } }) {
   const socialData = useSocialData(params.wallet);
   const [selectedTab, setSelectedTab] = useState("chat");
 
-  const { data: graphContext } = useBuilderFIData();
-
-  const [holders, holdings] = useMemo(() => {
-    const viewedUser = graphContext?.shareParticipants.find(user => user.owner == socialData.address.toLowerCase());
-    return [viewedUser?.numberOfHolders || 0, viewedUser?.numberOfHoldings || 0];
-  }, [graphContext?.shareParticipants, socialData.address]);
+  const holders = useGetHolders(params.wallet);
+  const holdings = useGetHoldings(params.wallet);
 
   return (
     <Flex component={"main"} y grow gap2 sx={{ p: { sm: 0, md: 2 } }}>
@@ -29,20 +25,34 @@ export default function ProfilePage({ params }: { params: { wallet: `0x${string}
             Chat
           </Tab>
           <Tab disableIndicator value="holding">
-            Holding ({holdings})
+            Holding ({holdings.data?.length})
           </Tab>
           <Tab disableIndicator value="holders">
-            Holders ({holders})
+            Holders ({holders.data?.length})
           </Tab>
         </TabList>
         <TabPanel value="chat" sx={{ display: selectedTab === "chat" ? "flex" : "none", flexGrow: 1 }}>
           <ChatTab socialData={socialData} />
         </TabPanel>
         <TabPanel value="holding">
-          <HoldingTab wallet={params.wallet} />
+          {holdings.data?.map(holdingItem => (
+            <UserItem
+              address={holdingItem.owner.owner as `0x${string}`}
+              buyPrice={tryParseBigInt(holdingItem.owner.buyPrice)}
+              numberOfHolders={Number(holdingItem.owner.numberOfHolders)}
+              key={`home-${holdingItem.id}`}
+            />
+          ))}
         </TabPanel>
         <TabPanel value="holders">
-          <HoldersTab wallet={params.wallet} />
+          {holders.data?.map(holdingItem => (
+            <UserItem
+              address={holdingItem.holder.owner as `0x${string}`}
+              buyPrice={tryParseBigInt(holdingItem.owner.buyPrice)}
+              numberOfHolders={Number(holdingItem.owner.numberOfHolders)}
+              key={`home-${holdingItem.id}`}
+            />
+          ))}
         </TabPanel>
       </Tabs>
     </Flex>

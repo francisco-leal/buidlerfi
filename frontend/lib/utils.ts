@@ -21,3 +21,9 @@ export const encodeQueryData = (data: Record<string, string>) => {
   }
   return ret.join("&");
 };
+
+export const tryParseBigInt = (value?: string | bigint | number) => {
+  if (typeof value === "bigint") return value;
+  if (!value) return BigInt(0);
+  else return BigInt(value);
+};

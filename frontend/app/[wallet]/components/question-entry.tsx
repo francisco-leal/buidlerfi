@@ -18,7 +18,7 @@ export const QuestionEntry: FC<Props> = ({ question, isOwnChat, refetch }) => {
       id: question.id,
       answerContent: reply
     });
-    await refetch();
+    refetch();
   };
   return (
     <Box key={question.id}>
