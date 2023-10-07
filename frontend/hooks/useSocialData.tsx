@@ -1,10 +1,12 @@
+import { GetEnsResponse } from "@/app/api/ens/route";
 import { DEFAULT_PROFILE_PICTURE } from "@/lib/assets";
 import { shortAddress } from "@/lib/utils";
+import { ApiResponse } from "@/models/apiResponse.model";
 import { useQuery } from "@tanstack/react-query";
+import axios from "axios";
 import { addHours, isAfter } from "date-fns";
 import { get, set } from "idb-keyval";
 import { useEffect, useMemo } from "react";
-import { useEnsAvatar } from "wagmi";
 import { useGetWalletSocials } from "./useAirstackApi";
 
 export interface SocialData {
@@ -42,12 +44,18 @@ export const useSocialData = (address: `0x${string}`): SocialData => {
     [walletDetails?.socials]
   );
 
-  //If not found in farcaster, try to fetch from ens
-  const { data: ensAvatar, isLoading: isAvatarLoading } = useEnsAvatar({
-    name: walletDetails?.primaryDomain?.name,
-    chainId: 1,
-    enabled: !isNotInCache && !farcasterInfo?.profileImage && !!walletDetails?.primaryDomain?.name
-  });
+  const lensInfo = useMemo(
+    () => walletDetails?.socials?.find(social => social.dappName === "lens"),
+    [walletDetails?.socials]
+  );
+
+  const ensData = useQuery(
+    ["getEnsData", address],
+    () => axios.get<ApiResponse<GetEnsResponse>>(`api/ens`, { params: { address } }).then(res => res.data.data),
+    {
+      enabled: isNotInCache && !!address
+    }
+  );
 
   const res = useMemo(
     () => ({
@@ -58,7 +66,12 @@ export const useSocialData = (address: `0x${string}`): SocialData => {
           ?.filter(i => i.profileName)
           .map(i => ({ dappName: i.dappName, profileName: i.profileName })) ||
         [],
-      avatar: cachedData.data?.avatar || farcasterInfo?.profileImage || ensAvatar || DEFAULT_PROFILE_PICTURE,
+      avatar:
+        cachedData.data?.avatar ||
+        farcasterInfo?.profileImage ||
+        lensInfo?.profileImage ||
+        ensData.data?.avatar ||
+        DEFAULT_PROFILE_PICTURE,
       name:
         cachedData.data?.name ||
         farcasterInfo?.profileName ||
@@ -66,17 +79,17 @@ export const useSocialData = (address: `0x${string}`): SocialData => {
         shortAddress(address) ||
         "Buidler"
     }),
-    [address, cachedData.data, ensAvatar, farcasterInfo, walletDetails]
+    [address, cachedData, ensData, farcasterInfo, lensInfo, walletDetails]
   );
 
   useEffect(() => {
-    if (isNotInCache && !cachedData.isLoading && !isLoading && !isAvatarLoading && res) {
+    if (isNotInCache && !cachedData.isLoading && !isLoading && !ensData.isLoading && res) {
       set(`social-data-${address}`, {
         ...res,
         cachedAt: new Date()
       });
     }
-  }, [address, cachedData.isLoading, isAvatarLoading, isLoading, isNotInCache, res]);
+  }, [address, cachedData.isLoading, ensData.isLoading, isLoading, isNotInCache, res]);
 
   return res;
 };
