@@ -2,7 +2,7 @@
 import { Flex } from "@/components/flex";
 import { Icons } from "@/components/ui/icons";
 import { UserItem } from "@/components/user-item";
-import { useBuilderFIData } from "@/hooks/useBuilderFiApi";
+import { useBuilderFIData, useGetHoldings } from "@/hooks/useBuilderFiApi";
 import { Card, Typography } from "@mui/joy";
 import { useMemo } from "react";
 import { formatUnits } from "viem";
@@ -11,19 +11,14 @@ import { useAccount } from "wagmi";
 export default function ChatsPage() {
   const { address } = useAccount();
   const { data: builderFiData, isLoading } = useBuilderFIData();
-
-  const [portfolio, holding, tradingFees] = useMemo(() => {
-    const allHolders =
-      builderFiData?.shareRelationships.filter(item => {
-        return item.holder.id == address?.toLowerCase() && item.heldKeyNumber > 0;
-      }) || [];
-
+  const { data: allHolding } = useGetHoldings(address);
+  const [portfolio, tradingFees] = useMemo(() => {
+    if (!allHolding || !builderFiData) return [BigInt(0), BigInt(0)];
     return [
-      allHolders.reduce((prev, curr) => prev + BigInt(curr.owner.buyPrice), BigInt(0)),
-      allHolders.map(item => item.owner),
-      builderFiData?.shareParticipants.find(user => user.owner == address?.toLowerCase())?.tradingFeesAmount
+      allHolding.shareRelationships.reduce((prev, curr) => prev + BigInt(curr.owner.buyPrice), BigInt(0)),
+      builderFiData.shareParticipants.find(user => user.owner == address?.toLowerCase())?.tradingFeesAmount
     ];
-  }, [address, builderFiData]);
+  }, [address, allHolding, builderFiData]);
 
   if (isLoading) {
     return (
@@ -42,14 +37,14 @@ export default function ChatsPage() {
         </Flex>
         <Flex component={Card}>
           <Typography level={"body-lg"}>Trading fees</Typography>
-          <Typography>{!tradingFees ? "undefined" : formatUnits(tradingFees, 18)} ETH</Typography>
+          <Typography>{!tradingFees ? "undefined" : formatUnits(BigInt(tradingFees), 18)} ETH</Typography>
         </Flex>
       </div>
-      {holding.map(item => (
+      {allHolding?.shareRelationships.map(item => (
         <UserItem
-          address={item.owner as `0x${string}`}
-          buyPrice={item.buyPrice}
-          numberOfHolders={item.numberOfHolders}
+          address={item.owner.owner as `0x${string}`}
+          buyPrice={BigInt(item.owner.buyPrice)}
+          numberOfHolders={Number(item.owner.numberOfHolders)}
           key={`home-${item.owner}`}
         />
       ))}

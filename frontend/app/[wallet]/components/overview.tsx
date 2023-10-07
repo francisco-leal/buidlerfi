@@ -1,6 +1,7 @@
 "use client";
 import { BuyShareModal } from "@/app/[wallet]/components/buy-share-modal";
 import { Flex } from "@/components/flex";
+import { useGetHolders } from "@/hooks/useBuilderFiApi";
 import { SocialData } from "@/hooks/useSocialData";
 import { builderFIV1Abi } from "@/lib/abi/BuidlerFiV1";
 import { BASE_GOERLI_TESTNET } from "@/lib/address";
@@ -19,6 +20,18 @@ interface Props {
 export const Overview: FC<Props> = ({ socialData }) => {
   const { address } = useAccount();
   const [openBuy, setOpenBuy] = useState(false);
+
+  const holders = useGetHolders(socialData.address);
+  const supporterNumber = useMemo(() => {
+    if (!holders?.data) return undefined;
+
+    const holder = holders.data.shareRelationships.find(
+      holder => holder.holder.owner.toLowerCase() === address?.toLowerCase()
+    );
+    if (!holder) return undefined;
+
+    return Number(holder.supporterNumber);
+  }, [address, holders.data]);
 
   const { data: totalSupply, refetch: refetchTotalSupply } = useContractRead({
     address: BASE_GOERLI_TESTNET,
@@ -49,30 +62,21 @@ export const Overview: FC<Props> = ({ socialData }) => {
     enabled: !!address
   });
 
-  const { data: supporterNumber, refetch: refetchSupporterNumber } = useContractRead({
-    address: BASE_GOERLI_TESTNET,
-    abi: builderFIV1Abi,
-    functionName: "supporterNumber",
-    args: [socialData.address, address!],
-    enabled: !!address
-  });
-
   const refetchAll = useCallback(async () => {
     refetchTotalSupply();
     refetchBuyPrice();
     refetchSellprice();
     refetchKeys();
-    refetchSupporterNumber();
-  }, [refetchBuyPrice, refetchKeys, refetchSellprice, refetchSupporterNumber, refetchTotalSupply]);
+  }, [refetchBuyPrice, refetchKeys, refetchSellprice, refetchTotalSupply]);
 
   const holderNumberText = () => {
-    if (totalSupply === undefined || supporterNumber === undefined || supporterKeys === undefined) return "...";
+    if (holders.isLoading || supporterKeys === undefined) return "...";
 
-    if (totalSupply === BigInt(0) && address == socialData.address) {
+    if (totalSupply === BigInt(0) && address?.toLowerCase() == socialData.address.toLowerCase()) {
       return "Your first card is free.";
     }
 
-    if (supporterNumber === BigInt(0) && supporterKeys > 0) {
+    if (supporterNumber === 0 && supporterKeys > 0) {
       return "You are holder #0";
     }
     if (supporterNumber && supporterNumber > 0) {

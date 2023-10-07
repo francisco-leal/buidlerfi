@@ -73,8 +73,8 @@ export default function Home() {
           {users.map(user => (
             <UserItem
               address={user.owner as `0x${string}`}
-              buyPrice={user.buyPrice}
-              numberOfHolders={user.numberOfHolders}
+              buyPrice={BigInt(user.buyPrice)}
+              numberOfHolders={Number(user.numberOfHolders)}
               key={`home-${user.owner}`}
             />
           ))}
