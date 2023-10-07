@@ -110,7 +110,7 @@ export const fetchHoldings = async (address: string) => {
     }
   ).then(res => res.json());
 
-  return res.data;
+  return res.data.shareRelationships;
 };
 
 export const fetchHolders = async (address: string) => {
@@ -130,5 +130,5 @@ export const fetchHolders = async (address: string) => {
     }
   ).then(res => res.json());
 
-  return res.data;
+  return res.data.shareRelationships;
 };

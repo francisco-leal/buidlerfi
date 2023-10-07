@@ -3,6 +3,7 @@ import { Flex } from "@/components/flex";
 import { Icons } from "@/components/ui/icons";
 import { UserItem } from "@/components/user-item";
 import { useBuilderFIData, useGetHoldings } from "@/hooks/useBuilderFiApi";
+import { tryParseBigInt } from "@/lib/utils";
 import { Card, Typography } from "@mui/joy";
 import { useMemo } from "react";
 import { formatUnits } from "viem";
@@ -15,7 +16,7 @@ export default function ChatsPage() {
   const [portfolio, tradingFees] = useMemo(() => {
     if (!allHolding || !builderFiData) return [BigInt(0), BigInt(0)];
     return [
-      allHolding.shareRelationships.reduce((prev, curr) => prev + BigInt(curr.owner.buyPrice), BigInt(0)),
+      allHolding.reduce((prev, curr) => prev + tryParseBigInt(curr.owner.buyPrice), BigInt(0)),
       builderFiData.shareParticipants.find(user => user.owner == address?.toLowerCase())?.tradingFeesAmount
     ];
   }, [address, allHolding, builderFiData]);
@@ -37,15 +38,15 @@ export default function ChatsPage() {
         </Flex>
         <Flex component={Card}>
           <Typography level={"body-lg"}>Trading fees</Typography>
-          <Typography>{!tradingFees ? "undefined" : formatUnits(BigInt(tradingFees), 18)} ETH</Typography>
+          <Typography>{!tradingFees ? "undefined" : formatUnits(tryParseBigInt(tradingFees), 18)} ETH</Typography>
         </Flex>
       </div>
-      {allHolding?.shareRelationships.map(item => (
+      {allHolding?.map(item => (
         <UserItem
           address={item.owner.owner as `0x${string}`}
-          buyPrice={BigInt(item.owner.buyPrice)}
+          buyPrice={tryParseBigInt(item.owner.buyPrice)}
           numberOfHolders={Number(item.owner.numberOfHolders)}
-          key={`home-${item.owner}`}
+          key={`home-${item.owner.owner}`}
         />
       ))}
     </main>

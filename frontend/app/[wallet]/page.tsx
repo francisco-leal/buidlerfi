@@ -3,6 +3,7 @@ import { Flex } from "@/components/flex";
 import { UserItem } from "@/components/user-item";
 import { useGetHolders, useGetHoldings } from "@/hooks/useBuilderFiApi";
 import { useSocialData } from "@/hooks/useSocialData";
+import { tryParseBigInt } from "@/lib/utils";
 import { Tab, TabList, TabPanel, Tabs } from "@mui/joy";
 import { useState } from "react";
 import { ChatTab } from "./components/chat-tab";
@@ -24,30 +25,30 @@ export default function ProfilePage({ params }: { params: { wallet: `0x${string}
             Chat
           </Tab>
           <Tab disableIndicator value="holding">
-            Holding ({holdings.data?.shareRelationships.length})
+            Holding ({holdings.data?.length})
           </Tab>
           <Tab disableIndicator value="holders">
-            Holders ({holders.data?.shareRelationships.length})
+            Holders ({holders.data?.length})
           </Tab>
         </TabList>
         <TabPanel value="chat" sx={{ display: selectedTab === "chat" ? "flex" : "none", flexGrow: 1 }}>
           <ChatTab socialData={socialData} />
         </TabPanel>
         <TabPanel value="holding">
-          {holdings.data?.shareRelationships.map(holdingItem => (
+          {holdings.data?.map(holdingItem => (
             <UserItem
               address={holdingItem.owner.owner as `0x${string}`}
-              buyPrice={BigInt(holdingItem.owner.buyPrice)}
+              buyPrice={tryParseBigInt(holdingItem.owner.buyPrice)}
               numberOfHolders={Number(holdingItem.owner.numberOfHolders)}
               key={`home-${holdingItem.id}`}
             />
           ))}
         </TabPanel>
         <TabPanel value="holders">
-          {holders.data?.shareRelationships.map(holdingItem => (
+          {holders.data?.map(holdingItem => (
             <UserItem
               address={holdingItem.holder.owner as `0x${string}`}
-              buyPrice={BigInt(holdingItem.owner.buyPrice)}
+              buyPrice={tryParseBigInt(holdingItem.owner.buyPrice)}
               numberOfHolders={Number(holdingItem.owner.numberOfHolders)}
               key={`home-${holdingItem.id}`}
             />

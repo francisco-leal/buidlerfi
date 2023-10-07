@@ -4,7 +4,7 @@ export interface Share {
   supply: string;
   numberOfHolders: string;
   numberOfHoldings: string;
-  buyPrice: string;
-  sellPrice: string;
-  tradingFeesAmount: string;
+  buyPrice?: string;
+  sellPrice?: string;
+  tradingFeesAmount?: string;
 }

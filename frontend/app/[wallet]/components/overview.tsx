@@ -25,9 +25,7 @@ export const Overview: FC<Props> = ({ socialData }) => {
   const supporterNumber = useMemo(() => {
     if (!holders?.data) return undefined;
 
-    const holder = holders.data.shareRelationships.find(
-      holder => holder.holder.owner.toLowerCase() === address?.toLowerCase()
-    );
+    const holder = holders.data.find(holder => holder.holder.owner.toLowerCase() === address?.toLowerCase());
     if (!holder) return undefined;
 
     return Number(holder.supporterNumber);

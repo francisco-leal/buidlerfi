@@ -8,6 +8,7 @@ import { UserItem } from "@/components/user-item";
 import { useGetSocialFollowers } from "@/hooks/useAirstackApi";
 import { useBuilderFIData } from "@/hooks/useBuilderFiApi";
 import { DEFAULT_PROFILE_PICTURE } from "@/lib/assets";
+import { tryParseBigInt } from "@/lib/utils";
 import { Tab, TabList, TabPanel, Tabs } from "@mui/joy";
 import { ChevronRight, Wallet } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -73,7 +74,7 @@ export default function Home() {
           {users.map(user => (
             <UserItem
               address={user.owner as `0x${string}`}
-              buyPrice={BigInt(user.buyPrice)}
+              buyPrice={tryParseBigInt(user.buyPrice)}
               numberOfHolders={Number(user.numberOfHolders)}
               key={`home-${user.owner}`}
             />
