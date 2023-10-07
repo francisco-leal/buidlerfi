@@ -20,6 +20,6 @@ dataSources:
         - name: BuidlerFiV1
           file: ./abis/BuilderFiV1.json
       eventHandlers:
-        - event: Trade(address,address,bool,uint256,uint256,uint256,uint256,uint256,uint256)
+        - event: Trade(address,address,bool,uint256,uint256,uint256,uint256,uint256,uint256,uint256)
           handler: handleTrade
       file: ./src/buidler-fi-v-1.ts

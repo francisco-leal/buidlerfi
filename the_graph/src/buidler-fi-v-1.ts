@@ -58,6 +58,8 @@ export function handleTrade(event: TradeEvent): void {
   }
 
   // edge case where we buy/sell from ourselves
+  subject.buyPrice = event.params.nextPrice;
+  subject.sellPrice = event.params.ethAmount;
   if (subject.id == buyer.id) {
     buyer.buyPrice = subject.buyPrice;
     buyer.sellPrice = subject.sellPrice;
