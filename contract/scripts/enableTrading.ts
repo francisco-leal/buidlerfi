@@ -5,10 +5,20 @@ const { exit } = process;
 async function main() {
   const [creator] = await ethers.getSigners();
   console.log(creator.address);
+  const provider = new ethers.providers.JsonRpcProvider("https://goerli.base.org");
+  const feeData = await provider.getFeeData();
+  const factory = new ethers.Contract("0x8b35b89ed2df3682b9783db65136211aee8bdd08", BuilderFiV1Artifact.abi, creator);
 
-  const factory = new ethers.Contract("0xa902DA7a40a671B84bA3Dd0BdBA6FD9d2D888246", BuilderFiV1Artifact.abi, creator);
+  await factory.setFeeDestination("0x33041027dd8F4dC82B6e825FB37ADf8f15d44053", { gasPrice: feeData.gasPrice?.mul(2) });
 
-  await factory.connect(creator).enableTrading();
+  console.log("BuilderFi fee destination set");
+  await factory.setHodlerFeePercent(ethers.utils.parseUnits("0.05"), { gasPrice: feeData.gasPrice?.mul(2) }); // 5%
+  await factory.setProtocolFeePercent(ethers.utils.parseUnits("0.05"), { gasPrice: feeData.gasPrice?.mul(2) }); // 5%
+  await factory.setSubjectFeePercent(ethers.utils.parseUnits("0.05"), { gasPrice: feeData.gasPrice?.mul(2) }); // 5%
+
+  console.log("BuilderFi percents set");
+  await factory.connect(creator).enableTrading({ gasPrice: feeData.gasPrice?.mul(2) });
+  console.log("all done");
 }
 
 main()

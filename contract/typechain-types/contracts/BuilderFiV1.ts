@@ -311,7 +311,7 @@ export interface BuilderFiV1Interface extends utils.Interface {
     "RoleAdminChanged(bytes32,bytes32,bytes32)": EventFragment;
     "RoleGranted(bytes32,address,address)": EventFragment;
     "RoleRevoked(bytes32,address,address)": EventFragment;
-    "Trade(address,address,bool,uint256,uint256,uint256,uint256,uint256,uint256)": EventFragment;
+    "Trade(address,address,bool,uint256,uint256,uint256,uint256,uint256,uint256,uint256)": EventFragment;
   };
 
   getEvent(nameOrSignatureOrTopic: "RoleAdminChanged"): EventFragment;
@@ -367,12 +367,14 @@ export interface TradeEventObject {
   subjectEthAmount: BigNumber;
   hodlerEthAmount: BigNumber;
   supply: BigNumber;
+  nextPrice: BigNumber;
 }
 export type TradeEvent = TypedEvent<
   [
     string,
     string,
     boolean,
+    BigNumber,
     BigNumber,
     BigNumber,
     BigNumber,
@@ -847,7 +849,7 @@ export interface BuilderFiV1 extends BaseContract {
       sender?: PromiseOrValue<string> | null
     ): RoleRevokedEventFilter;
 
-    "Trade(address,address,bool,uint256,uint256,uint256,uint256,uint256,uint256)"(
+    "Trade(address,address,bool,uint256,uint256,uint256,uint256,uint256,uint256,uint256)"(
       trader?: null,
       subject?: null,
       isBuy?: null,
@@ -856,7 +858,8 @@ export interface BuilderFiV1 extends BaseContract {
       protocolEthAmount?: null,
       subjectEthAmount?: null,
       hodlerEthAmount?: null,
-      supply?: null
+      supply?: null,
+      nextPrice?: null
     ): TradeEventFilter;
     Trade(
       trader?: null,
@@ -867,7 +870,8 @@ export interface BuilderFiV1 extends BaseContract {
       protocolEthAmount?: null,
       subjectEthAmount?: null,
       hodlerEthAmount?: null,
-      supply?: null
+      supply?: null,
+      nextPrice?: null
     ): TradeEventFilter;
   };
 
