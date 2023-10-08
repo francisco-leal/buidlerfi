@@ -8,7 +8,6 @@ import { baseGoerli } from "wagmi/chains";
 import { BottomNav } from "@/components/bottom-nav";
 import { NavBalance } from "@/components/nav-balance";
 import { NavWeb3Button } from "@/components/nav-web3-button";
-import { Toaster } from "@/components/ui/toaster";
 
 import { Flex } from "@/components/flex";
 import { LOGO, LOGO_SMALL } from "@/lib/assets";
@@ -18,6 +17,8 @@ import useMediaQuery from "@mui/material/useMediaQuery";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 const chains = [baseGoerli];
 const projectId = "530148d9ddb07d128a40fc21cc9ffdd9";
@@ -74,7 +75,7 @@ export const Dynamic = ({ children }: { children: React.ReactNode }) => {
           </Flex>
         </QueryClientProvider>
       </WagmiConfig>
-      <Toaster />
+      <ToastContainer />
       <Web3Modal
         projectId={projectId}
         ethereumClient={ethereumClient}

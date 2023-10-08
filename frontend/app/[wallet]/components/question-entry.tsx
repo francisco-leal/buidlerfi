@@ -39,7 +39,7 @@ export const QuestionEntry: FC<Props> = ({ question, isOwnChat, refetch }) => {
             type="text"
           />
           <Button className="appearance-none" loading={putQuestion.isLoading} onClick={() => replyQuestion()}>
-            Send reply
+            Post answer
           </Button>
         </Flex>
       )}

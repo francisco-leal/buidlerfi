@@ -34,7 +34,7 @@ export function BottomNav() {
         }}
       >
         <MessageSquare className="h-4 w-4" />
-        Chats
+        Cards
       </Link>
       <Link
         href={address ? `/${address}` : `/`}

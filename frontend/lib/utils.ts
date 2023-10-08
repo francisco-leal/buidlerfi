@@ -27,3 +27,11 @@ export const tryParseBigInt = (value?: string | bigint | number) => {
   if (!value) return BigInt(0);
   else return BigInt(value);
 };
+
+export const formatError = (error: unknown) => {
+  if (typeof error === "string") return error;
+  if (error instanceof Error) {
+    return error.message;
+  }
+  return JSON.stringify(error);
+};

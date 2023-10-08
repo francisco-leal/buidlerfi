@@ -1,40 +1,55 @@
 "use client";
 import { Flex } from "@/components/flex";
+import { PageMessage } from "@/components/page-message";
 import { UserItem } from "@/components/user-item";
 import { useGetHolders, useGetHoldings } from "@/hooks/useBuilderFiApi";
 import { useSocialData } from "@/hooks/useSocialData";
 import { tryParseBigInt } from "@/lib/utils";
+import { Chat, Lock } from "@mui/icons-material";
 import { Tab, TabList, TabPanel, Tabs } from "@mui/joy";
 import { useState } from "react";
+import { useAccount } from "wagmi";
 import { ChatTab } from "./components/chat-tab";
 import { Overview } from "./components/overview";
 
 export default function ProfilePage({ params }: { params: { wallet: `0x${string}` } }) {
+  const { address } = useAccount();
   const socialData = useSocialData(params.wallet);
   const [selectedTab, setSelectedTab] = useState("chat");
 
   const holders = useGetHolders(params.wallet);
   const holdings = useGetHoldings(params.wallet);
 
+  const isOwnProfile = address?.toLowerCase() === socialData.address.toLowerCase();
+
   return (
     <Flex component={"main"} y grow gap2 sx={{ p: { sm: 0, md: 2 } }}>
-      <Overview socialData={socialData} />
+      <Overview socialData={socialData} isOwnProfile={isOwnProfile} />
       <Tabs value={selectedTab} onChange={(_, val) => val && setSelectedTab(val as string)} sx={{ flexGrow: 1 }}>
         <TabList tabFlex={1} className="grid w-full grid-cols-3">
           <Tab disableIndicator value="chat">
-            Chat
-          </Tab>
-          <Tab disableIndicator value="holding">
-            Holding ({holdings.data?.length})
+            Questions
           </Tab>
           <Tab disableIndicator value="holders">
             Holders ({holders.data?.length})
           </Tab>
+          <Tab disableIndicator value="holding">
+            Holding ({holdings.data?.length})
+          </Tab>
         </TabList>
         <TabPanel value="chat" sx={{ display: selectedTab === "chat" ? "flex" : "none", flexGrow: 1 }}>
-          <ChatTab socialData={socialData} />
+          <ChatTab socialData={socialData} isOwnProfile={isOwnProfile} />
         </TabPanel>
-        <TabPanel value="holding">
+        <TabPanel
+          value="holding"
+          sx={{ flexDirection: "column", display: selectedTab === "holding" ? "flex" : "none", flexGrow: 1 }}
+        >
+          {holdings.data?.length === 0 && isOwnProfile && (
+            <PageMessage
+              icon={<Chat />}
+              text={"Buy other people's cards to ask them a question and access all answers."}
+            />
+          )}
           {holdings.data?.map(holdingItem => (
             <UserItem
               address={holdingItem.owner.owner as `0x${string}`}
@@ -44,7 +59,16 @@ export default function ProfilePage({ params }: { params: { wallet: `0x${string}
             />
           ))}
         </TabPanel>
-        <TabPanel value="holders">
+        <TabPanel
+          value="holders"
+          sx={{ flexDirection: "column", display: selectedTab === "holders" ? "flex" : "none", flexGrow: 1 }}
+        >
+          {holders.data?.length === 0 && isOwnProfile && (
+            <PageMessage
+              icon={<Lock />}
+              text="Buy the first card to allow others to trade your cards and ask you questions."
+            />
+          )}
           {holders.data?.map(holdingItem => (
             <UserItem
               address={holdingItem.holder.owner as `0x${string}`}

@@ -1,20 +1,23 @@
 "use client";
 import { Flex } from "@/components/flex";
+import { PageMessage } from "@/components/page-message";
 import { useGetQuestions, usePostQuestion } from "@/hooks/useQuestionsApi";
 import { SocialData } from "@/hooks/useSocialData";
 import { builderFIV1Abi } from "@/lib/abi/BuidlerFiV1";
 import { BASE_GOERLI_TESTNET } from "@/lib/address";
-import { Button, Input } from "@mui/joy";
-import { Lock, MessageSquare } from "lucide-react";
+import { Chat, Lock, LockOpen } from "@mui/icons-material";
+import { Button } from "@mui/joy";
+import { TextField } from "@mui/material";
 import { FC, useState } from "react";
 import { useAccount, useContractRead } from "wagmi";
 import { QuestionEntry } from "./question-entry";
 
 interface Props {
   socialData: SocialData;
+  isOwnProfile: boolean;
 }
 
-export const ChatTab: FC<Props> = ({ socialData }) => {
+export const ChatTab: FC<Props> = ({ socialData, isOwnProfile }) => {
   const [chatValue, setChatValue] = useState<string>("");
   const { address } = useAccount();
   const { data: supporterKeys } = useContractRead({
@@ -24,6 +27,8 @@ export const ChatTab: FC<Props> = ({ socialData }) => {
     args: [socialData.address, address!],
     enabled: !!address
   });
+
+  const ownsKeys = supporterKeys !== undefined && supporterKeys > BigInt(0);
 
   const { data: questions, refetch } = useGetQuestions(socialData.address);
 
@@ -40,50 +45,56 @@ export const ChatTab: FC<Props> = ({ socialData }) => {
     await refetch();
   };
 
-  // const sendReply = async (questionId: number, questionAnswer: string) => {
-  // 	const response = await axios.put(`/api/questions/${questionId}`, {
-  // 		questionAnswer,
-  // 	});
-
-  // 	console.log(response.data);
-  // };
-
-  if (supporterKeys === BigInt(0)) {
+  if (!ownsKeys && !isOwnProfile) {
     return (
-      <Flex y xc yc fullwidth>
-        <Lock className="text-muted-foreground h-32 w-32 mb-6" />
-        <p>Hold atleast one key to access the chat.</p>
-      </Flex>
+      <PageMessage
+        icon={<Lock />}
+        text={`Hold at least one card to ask ${socialData.name} a question and access the answers.`}
+      />
     );
   }
 
-  const isOwnChat = address?.toLowerCase() === socialData.address.toLowerCase();
+  if (!ownsKeys && isOwnProfile) {
+    return (
+      <PageMessage
+        icon={<Lock />}
+        text="Buy the first card to allow others to trade your cards and ask you questions."
+      />
+    );
+  }
+
+  if (isOwnProfile && !questions?.length) {
+    return <PageMessage icon={<Chat />} text="Questions asked by holders of your cards will appear here." />;
+  }
 
   return (
     <Flex y grow>
       <Flex y grow gap2>
-        {!questions?.length ? (
-          <div className="flex flex-col items-center justify-center mt-24">
-            <MessageSquare className="text-muted-foreground h-32 w-32 mb-6" />
-            <p className="text-center">Congratulations. You can now chat with {socialData.name}</p>
-          </div>
+        {ownsKeys && !questions?.length ? (
+          <PageMessage text={`Congratulations. You can now chat with ${socialData.name}`} icon={<LockOpen />} />
         ) : (
-          questions.map(question => {
-            return <QuestionEntry key={question.id} question={question} isOwnChat={isOwnChat} refetch={refetch} />;
+          questions?.map(question => {
+            return <QuestionEntry key={question.id} question={question} isOwnChat={isOwnProfile} refetch={refetch} />;
           })
         )}
       </Flex>
-      {!isOwnChat && (
+      {!isOwnProfile && (
         <Flex x gap2>
-          <Input
+          <TextField
             value={chatValue}
             onChange={e => setChatValue(e.target.value)}
             fullWidth
+            error={length > 500}
+            helperText={length > 500 ? "Question is limited to 500 characters" : ""}
             placeholder={`Ask a question to ${socialData.name}`}
-            type="text"
           />
-          <Button className="appearance-none" loading={postQuestion.isLoading} onClick={() => sendQuestion()}>
-            Send message
+          <Button
+            disabled={chatValue.length > 500}
+            className="appearance-none"
+            loading={postQuestion.isLoading}
+            onClick={() => sendQuestion()}
+          >
+            Post Question
           </Button>
         </Flex>
       )}
