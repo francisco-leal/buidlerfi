@@ -1,4 +1,4 @@
-import { Flex } from "@/components/flex";
+import { Flex } from "@/components/shared/flex";
 import { SocialData } from "@/hooks/useSocialData";
 import { builderFIV1Abi } from "@/lib/abi/BuidlerFiV1";
 import { BASE_GOERLI_TESTNET } from "@/lib/address";

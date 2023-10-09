@@ -1,10 +1,10 @@
 "use client";
-import { Flex } from "@/components/flex";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Icons } from "@/components/ui/icons";
-import { UserItem } from "@/components/user-item";
+import { Flex } from "@/components/shared/flex";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/shared/ui/avatar";
+import { Badge } from "@/components/shared/ui/badge";
+import { Button } from "@/components/shared/ui/button";
+import { Icons } from "@/components/shared/ui/icons";
+import { UserItem } from "@/components/shared/user-item";
 import { useGetSocialFollowers } from "@/hooks/useAirstackApi";
 import { useBuilderFIData } from "@/hooks/useBuilderFiApi";
 import { DEFAULT_PROFILE_PICTURE } from "@/lib/assets";

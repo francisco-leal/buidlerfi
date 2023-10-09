@@ -1,13 +1,12 @@
 "use client";
-import { Flex } from "@/components/flex";
-import { PageMessage } from "@/components/page-message";
+import { Flex } from "@/components/shared/flex";
+import { PageMessage } from "@/components/shared/page-message";
 import { useGetQuestions, usePostQuestion } from "@/hooks/useQuestionsApi";
 import { SocialData } from "@/hooks/useSocialData";
 import { builderFIV1Abi } from "@/lib/abi/BuidlerFiV1";
 import { BASE_GOERLI_TESTNET } from "@/lib/address";
 import { Chat, Lock, LockOpen } from "@mui/icons-material";
-import { Button } from "@mui/joy";
-import { TextField } from "@mui/material";
+import { Button, Input } from "@mui/joy";
 import { FC, useState } from "react";
 import { useAccount, useContractRead } from "wagmi";
 import { QuestionEntry } from "./question-entry";
@@ -80,13 +79,13 @@ export const ChatTab: FC<Props> = ({ socialData, isOwnProfile }) => {
       </Flex>
       {!isOwnProfile && (
         <Flex x gap2>
-          <TextField
+          <Input
             value={chatValue}
             onChange={e => setChatValue(e.target.value)}
-            fullWidth
-            error={length > 500}
-            helperText={length > 500 ? "Question is limited to 500 characters" : ""}
+            error={chatValue.length > 500}
             placeholder={`Ask a question to ${socialData.name}`}
+            endDecorator={<>{chatValue.length}/500</>}
+            sx={{ flexGrow: 1 }}
           />
           <Button
             disabled={chatValue.length > 500}

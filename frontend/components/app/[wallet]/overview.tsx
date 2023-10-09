@@ -1,6 +1,5 @@
 "use client";
-import { BuyShareModal } from "@/app/[wallet]/components/buy-share-modal";
-import { Flex } from "@/components/flex";
+import { Flex } from "@/components/shared/flex";
 import { useGetHolders } from "@/hooks/useBuilderFiApi";
 import { SocialData } from "@/hooks/useSocialData";
 import { builderFIV1Abi } from "@/lib/abi/BuidlerFiV1";
@@ -12,6 +11,7 @@ import { Avatar, Button, Chip, IconButton, Tooltip, Typography } from "@mui/joy"
 import Image from "next/image";
 import { FC, useCallback, useMemo, useState } from "react";
 import { useAccount, useContractRead } from "wagmi";
+import { BuyShareModal } from "./buy-share-modal";
 
 interface Props {
   socialData: SocialData;

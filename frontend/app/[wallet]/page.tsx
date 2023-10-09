@@ -1,7 +1,9 @@
 "use client";
-import { Flex } from "@/components/flex";
-import { PageMessage } from "@/components/page-message";
-import { UserItem } from "@/components/user-item";
+import { ChatTab } from "@/components/app/[wallet]/chat-tab";
+import { Overview } from "@/components/app/[wallet]/overview";
+import { Flex } from "@/components/shared/flex";
+import { PageMessage } from "@/components/shared/page-message";
+import { UserItem } from "@/components/shared/user-item";
 import { useGetHolders, useGetHoldings } from "@/hooks/useBuilderFiApi";
 import { useSocialData } from "@/hooks/useSocialData";
 import { tryParseBigInt } from "@/lib/utils";
@@ -9,8 +11,6 @@ import { Chat, Lock } from "@mui/icons-material";
 import { Tab, TabList, TabPanel, Tabs } from "@mui/joy";
 import { useState } from "react";
 import { useAccount } from "wagmi";
-import { ChatTab } from "./components/chat-tab";
-import { Overview } from "./components/overview";
 
 export default function ProfilePage({ params }: { params: { wallet: `0x${string}` } }) {
   const { address } = useAccount();

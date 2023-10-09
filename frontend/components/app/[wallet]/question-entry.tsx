@@ -1,4 +1,4 @@
-import { Flex } from "@/components/flex";
+import { Flex } from "@/components/shared/flex";
 import { usePutQuestion } from "@/hooks/useQuestionsApi";
 import { Box, Button, Input, Typography } from "@mui/joy";
 import { Question } from "@prisma/client";

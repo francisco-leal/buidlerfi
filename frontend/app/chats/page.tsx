@@ -1,8 +1,8 @@
 "use client";
-import { Flex } from "@/components/flex";
-import { PageMessage } from "@/components/page-message";
-import { Icons } from "@/components/ui/icons";
-import { UserItem } from "@/components/user-item";
+import { Flex } from "@/components/shared/flex";
+import { PageMessage } from "@/components/shared/page-message";
+import { Icons } from "@/components/shared/ui/icons";
+import { UserItem } from "@/components/shared/user-item";
 import { useBuilderFIData, useGetHoldings } from "@/hooks/useBuilderFiApi";
 import { tryParseBigInt } from "@/lib/utils";
 import { CreditCard } from "@mui/icons-material";

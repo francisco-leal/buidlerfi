@@ -2,14 +2,14 @@
 
 import { DotsHorizontalIcon } from "@radix-ui/react-icons";
 
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/shared/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger
-} from "@/components/ui/dropdown-menu";
+} from "@/components/shared/ui/dropdown-menu";
 import { useRouter } from "next/navigation";
 import { useAccount, useDisconnect } from "wagmi";
 
