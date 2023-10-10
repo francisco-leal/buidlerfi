@@ -1,8 +1,8 @@
 "use client";
 
-import { Flex } from "@/components/flex";
+import { Flex } from "@/components/shared/flex";
 import { useEffect, useState } from "react";
-import { Dynamic } from "./dynamic";
+import { Dynamic } from "../components/app/dynamic";
 import "./globals.css";
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

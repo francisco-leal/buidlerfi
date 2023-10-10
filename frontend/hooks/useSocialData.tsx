@@ -25,6 +25,8 @@ interface CachedSocialData extends SocialData {
 
 const CACHE_VALIDITY_HOURS = 24;
 
+const supportedSocialDapps = ["lens", "farcaster"];
+
 export const useSocialData = (address: `0x${string}`): SocialData => {
   const cachedData = useQuery<CachedSocialData>(["useSocialData", address], () => get(`social-data-${address}`));
 
@@ -63,7 +65,7 @@ export const useSocialData = (address: `0x${string}`): SocialData => {
       socialsList:
         cachedData.data?.socialsList ||
         walletDetails?.socials
-          ?.filter(i => i.profileName)
+          ?.filter(i => i.profileName && supportedSocialDapps.includes(i.dappName.toLowerCase()))
           .map(i => ({ dappName: i.dappName, profileName: i.profileName })) ||
         [],
       avatar:

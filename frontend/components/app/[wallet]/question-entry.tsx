@@ -1,4 +1,4 @@
-import { Flex } from "@/components/flex";
+import { Flex } from "@/components/shared/flex";
 import { usePutQuestion } from "@/hooks/useQuestionsApi";
 import { Box, Button, Input, Typography } from "@mui/joy";
 import { Question } from "@prisma/client";
@@ -39,7 +39,7 @@ export const QuestionEntry: FC<Props> = ({ question, isOwnChat, refetch }) => {
             type="text"
           />
           <Button className="appearance-none" loading={putQuestion.isLoading} onClick={() => replyQuestion()}>
-            Send reply
+            Post answer
           </Button>
         </Flex>
       )}

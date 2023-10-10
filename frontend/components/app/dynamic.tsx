@@ -5,19 +5,23 @@ import { Web3Modal } from "@web3modal/react";
 import { WagmiConfig, configureChains, createConfig } from "wagmi";
 import { baseGoerli } from "wagmi/chains";
 
-import { BottomNav } from "@/components/bottom-nav";
-import { NavBalance } from "@/components/nav-balance";
-import { NavWeb3Button } from "@/components/nav-web3-button";
-import { Toaster } from "@/components/ui/toaster";
+import { BottomNav } from "@/components/shared/bottom-nav";
+import { NavBalance } from "@/components/shared/nav-balance";
+import { NavWeb3Button } from "@/components/shared/nav-web3-button";
 
-import { Flex } from "@/components/flex";
+import { Flex } from "@/components/shared/flex";
 import { LOGO, LOGO_SMALL } from "@/lib/assets";
 import muiTheme from "@/theme";
-import { CssVarsProvider } from "@mui/joy";
 import useMediaQuery from "@mui/material/useMediaQuery";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+
+import { CssVarsProvider as JoyCssVarsProvider } from "@mui/joy/styles";
+
+import theme from "@/theme";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 const chains = [baseGoerli];
 const projectId = "530148d9ddb07d128a40fc21cc9ffdd9";
@@ -44,7 +48,7 @@ export const Dynamic = ({ children }: { children: React.ReactNode }) => {
   const router = useRouter();
   const isSm = useMediaQuery(muiTheme.breakpoints.down("sm"));
   return (
-    <CssVarsProvider theme={muiTheme} defaultMode="light">
+    <JoyCssVarsProvider theme={theme}>
       <WagmiConfig config={wagmiConfig}>
         <QueryClientProvider client={queryClient}>
           <Flex y py={7} grow>
@@ -74,7 +78,7 @@ export const Dynamic = ({ children }: { children: React.ReactNode }) => {
           </Flex>
         </QueryClientProvider>
       </WagmiConfig>
-      <Toaster />
+      <ToastContainer />
       <Web3Modal
         projectId={projectId}
         ethereumClient={ethereumClient}
@@ -82,6 +86,6 @@ export const Dynamic = ({ children }: { children: React.ReactNode }) => {
           "--w3m-accent-color": "#000"
         }}
       />
-    </CssVarsProvider>
+    </JoyCssVarsProvider>
   );
 };

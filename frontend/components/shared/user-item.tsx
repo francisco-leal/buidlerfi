@@ -1,5 +1,6 @@
 "use client";
 import { useSocialData } from "@/hooks/useSocialData";
+import { tryParseBigInt } from "@/lib/utils";
 import { Typography } from "@mui/joy";
 import Avatar from "@mui/joy/Avatar";
 import { ChevronRight } from "lucide-react";
@@ -36,7 +37,7 @@ export function UserItem({ address, numberOfHolders, buyPrice }: Props) {
             {socialData.name}
           </Typography>
           <Typography textColor={"neutral.500"} level="body-sm">
-            {numberOfHolders.toString()} holders | Price {formatUnits(BigInt(buyPrice || 0), 18)} ETH
+            {numberOfHolders.toString()} holders | Price {formatUnits(tryParseBigInt(buyPrice || 0), 18)} ETH
           </Typography>
         </Flex>
       </Flex>

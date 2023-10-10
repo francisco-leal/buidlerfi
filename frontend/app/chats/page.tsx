@@ -1,9 +1,11 @@
 "use client";
-import { Flex } from "@/components/flex";
-import { Icons } from "@/components/ui/icons";
-import { UserItem } from "@/components/user-item";
+import { Flex } from "@/components/shared/flex";
+import { PageMessage } from "@/components/shared/page-message";
+import { Icons } from "@/components/shared/ui/icons";
+import { UserItem } from "@/components/shared/user-item";
 import { useBuilderFIData, useGetHoldings } from "@/hooks/useBuilderFiApi";
 import { tryParseBigInt } from "@/lib/utils";
+import { CreditCard } from "@mui/icons-material";
 import { Card, Typography } from "@mui/joy";
 import { useMemo } from "react";
 import { formatUnits } from "viem";
@@ -30,25 +32,37 @@ export default function ChatsPage() {
   }
 
   return (
-    <main className="pt-4 px-2 pb-16">
-      <div className="grid gap-4 grid-cols-2 mb-6">
-        <Flex component={Card}>
-          <Typography level={"body-lg"}>Portfolio Value</Typography>
+    <Flex y grow gap3 component={"main"} pt={4} px={2} pb={16}>
+      <Flex x gap3 ys>
+        <Flex grow component={Card}>
+          <Typography level={"body-lg"}>Holdings</Typography>
           <Typography>{formatUnits(portfolio, 18)} ETH</Typography>
         </Flex>
-        <Flex component={Card}>
-          <Typography level={"body-lg"}>Trading fees</Typography>
-          <Typography>{!tradingFees ? "undefined" : formatUnits(tryParseBigInt(tradingFees), 18)} ETH</Typography>
+        <Flex grow component={Card}>
+          <Typography level={"body-lg"}>Fees earned</Typography>
+          <Typography>{formatUnits(tryParseBigInt(tradingFees), 18)} ETH</Typography>
         </Flex>
-      </div>
-      {allHolding?.map(item => (
-        <UserItem
-          address={item.owner.owner as `0x${string}`}
-          buyPrice={tryParseBigInt(item.owner.buyPrice)}
-          numberOfHolders={Number(item.owner.numberOfHolders)}
-          key={`home-${item.owner.owner}`}
-        />
-      ))}
-    </main>
+      </Flex>
+      <Flex y grow>
+        <Typography level="h4" textColor="neutral.600" mb={1}>
+          Experts ({allHolding?.length})
+        </Typography>
+        {allHolding?.length === 0 ? (
+          <PageMessage
+            icon={<CreditCard />}
+            text="Buy other people's cards to ask them a question and access all answers."
+          />
+        ) : (
+          allHolding?.map(item => (
+            <UserItem
+              address={item.owner.owner as `0x${string}`}
+              buyPrice={tryParseBigInt(item.owner.buyPrice)}
+              numberOfHolders={Number(item.owner.numberOfHolders)}
+              key={`home-${item.owner.owner}`}
+            />
+          ))
+        )}
+      </Flex>
+    </Flex>
   );
 }

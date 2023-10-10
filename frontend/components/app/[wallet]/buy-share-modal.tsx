@@ -1,11 +1,11 @@
-import { Flex } from "@/components/flex";
-import { useToast } from "@/components/ui/use-toast";
+import { Flex } from "@/components/shared/flex";
 import { SocialData } from "@/hooks/useSocialData";
 import { builderFIV1Abi } from "@/lib/abi/BuidlerFiV1";
 import { BASE_GOERLI_TESTNET } from "@/lib/address";
-import { formatEth } from "@/lib/utils";
+import { formatError, formatEth } from "@/lib/utils";
 import { Button, DialogTitle, Modal, ModalDialog, Typography } from "@mui/joy";
-import { FC } from "react";
+import { FC, useRef } from "react";
+import { toast } from "react-toastify";
 import { useContractRead, useContractWrite, useWaitForTransaction } from "wagmi";
 
 interface Props {
@@ -27,7 +27,7 @@ export const BuyShareModal: FC<Props> = ({
   socialData,
   supporterKeysCount
 }) => {
-  const { toast } = useToast();
+  const toastId = useRef<string | number | undefined>(undefined);
 
   const { data: buyPriceAfterFee } = useContractRead({
     address: BASE_GOERLI_TESTNET,
@@ -44,17 +44,11 @@ export const BuyShareModal: FC<Props> = ({
     address: BASE_GOERLI_TESTNET,
     abi: builderFIV1Abi,
     functionName: "buyShares",
-    onSuccess: ({ hash }) => {
-      toast({
-        title: "Transaction submitted!",
-        description: `Hash: ${hash}`
-      });
+    onSuccess: () => {
+      toastId.current = toast("Transaction submitted!", { isLoading: true });
     },
-    onError: () => {
-      toast({
-        title: "Unable to buy card",
-        description: `There was an error processing your transaction`
-      });
+    onError: (err: unknown) => {
+      toast.error("There was an error processing your transaction: " + formatError(err));
     }
   });
 
@@ -66,43 +60,41 @@ export const BuyShareModal: FC<Props> = ({
     address: BASE_GOERLI_TESTNET,
     abi: builderFIV1Abi,
     functionName: "sellShares",
-    onSuccess: ({ hash }) => {
-      toast({
-        title: "Transaction submitted!",
-        description: `Hash: ${hash}`
-      });
+    onSuccess: () => {
+      toastId.current = toast("Transaction submitted!", { isLoading: true });
     },
-    onError: () => {
-      toast({
-        title: "Unable to sell card",
-        description: `There was an error processing your transaction`
-      });
+    onError: (err: unknown) => {
+      toast.error("There was an error processing your transaction: " + formatError(err));
     }
   });
 
-  const {} = useWaitForTransaction({
+  const { isLoading: buyTxProcessing } = useWaitForTransaction({
     hash: tx_buy?.hash,
     onSuccess: () => {
-      toast({
-        title: "Card bought!",
-        description: `You bought a card of ${socialData.name}.`
+      toast.update(toastId.current!, {
+        render: `You bought a card of ${socialData.name} !`,
+        isLoading: false,
+        type: "success",
+        autoClose: 3000
       });
       close();
     }
   });
 
-  const {} = useWaitForTransaction({
+  const { isLoading: sellTxProcessing } = useWaitForTransaction({
     hash: tx_sell?.hash,
     onSuccess: () => {
-      toast({
-        title: "Card sold!",
-        description: `You sold a card of ${socialData.name}.`
+      toast.update(toastId.current!, {
+        render: `You sold a card of ${socialData.name} !`,
+        isLoading: false,
+        type: "success",
+        autoClose: 3000
       });
       close();
     }
   });
 
-  const isLoading = buyIsLoading || sellIsLoading;
+  const isLoading = buyIsLoading || sellIsLoading || buyTxProcessing || sellTxProcessing;
 
   return (
     <Modal open={open} onClose={close}>
@@ -128,7 +120,7 @@ export const BuyShareModal: FC<Props> = ({
             <Flex x yc gap3 alignSelf={"center"}>
               <Button
                 loading={buyIsLoading}
-                disabled={sellIsLoading}
+                disabled={isLoading}
                 onClick={() => contractBuyKeys({ args: [socialData.address], value: buyPriceAfterFee })}
                 className="mt-4"
               >
@@ -139,7 +131,7 @@ export const BuyShareModal: FC<Props> = ({
                   variant="outlined"
                   onClick={() => contractSellKeys({ args: [socialData.address, BigInt(1)] })}
                   loading={sellIsLoading}
-                  disabled={buyIsLoading}
+                  disabled={isLoading}
                   className="mt-2"
                 >
                   Sell a card

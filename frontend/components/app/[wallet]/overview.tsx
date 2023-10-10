@@ -1,6 +1,5 @@
 "use client";
-import { BuyShareModal } from "@/app/[wallet]/components/buy-share-modal";
-import { Flex } from "@/components/flex";
+import { Flex } from "@/components/shared/flex";
 import { useGetHolders } from "@/hooks/useBuilderFiApi";
 import { SocialData } from "@/hooks/useSocialData";
 import { builderFIV1Abi } from "@/lib/abi/BuidlerFiV1";
@@ -12,12 +11,27 @@ import { Avatar, Button, Chip, IconButton, Tooltip, Typography } from "@mui/joy"
 import Image from "next/image";
 import { FC, useCallback, useMemo, useState } from "react";
 import { useAccount, useContractRead } from "wagmi";
+import { BuyShareModal } from "./buy-share-modal";
 
 interface Props {
   socialData: SocialData;
+  isOwnProfile: boolean;
 }
 
-export const Overview: FC<Props> = ({ socialData }) => {
+const socialInfo = {
+  lens: {
+    name: "Lens",
+    icon: <Image width={20} height={20} src={LENS_LOGO} alt="Lens logo" />,
+    url: (username: string) => `https://hey.xyz/u/${username}`
+  },
+  farcaster: {
+    name: "Farcaster",
+    icon: <Image width={20} height={20} src={FARCASTER_LOGO} alt="Farcaster logo" />,
+    url: (username: string) => `https://warpcast.com/${username}`
+  }
+};
+
+export const Overview: FC<Props> = ({ socialData, isOwnProfile }) => {
   const { address } = useAccount();
   const [openBuy, setOpenBuy] = useState(false);
 
@@ -67,12 +81,10 @@ export const Overview: FC<Props> = ({ socialData }) => {
     refetchKeys();
   }, [refetchBuyPrice, refetchKeys, refetchSellprice, refetchTotalSupply]);
 
-  const isOwnChat = address?.toLowerCase() === socialData.address.toLowerCase();
-
   const holderNumberText = () => {
     if (holders.isLoading || supporterKeys === undefined) return "...";
 
-    if (totalSupply === BigInt(0) && isOwnChat) {
+    if (totalSupply === BigInt(0) && isOwnProfile) {
       return "Your first card is free.";
     }
 
@@ -109,7 +121,7 @@ export const Overview: FC<Props> = ({ socialData }) => {
           </Flex>
         </Flex>
         <div className="space-x-2">
-          <Button onClick={() => setOpenBuy(true)} disabled={totalSupply === BigInt(0) && !isOwnChat}>
+          <Button onClick={() => setOpenBuy(true)} disabled={totalSupply === BigInt(0) && !isOwnProfile}>
             {hasKeys ? "Trade" : "Buy"}
           </Button>
         </div>
@@ -152,24 +164,22 @@ export const Overview: FC<Props> = ({ socialData }) => {
 
       {socialData.socialsList.length > 0 && (
         <Flex x gap2 wrap>
-          {socialData.socialsList.map(social => (
-            <Tooltip key={social.dappName} title={social.dappName} placement="top">
-              <Chip
-                variant="outlined"
-                color="neutral"
-                size="lg"
-                startDecorator={
-                  social.dappName === "lens" ? (
-                    <Image width={20} height={20} src={LENS_LOGO} alt="Lens logo" />
-                  ) : (
-                    <Image width={20} height={20} src={FARCASTER_LOGO} alt="Farcaster logo" />
-                  )
-                }
-              >
-                {social.profileName}
-              </Chip>
-            </Tooltip>
-          ))}
+          {socialData.socialsList.map(social => {
+            const additionalData = socialInfo[social.dappName as keyof typeof socialInfo];
+            return (
+              <Tooltip key={social.dappName} title={additionalData.name} placement="top">
+                <Chip
+                  onClick={() => window.open(additionalData.url(social.profileName), "_blank")}
+                  variant="outlined"
+                  color="neutral"
+                  size="lg"
+                  startDecorator={additionalData.icon}
+                >
+                  {social.profileName}
+                </Chip>
+              </Tooltip>
+            );
+          })}
         </Flex>
       )}
     </Flex>
