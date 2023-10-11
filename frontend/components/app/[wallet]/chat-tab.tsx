@@ -5,8 +5,10 @@ import { useGetQuestions, usePostQuestion } from "@/hooks/useQuestionsApi";
 import { SocialData } from "@/hooks/useSocialData";
 import { builderFIV1Abi } from "@/lib/abi/BuidlerFiV1";
 import { BASE_GOERLI_TESTNET } from "@/lib/address";
+import theme from "@/theme";
 import { Chat, Lock, LockOpen } from "@mui/icons-material";
 import { Button, Textarea } from "@mui/joy";
+import { useMediaQuery } from "@mui/material";
 import { FC, useState } from "react";
 import { useAccount, useContractRead } from "wagmi";
 import { QuestionEntry } from "./question-entry";
@@ -32,6 +34,8 @@ export const ChatTab: FC<Props> = ({ socialData, isOwnProfile }) => {
   const { data: questions, refetch } = useGetQuestions(socialData.address);
 
   const postQuestion = usePostQuestion();
+
+  const isSm = useMediaQuery(theme.breakpoints.down("sm"));
 
   const sendQuestion = async () => {
     if (!address) return;
@@ -78,7 +82,7 @@ export const ChatTab: FC<Props> = ({ socialData, isOwnProfile }) => {
         )}
       </Flex>
       {!isOwnProfile && (
-        <Flex x yc gap2>
+        <Flex y={isSm} yc gap2>
           <Textarea
             value={chatValue}
             onChange={e => setChatValue(e.target.value)}
