@@ -6,7 +6,7 @@ import { SocialData } from "@/hooks/useSocialData";
 import { builderFIV1Abi } from "@/lib/abi/BuidlerFiV1";
 import { BASE_GOERLI_TESTNET } from "@/lib/address";
 import { Chat, Lock, LockOpen } from "@mui/icons-material";
-import { Button, Input } from "@mui/joy";
+import { Button, Textarea } from "@mui/joy";
 import { FC, useState } from "react";
 import { useAccount, useContractRead } from "wagmi";
 import { QuestionEntry } from "./question-entry";
@@ -78,8 +78,8 @@ export const ChatTab: FC<Props> = ({ socialData, isOwnProfile }) => {
         )}
       </Flex>
       {!isOwnProfile && (
-        <Flex x gap2>
-          <Input
+        <Flex x yc gap2>
+          <Textarea
             value={chatValue}
             onChange={e => setChatValue(e.target.value)}
             error={chatValue.length > 500}

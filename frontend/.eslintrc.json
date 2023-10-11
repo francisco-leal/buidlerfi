@@ -2,6 +2,12 @@
   "extends": ["next/core-web-vitals", "plugin:@typescript-eslint/recommended"],
   "parser": "@typescript-eslint/parser",
   "plugins": ["@typescript-eslint"],
-  "root": true,
-  "ignorePatterns": ["__generated__/*"]
+  "settings": {
+    "next": {
+      "rootDir": "./frontend"
+    }
+  },
+  "rules": {
+    "@next/next/no-html-link-for-pages": ["error", "app"]
+  }
 }
