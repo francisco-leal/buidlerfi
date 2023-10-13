@@ -37,7 +37,10 @@ export default function ProfilePage({ params }: { params: { wallet: `0x${string}
             Holding ({holdings.data?.length})
           </Tab>
         </TabList>
-        <TabPanel value="chat" sx={{ display: selectedTab === "chat" ? "flex" : "none", flexGrow: 1 }}>
+        <TabPanel
+          value="chat"
+          sx={{ display: selectedTab === "chat" ? "flex" : "none", flexGrow: 1, flexDirection: "column" }}
+        >
           <ChatTab socialData={socialData} isOwnProfile={isOwnProfile} />
         </TabPanel>
         <TabPanel

@@ -11,15 +11,13 @@ import { NavWeb3Button } from "@/components/shared/nav-web3-button";
 
 import { Flex } from "@/components/shared/flex";
 import { LOGO, LOGO_SMALL } from "@/lib/assets";
-import muiTheme from "@/theme";
+import theme from "@/theme";
 import useMediaQuery from "@mui/material/useMediaQuery";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 
 import { CssVarsProvider as JoyCssVarsProvider } from "@mui/joy/styles";
-
-import theme from "@/theme";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
@@ -46,7 +44,7 @@ const queryClient = new QueryClient({
 
 export const Dynamic = ({ children }: { children: React.ReactNode }) => {
   const router = useRouter();
-  const isSm = useMediaQuery(muiTheme.breakpoints.down("sm"));
+  const isSm = useMediaQuery(theme.breakpoints.down("sm"));
   return (
     <JoyCssVarsProvider theme={theme}>
       <WagmiConfig config={wagmiConfig}>
