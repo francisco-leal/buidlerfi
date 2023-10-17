@@ -9,7 +9,6 @@ import { parseFollower } from "@/lib/airstack/parser";
 import { tryParseBigInt } from "@/lib/utils";
 import { Tab, TabList, TabPanel, Tabs } from "@mui/joy";
 import { Wallet } from "lucide-react";
-import { useRouter } from "next/navigation";
 import { useMemo } from "react";
 import { useAccount } from "wagmi";
 
@@ -24,8 +23,6 @@ export default function Home() {
       ),
     [builderfiData]
   );
-
-  const router = useRouter();
 
   const { data: socialFollowers } = useGetSocialFollowers(address);
   const followers = useMemo(() => socialFollowers?.Follower.map(f => parseFollower(f)) || [], [socialFollowers]);
