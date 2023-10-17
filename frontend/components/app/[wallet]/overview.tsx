@@ -35,7 +35,7 @@ export const Overview: FC<Props> = ({ socialData, isOwnProfile }) => {
   const { address } = useAccount();
   const [openBuy, setOpenBuy] = useState(false);
 
-  const holders = useGetHolders(socialData.address);
+  const holders = useGetHolders(socialData?.address);
   const supporterNumber = useMemo(() => {
     if (!holders?.data) return undefined;
 

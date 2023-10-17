@@ -20,7 +20,7 @@ export default function ProfilePage({ params }: { params: { wallet: `0x${string}
   const holders = useGetHolders(params.wallet);
   const holdings = useGetHoldings(params.wallet);
 
-  const isOwnProfile = address?.toLowerCase() === socialData.address.toLowerCase();
+  const isOwnProfile = address?.toLowerCase() === socialData?.address?.toLowerCase();
 
   return (
     <Flex component={"main"} y grow gap2 sx={{ p: { sm: 0, md: 2 } }}>
