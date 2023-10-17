@@ -11,9 +11,18 @@ const getSocialFollowersQuery = `query GetSocial($identity: Identity!) {
       dappSlug
       followerAddress {
         identity
+        addresses
         domains {
           isPrimary
           name
+          resolvedAddress
+        }
+        socials {
+          profileName
+          profileTokenId
+          profileTokenIdHex
+          userId
+          userAssociatedAddresses
         }
       }
     }
@@ -27,12 +36,40 @@ export interface GetFollowersResponse {
     dappSlug: string;
     followerAddress: {
       identity: string;
+      addresses: string[];
+      socials: {
+        profileName: string;
+        profileTokenId: string;
+        profileTokenIdHex: string;
+        userId: string;
+        userAssociatedAddresses: string[];
+      }[];
       domains: {
         isPrimary: boolean;
         name: string;
       }[];
     };
   }[];
+}
+
+export interface FollowerStructure {
+  dappName: string;
+  dappSlug: string;
+  followerAddress: {
+    identity: string;
+    addresses: string[];
+    socials: {
+      profileName: string;
+      profileTokenId: string;
+      profileTokenIdHex: string;
+      userId: string;
+      userAssociatedAddresses: string[];
+    }[];
+    domains: {
+      isPrimary: boolean;
+      name: string;
+    }[];
+  };
 }
 
 export const GET = async (req: Request) => {
