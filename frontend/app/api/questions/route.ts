@@ -1,59 +1,64 @@
-import CreateQuestion from "@/backend/services/questions/create";
-import GetQuestions from "@/backend/services/questions/get";
+import { fetchHolders } from "@/lib/api/common/builderfi";
+import { ERRORS } from "@/lib/errors";
+import prisma from "@/lib/prisma";
+import { NextRequest } from "next/server";
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   try {
-    const body = await req.json();
-    let errorMessage = "";
-    if (!body.questionerWallet) {
-      errorMessage += "QuestionerWallet field is mandatory.";
-    }
-    if (!body.replierWallet) {
-      errorMessage += " ReplierWallet field is mandatory.";
-    }
-    if (!body.questionContent) {
-      errorMessage += " QuestionContent field is mandatory.";
+    const { replierWallet, questionContent } = await req.json();
+    if (!replierWallet || !questionContent) {
+      return Response.json({ error: ERRORS.INVALID_REQUEST }, { status: 400 });
     }
 
-    if (errorMessage.length > 0) {
-      return Response.json({ error: errorMessage }, { status: 409 });
+    //TODO check if user isActive = true. Removed for now
+    const questioner = await prisma.user.findUnique({ where: { privyUserId: req.headers.get("privyUserId")! } });
+    const replier = await prisma.user.findUnique({ where: { wallet: replierWallet.toLowerCase() } });
+    if (!questioner || !replier) {
+      return Response.json({ error: ERRORS.USER_NOT_FOUND }, { status: 404 });
     }
 
-    const question = await CreateQuestion.call(body.questionerWallet, body.replierWallet, body.questionContent);
+    const replierHolders = await fetchHolders(replierWallet);
+    const found = replierHolders.find(holder => holder.holder.owner.toLowerCase() === questioner.wallet.toLowerCase());
+    if (!found || Number(found.heldKeyNumber) === 0) {
+      return Response.json({ error: ERRORS.MUST_HOLD_KEY }, { status: 404 });
+    }
+
+    const question = await prisma.question.create({
+      data: { questionerId: questioner.id, replierId: replier.id, questionContent: questionContent }
+    });
 
     return Response.json({ data: question }, { status: 200 });
   } catch (error) {
     console.error(error);
     console.error("Error from URL:", req.url);
-    return Response.json({ error: "Unexpected error. Contact Us." }, { status: 500 });
+    return Response.json({ error: ERRORS.SOMETHING_WENT_WRONG }, { status: 500 });
   }
 }
 
-export async function GET(req: Request) {
+export async function GET(req: NextRequest) {
   try {
-    const { searchParams } = new URL(req.url);
-    const questionerWallet = searchParams.get("questionerWallet") as string;
-    const replierWallet = searchParams.get("replierWallet") as string;
-
-    let errorMessage = "";
-
-    // if (!questionerWallet) {
-    //   errorMessage += "QuestionerWallet field is mandatory.";
-    // }
+    const replierWallet = req.nextUrl.searchParams.get("replierWallet") as string;
 
     if (!replierWallet) {
-      errorMessage += " ReplierWallet field is mandatory.";
+      return Response.json({ error: ERRORS.INVALID_REQUEST }, { status: 400 });
     }
 
-    if (errorMessage.length > 0) {
-      return Response.json({ error: errorMessage }, { status: 409 });
+    //TODO check if user isActive = true. Removed for now
+    const replier = await prisma.user.findUnique({ where: { wallet: replierWallet.toLowerCase() } });
+    if (!replier) {
+      return Response.json({ error: ERRORS.USER_NOT_FOUND }, { status: 404 });
     }
-    const questions = await GetQuestions.call(replierWallet, questionerWallet);
+
+    const questions = await prisma.question.findMany({
+      where: { replierId: replier.id },
+      include: { questioner: true, reactions: true, comments: true },
+      orderBy: { createdAt: "desc" }
+    });
 
     return Response.json({ data: questions }, { status: 200 });
   } catch (error) {
     console.error(error);
     console.error("Error from URL:", req.url);
-    return Response.json({ error: "Unexpected error. Contact Us." }, { status: 500 });
+    return Response.json({ error: ERRORS.SOMETHING_WENT_WRONG }, { status: 500 });
   }
 }

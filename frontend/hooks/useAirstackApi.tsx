@@ -1,11 +1,12 @@
 import { GetFollowersResponse } from "@/app/api/airstack/followers/route";
-import { GetWalletSocialsResponse } from "@/app/api/airstack/social/route";
+import { AirstackSocialProfiles } from "@/lib/api/backend/airstack";
 import { ApiResponse } from "@/models/apiResponse.model";
 import { SimpleUseQueryOptions } from "@/models/helpers.model";
 import { useQuery } from "@tanstack/react-query";
-import axios from "axios";
+import { useAxios } from "./useAxios";
 
 export const useGetSocialFollowers = (address?: `0x${string}`, options?: SimpleUseQueryOptions) => {
+  const axios = useAxios();
   return useQuery(
     ["useGetSocialFollowers", address],
     () =>
@@ -20,11 +21,12 @@ export const useGetSocialFollowers = (address?: `0x${string}`, options?: SimpleU
 };
 
 export const useGetWalletSocials = (address?: `0x${string}`, options?: SimpleUseQueryOptions) => {
+  const axios = useAxios();
   return useQuery(
     ["useGetWalletSocials", address],
     () =>
       axios
-        .get<ApiResponse<GetWalletSocialsResponse>>("api/airstack/social", { params: { address } })
+        .get<ApiResponse<AirstackSocialProfiles>>("api/airstack/social", { params: { address } })
         .then(res => res.data.data),
     {
       enabled: !!address,

@@ -1,9 +1,9 @@
 "use client";
 import { useSocialData } from "@/hooks/useSocialData";
 import { tryParseBigInt } from "@/lib/utils";
-import { Typography } from "@mui/joy";
+import { ChevronRight } from "@mui/icons-material";
+import { Skeleton, Typography } from "@mui/joy";
 import Avatar from "@mui/joy/Avatar";
-import { ChevronRight } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { formatUnits } from "viem";
 import { Flex } from "./flex";
@@ -24,24 +24,25 @@ export function UserItem({ address, numberOfHolders, buyPrice }: Props) {
       x
       xsb
       yc
-      px={{ xs: 0, sm: 2 }}
       py={1}
-      sx={{ ":hover": { backgroundColor: "neutral.100" } }}
-      className="transition-all cursor-pointer"
-      onClick={() => router.push(`/${address}`)}
+      px={2}
+      sx={{ cursor: "pointer", ":hover": { backgroundColor: "neutral.100" } }}
+      onClick={() => router.push(`/profile/${address}`)}
     >
       <Flex x yc gap2>
-        <Avatar size="sm" src={socialData.avatar} />
+        <Avatar size="sm" src={socialData.avatar}>
+          <Skeleton loading={socialData.isLoading} />
+        </Avatar>
         <Flex y gap={0.5}>
-          <Typography fontWeight={700} level="body-sm">
-            {socialData.name}
+          <Typography textColor={"neutral.800"} fontWeight={600} level="body-sm">
+            <Skeleton loading={socialData.isLoading}>{socialData.name}</Skeleton>
           </Typography>
-          <Typography textColor={"neutral.500"} level="body-sm">
-            {numberOfHolders.toString()} holders | Price {formatUnits(tryParseBigInt(buyPrice || 0), 18)} ETH
+          <Typography textColor={"neutral.600"} level="body-sm">
+            {numberOfHolders.toString()} holders • Price {formatUnits(tryParseBigInt(buyPrice || 0), 18)} ETH
           </Typography>
         </Flex>
       </Flex>
-      <ChevronRight className="h-4 w-4" />
+      <ChevronRight />
     </Flex>
   );
 }
