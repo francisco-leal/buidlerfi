@@ -38,6 +38,7 @@ interface Props extends BoxProps {
   grow?: boolean;
   loading?: boolean;
   fullwidth?: boolean;
+  basis?: string;
 }
 
 const Flex = forwardRef<HTMLDivElement, Props>(
@@ -65,6 +66,7 @@ const Flex = forwardRef<HTMLDivElement, Props>(
       wrap,
       grow,
       loading,
+      basis,
       ...rest
     },
     ref
@@ -114,6 +116,10 @@ const Flex = forwardRef<HTMLDivElement, Props>(
 
     if (grow) {
       style.flexGrow = 1;
+    }
+
+    if (basis) {
+      style.flexBasis = basis;
     }
 
     return (

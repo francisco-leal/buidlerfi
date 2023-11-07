@@ -27,11 +27,13 @@ export default function ChatsPage() {
     return [holding, tradingFees];
   }, [address, allHolding, builderFiData]);
 
+  console.log(allHolding);
+
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center w-full mt-24">
+      <Flex y yc xc grow>
         <CircularProgress />
-      </div>
+      </Flex>
     );
   }
 
@@ -61,7 +63,7 @@ export default function ChatsPage() {
       <Divider />
       <Flex y grow px={2}>
         <Typography level="h4" mb={1}>
-          Holding({allHolding?.length})
+          {allHolding ? `Holding(${allHolding.length})` : "Holding"}
         </Typography>
         {allHolding?.length === 0 ? (
           <PageMessage

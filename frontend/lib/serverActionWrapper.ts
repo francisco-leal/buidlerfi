@@ -15,19 +15,21 @@ export interface ServerActionResponse<T> {
 }
 
 export interface ServerActionOptions {
-  authorization?: string;
+  authorization?: string | null;
 }
 
 export interface ServerActionData {
   userId: string;
 }
 
-//This wrapper is used to check authorization and handle errors for server actions
+//This wrapper is used to check authorization
+//Servers actions need to throw an error in order to return a 500 error
+//Without this, the client can't know if an error occured
 export async function serverActionWrapper<T>(
   fn: (data: ServerActionData) => Promise<ServerActionResponse<T>>,
   options?: ServerActionOptions
 ) {
-  if (!options?.authorization) return { error: ERRORS.UNAUTHORIZED };
+  if (!options?.authorization) throw new Error(ERRORS.UNAUTHORIZED);
   const verifKey = await verificationKey;
   const authToken = options.authorization.replace("Bearer ", "");
   const payload = authToken
@@ -36,9 +38,15 @@ export async function serverActionWrapper<T>(
         audience: process.env.PRIVY_APP_ID
       })
     : undefined;
-  if (!payload?.payload.sub) return { error: ERRORS.UNAUTHORIZED };
+  if (!payload?.payload.sub) throw new Error(ERRORS.UNAUTHORIZED);
   const res = await fn({ userId: payload.payload.sub })
-    .then(res => res)
-    .catch(() => ({ error: ERRORS.SOMETHING_WENT_WRONG } as ServerActionResponse<T>));
+    .catch(() => {
+      throw new Error(ERRORS.SOMETHING_WENT_WRONG);
+    })
+    .then(res => {
+      if (res.error) throw new Error(res.error);
+      else return res;
+    });
+
   return res;
 }

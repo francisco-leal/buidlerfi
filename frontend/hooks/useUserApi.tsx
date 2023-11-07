@@ -17,7 +17,7 @@ export type GetUserResponse = Prisma.UserGetPayload<{ include: { socialProfiles:
 export const useCreateUser = () => {
   const { getAccessToken } = usePrivy();
   return useMutation(async ({ privyUser, inviteCode }: { privyUser: PrivyUser; inviteCode: string }) => {
-    createUserSA(privyUser, inviteCode, { authorization: (await getAccessToken()) || undefined }).then(res => res.data);
+    return createUserSA(privyUser, inviteCode, { authorization: await getAccessToken() }).then(res => res.data);
   });
 };
 
@@ -25,7 +25,7 @@ export const useGetUser = (address?: string) => {
   const { getAccessToken } = usePrivy();
   return useQuery(
     ["useGetUser", address],
-    async () => getUserSA(address!, { authorization: (await getAccessToken()) || undefined }).then(res => res.data),
+    async () => getUserSA(address!, { authorization: await getAccessToken() }).then(res => res.data),
     { enabled: !!address }
   );
 };
@@ -33,14 +33,13 @@ export const useGetUser = (address?: string) => {
 export const useGetCurrentUser = () => {
   const { getAccessToken } = usePrivy();
   return useQuery(["useGetCurrentUser"], async () =>
-    getCurrentUserSA({ authorization: (await getAccessToken()) || undefined }).then(res => res.data)
+    getCurrentUserSA({ authorization: await getAccessToken() }).then(res => res.data)
   );
 };
 
 export const useRefreshCurrentUser = () => {
   const { getAccessToken } = usePrivy();
-  return useMutation(async () => {
-    const token = await getAccessToken();
-    refreshCurrentUserProfileSA({ authorization: token || undefined }).then(res => res.data);
-  });
+  return useMutation(async () =>
+    refreshCurrentUserProfileSA({ authorization: await getAccessToken() }).then(res => res.data)
+  );
 };

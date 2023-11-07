@@ -34,7 +34,7 @@ const query = `
 
 const getHoldingsQuery = `
 query RelationshipsQuery($address: ID = "owner") {
-  shareRelationships(where: {holder_: {owner: $address}}) {
+  shareRelationships(where: {holder_: {owner: $address}, heldKeyNumber: {_gte: 0}}) {
     heldKeyNumber
     id
     supporterNumber

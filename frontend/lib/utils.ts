@@ -23,10 +23,10 @@ export const tryParseBigInt = (value?: string | bigint | number) => {
   else return BigInt(value);
 };
 
-export const formatToDisplayString = (value?: string | bigint | number, decimals = 0) => {
+export const formatToDisplayString = (value?: string | bigint | number, decimals = 18, significantDigits = 6) => {
   const val = tryParseBigInt(value);
   const nbr = decimals ? Number(formatUnits(val, decimals)) : Number(val);
-  return nbr.toLocaleString("en-us", { maximumFractionDigits: 5 });
+  return nbr.toLocaleString("en-us", { maximumFractionDigits: significantDigits });
 };
 
 export const formatError = (error: unknown) => {

@@ -1,16 +1,17 @@
 import { Flex } from "@/components/shared/flex";
+import { useUserContext } from "@/contexts/userContext";
 import { useTradeKey } from "@/hooks/useBuilderFiContract";
 import { SocialData } from "@/hooks/useSocialData";
-import { formatEth } from "@/lib/utils";
+import { formatToDisplayString } from "@/lib/utils";
 import { Close } from "@mui/icons-material";
-import { useBalance, useAccount } from "wagmi";
 import { Button, DialogTitle, IconButton, Modal, ModalDialog, Typography } from "@mui/joy";
 import { FC, useMemo } from "react";
+import { toast } from "react-toastify";
+import { useBalance } from "wagmi";
 
 interface Props {
   hasKeys: boolean;
   close: () => void;
-  buyPrice?: bigint;
   sellPrice?: bigint;
   buyPriceWithFees?: bigint;
   socialData: SocialData;
@@ -21,33 +22,53 @@ interface Props {
 export const TradeKeyModal: FC<Props> = ({
   hasKeys,
   close,
-  buyPrice,
   sellPrice,
   socialData,
   supporterKeysCount,
   buyPriceWithFees,
   side
 }) => {
-  const tx = useTradeKey(side);
-  const { address } = useAccount();
+  const { address } = useUserContext();
   const { data: balance } = useBalance({
     address
   });
+  const tx = useTradeKey(side, () => close());
+
+  const handleBuy = () => {
+    console.log({ buyPriceWithFees, balance: balance });
+    if (!buyPriceWithFees || !balance) return;
+
+    if (buyPriceWithFees > balance.value) {
+      toast.error(
+        `Insufficient balance. You have: ${formatToDisplayString(
+          balance.value,
+          18
+        )} ETH. You need: ${formatToDisplayString(buyPriceWithFees, 18)} ETH`
+      );
+      return;
+    }
+
+    tx.executeTx({ args: [socialData.address], value: buyPriceWithFees });
+  };
+
+  const handleSell = () => {
+    tx.executeTx({ args: [socialData.address, BigInt(1)] });
+  };
 
   const hasEnoughBalance = useMemo(() => {
     if (side === "sell") return true;
     if (!balance) return false;
     if (!buyPriceWithFees) return true;
 
-    return (balance.value || BigInt(0)) >= buyPriceWithFees
+    return (balance.value || BigInt(0)) >= buyPriceWithFees;
   }, [side, balance, buyPriceWithFees]);
 
   const enableTradeButton = () => {
-    if(side === "sell") return true;
-    if(!buyPriceWithFees) return false;
+    if (side === "sell") return true;
+    if (!buyPriceWithFees) return false;
 
     return hasEnoughBalance;
-  }
+  };
 
   return (
     <Modal open={true} onClose={close}>
@@ -67,7 +88,9 @@ export const TradeKeyModal: FC<Props> = ({
             <Typography level="body-lg" textColor="neutral.600">
               {side === "buy" ? "Buy" : "Sell"} price
             </Typography>
-            <Typography level="title-lg">{formatEth(side === "buy" ? buyPrice : sellPrice)} ETH</Typography>
+            <Typography level="title-lg">
+              {formatToDisplayString(side === "buy" ? buyPriceWithFees : sellPrice)} ETH
+            </Typography>
           </Flex>
           {!hasEnoughBalance && (
             <Flex x yc>
@@ -84,11 +107,7 @@ export const TradeKeyModal: FC<Props> = ({
 
               <Button
                 loading={tx.isLoading}
-                onClick={() =>
-                  side === "sell"
-                    ? tx.executeTx({ args: [socialData.address, BigInt(1)] })
-                    : tx.executeTx({ args: [socialData.address], value: buyPriceWithFees })
-                }
+                onClick={() => (side === "sell" ? handleSell() : handleBuy())}
                 disabled={!enableTradeButton()}
               >
                 {side === "buy" ? "Buy" : "Sell"} 1 key

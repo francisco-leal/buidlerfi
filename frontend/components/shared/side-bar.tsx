@@ -1,7 +1,7 @@
 import { useUserContext } from "@/contexts/userContext";
 import { useGetHolders } from "@/hooks/useBuilderFiApi";
 import { DEFAULT_PROFILE_PICTURE, LOGO } from "@/lib/assets";
-import { shortAddress } from "@/lib/utils";
+import { formatToDisplayString, shortAddress } from "@/lib/utils";
 import { AccountBalanceWalletOutlined, ContentCopy, PersonOutlineOutlined, SearchOutlined } from "@mui/icons-material";
 import { Avatar, Button, Drawer, IconButton, List, ListItem, ListItemButton, Typography } from "@mui/joy";
 import { ListItemIcon, ListItemText } from "@mui/material";
@@ -78,7 +78,7 @@ export const Sidebar: FC<Props> = ({ isOpen, setOpen }) => {
             </IconButton>
           </Flex>
           <Typography textColor={"neutral.600"} level="body-sm">
-            {holders.data?.length || 0} holders • Balance {balance?.formatted.slice(0, 8)} ETH
+            {holders.data?.length || 0} holders • Balance {formatToDisplayString(balance?.value)} ETH
           </Typography>
         </Flex>
       </Flex>

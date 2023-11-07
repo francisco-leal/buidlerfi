@@ -23,7 +23,7 @@ const socialInfo = {
   [SocialProfileType.LENS]: {
     name: "Lens",
     icon: <Image width={20} height={20} src={LENS_LOGO} alt="Lens logo" />,
-    url: (username: string) => `https://hey.xyz/u/${username}`
+    url: (username: string) => `https://hey.xyz/u/${username.replace(".lens", "")}`
   },
   [SocialProfileType.FARCASTER]: {
     name: "Farcaster",
@@ -67,7 +67,6 @@ export const Overview: FC<Props> = ({ socialData, isOwnProfile }) => {
           socialData={socialData}
           supporterKeysCount={ownedKeysCount || 0}
           hasKeys={hasKeys}
-          buyPrice={buyPrice}
           sellPrice={sellPrice}
           buyPriceWithFees={buyPriceAfterFee}
           side={buyModalState}

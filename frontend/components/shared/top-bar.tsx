@@ -1,10 +1,13 @@
 "use client";
 import { useUserContext } from "@/contexts/userContext";
 import { DEFAULT_PROFILE_PICTURE, LOGO_SMALL } from "@/lib/assets";
-import { Avatar, Skeleton } from "@mui/joy";
+import { formatToDisplayString } from "@/lib/utils";
+import { Menu } from "@mui/icons-material";
+import { Avatar, IconButton, Skeleton, Typography } from "@mui/joy";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { FC, useRef } from "react";
+import { useBalance } from "wagmi";
 import { Flex } from "./flex";
 
 interface Props {
@@ -14,7 +17,10 @@ interface Props {
 export const Topbar: FC<Props> = ({ setOpen }) => {
   const router = useRouter();
   const anchor = useRef<HTMLDivElement>(null);
-  const { user, isLoading } = useUserContext();
+  const { user, address, isLoading } = useUserContext();
+  const { data: balance } = useBalance({
+    address
+  });
 
   return (
     <>
@@ -22,20 +28,23 @@ export const Topbar: FC<Props> = ({ setOpen }) => {
         x
         xsb
         yc
-        p={2}
-        sx={{ width: "calc(100% - 32px)", backgroundColor: "Background", position: "sticky", top: 0, zIndex: 2 }}
+        p={1}
+        sx={{
+          width: "calc(100% - 32px)",
+          backgroundColor: theme => theme.palette.background.body,
+          position: "sticky",
+          top: 0,
+          zIndex: 2
+        }}
         borderBottom={"1px solid var(--neutral-outlined-border, #CDD7E1)"}
       >
-        <Avatar
-          ref={anchor}
-          src={user?.avatarUrl || DEFAULT_PROFILE_PICTURE}
-          onClick={() => setOpen(true)}
-          sx={{ position: "relative", cursor: "pointer" }}
-        >
-          <Skeleton loading={isLoading} />
-        </Avatar>
+        <Flex basis="100%">
+          <IconButton onClick={() => setOpen(true)}>
+            <Menu />
+          </IconButton>
+        </Flex>
         <Image
-          style={{ cursor: "pointer" }}
+          style={{ cursor: "pointer", flexBasis: "100%" }}
           onClick={() => router.push("/home")}
           alt="App logo"
           src={LOGO_SMALL}
@@ -43,7 +52,12 @@ export const Topbar: FC<Props> = ({ setOpen }) => {
           width={40}
         />
 
-        <Flex height={40} width={40} />
+        <Flex basis="100%" y xe gap1>
+          <Avatar size="md" ref={anchor} src={user?.avatarUrl || DEFAULT_PROFILE_PICTURE} sx={{ position: "relative" }}>
+            <Skeleton loading={isLoading} />
+          </Avatar>
+          <Typography level="body-xs">{formatToDisplayString(balance?.value)} ETH</Typography>
+        </Flex>
       </Flex>
     </>
   );

@@ -72,12 +72,12 @@ const TRADE_DATA = {
   }
 } as const;
 
-export const useTradeKey = (side: "buy" | "sell") => {
+export const useTradeKey = (side: "buy" | "sell", successFn?: () => void) => {
   const toastId = useRef<string | number | undefined>(undefined);
 
   const {
     data: tx,
-    write,
+    writeAsync,
     isLoading
   } = useContractWrite({
     ...BUILDERFI_CONTRACT,
@@ -99,9 +99,9 @@ export const useTradeKey = (side: "buy" | "sell") => {
         type: "success",
         autoClose: 3000
       });
-      close();
+      successFn && successFn();
     }
   });
 
-  return { isLoading: isLoading || txProcessing, executeTx: write };
+  return { isLoading: isLoading || txProcessing, executeTx: writeAsync };
 };

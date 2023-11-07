@@ -1,7 +1,13 @@
 import { useUserContext } from "@/contexts/userContext";
-import { CircularProgress } from "@mui/joy";
+import { useGetActiveNetwork, useSwitchNetwork } from "@/hooks/useNetworkUtils";
+import { formatError } from "@/lib/utils";
+import { Button, CircularProgress, Typography } from "@mui/joy";
+import { usePrivy } from "@privy-io/react-auth";
 import { usePathname, useRouter } from "next/navigation";
 import { ReactNode, useCallback, useEffect, useState } from "react";
+import { toast } from "react-toastify";
+import { toHex } from "viem";
+import { baseGoerli } from "viem/chains";
 import { Flex } from "../shared/flex";
 
 export const AuthRoute = ({ children }: { children: ReactNode }) => {
@@ -10,6 +16,9 @@ export const AuthRoute = ({ children }: { children: ReactNode }) => {
   const user = useUserContext();
   const pathname = usePathname();
   const router = useRouter();
+  const {} = usePrivy();
+  const switchNetwork = useSwitchNetwork();
+  const chain = useGetActiveNetwork();
 
   const redirect = useCallback(
     (path: string) => {
@@ -47,6 +56,27 @@ export const AuthRoute = ({ children }: { children: ReactNode }) => {
     return (
       <Flex y yc xc grow>
         <CircularProgress />
+      </Flex>
+    );
+  }
+
+  if (
+    user.isAuthenticatedAndActive &&
+    user.privyUser?.wallet?.walletClientType !== "privy" &&
+    chain !== toHex(baseGoerli.id)
+  ) {
+    return (
+      <Flex y yc xc grow gap3>
+        <Typography>Wrong Network</Typography>
+        <Button
+          onClick={() =>
+            switchNetwork(baseGoerli.id)
+              .then(() => location.reload())
+              .catch(err => toast.error(formatError(err)))
+          }
+        >
+          Switch Network
+        </Button>
       </Flex>
     );
   }
