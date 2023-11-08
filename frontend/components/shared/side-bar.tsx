@@ -115,7 +115,10 @@ export const Sidebar: FC<Props> = ({ isOpen, setOpen }) => {
           ))}
       </List>
       <Flex y xs p={2} gap3>
-        <Button variant="soft" onClick={() => window.open()}>
+        <Button
+          variant="soft"
+          onClick={() => window.open("https://twitter.com/messages/compose?recipient_id=1709427051135160320")}
+        >
           Give Feedback
         </Button>
         <Image src={LOGO} alt="App logo" height={40} width={120} />
