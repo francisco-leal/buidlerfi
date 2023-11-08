@@ -23,7 +23,7 @@ const socialInfo = {
   [SocialProfileType.LENS]: {
     name: "Lens",
     icon: <Image width={20} height={20} src={LENS_LOGO} alt="Lens logo" />,
-    url: (username: string) => `https://hey.xyz/u/${username.replace(".lens", "")}`
+    url: (username: string) => `https://hey.xyz/u/${username.replace("lens/@", "")}`
   },
   [SocialProfileType.FARCASTER]: {
     name: "Farcaster",
@@ -124,8 +124,11 @@ export const Overview: FC<Props> = ({ socialData, isOwnProfile }) => {
             {/* Only display if user has a display name */}
             {shortAddress(socialData.address) !== socialData.name && (
               <Flex x yc gap={0.5} height="20px">
+                <Typography level="body-sm" startDecorator={<KeyOutlined fontSize="small" />}>
+                  <Skeleton loading={isLoading}>{formatEth(buyPrice)}</Skeleton>
+                </Typography>
                 <Typography level="body-sm" textColor="neutral.600">
-                  {shortAddress(socialData.address)}
+                  • {shortAddress(socialData.address)}
                 </Typography>
                 <IconButton size="sm" onClick={() => window.navigator.clipboard.writeText(socialData.address)}>
                   <ContentCopy sx={{ fontSize: "0.9rem" }} />
@@ -135,10 +138,7 @@ export const Overview: FC<Props> = ({ socialData, isOwnProfile }) => {
           </Flex>
         </Flex>
 
-        <Flex y gap1>
-          <Typography level="body-sm" startDecorator={<KeyOutlined fontSize="small" />}>
-            <Skeleton loading={isLoading}>{formatEth(buyPrice)}</Skeleton>
-          </Typography>
+        <Flex x gap2>
           {socialData.socialsList.map(social => {
             const additionalData = socialInfo[social.dappName as keyof typeof socialInfo];
             return (
