@@ -2,7 +2,13 @@ import { useUserContext } from "@/contexts/userContext";
 import { useGetHolders } from "@/hooks/useBuilderFiApi";
 import { DEFAULT_PROFILE_PICTURE, LOGO } from "@/lib/assets";
 import { formatToDisplayString, shortAddress } from "@/lib/utils";
-import { AccountBalanceWalletOutlined, ContentCopy, PersonOutlineOutlined, SearchOutlined } from "@mui/icons-material";
+import {
+  AccountBalanceWalletOutlined,
+  AdminPanelSettings,
+  ContentCopy,
+  PersonOutlineOutlined,
+  SearchOutlined
+} from "@mui/icons-material";
 import { Avatar, Button, Drawer, IconButton, List, ListItem, ListItemButton, Typography } from "@mui/joy";
 import { ListItemIcon, ListItemText } from "@mui/material";
 import { usePrivy } from "@privy-io/react-auth";
@@ -48,9 +54,15 @@ export const Sidebar: FC<Props> = ({ isOpen, setOpen }) => {
         text: "Invite",
         icon: <ParachuteIcon />,
         path: "/invite"
+      },
+      {
+        text: "Admin",
+        icon: <AdminPanelSettings />,
+        path: "/admin",
+        hidden: !user?.isAdmin
       }
     ],
-    [address]
+    [address, user?.isAdmin]
   );
 
   if (!user) return <></>;
@@ -83,21 +95,26 @@ export const Sidebar: FC<Props> = ({ isOpen, setOpen }) => {
         </Flex>
       </Flex>
       <List>
-        {navItems.map(item => (
-          <ListItem key={item.text}>
-            <ListItemButton
-              onClick={() => {
-                router.push(item.path);
-                setOpen(false);
-              }}
-            >
-              <ListItemIcon>{item.icon}</ListItemIcon>
-              <ListItemText primary={item.text} />
-            </ListItemButton>
-          </ListItem>
-        ))}
+        {navItems
+          .filter(item => !item.hidden)
+          .map(item => (
+            <ListItem key={item.text}>
+              <ListItemButton
+                onClick={() => {
+                  router.push(item.path);
+                  setOpen(false);
+                }}
+              >
+                <ListItemIcon>{item.icon}</ListItemIcon>
+                <ListItemText primary={item.text} />
+              </ListItemButton>
+            </ListItem>
+          ))}
       </List>
       <Flex y xs p={2} gap3>
+        <Button variant="soft" onClick={() => window.open()}>
+          Give Feedback
+        </Button>
         <Image src={LOGO} alt="App logo" height={40} width={120} />
       </Flex>
     </Drawer>

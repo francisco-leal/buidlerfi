@@ -27,8 +27,6 @@ export default function ChatsPage() {
     return [holding, tradingFees];
   }, [address, allHolding, builderFiData]);
 
-  console.log(allHolding);
-
   if (isLoading) {
     return (
       <Flex y yc xc grow>
@@ -65,14 +63,14 @@ export default function ChatsPage() {
         <Typography level="h4" mb={1}>
           {allHolding ? `Holding(${allHolding.length})` : "Holding"}
         </Typography>
-        {allHolding?.length === 0 ? (
+        {!allHolding || allHolding?.length === 0 ? (
           <PageMessage
             icon={<KeyOutlined />}
             title="You don't have any keys"
             text="This space is where you'll find all your expert key holdings."
           />
         ) : (
-          allHolding?.map(item => (
+          allHolding.map(item => (
             <UserItem
               address={item.owner.owner as `0x${string}`}
               buyPrice={tryParseBigInt(item.owner.buyPrice)}

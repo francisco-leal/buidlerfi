@@ -1,4 +1,5 @@
 import {
+  checkUsersExistSA,
   createUserSA,
   getCurrentUserSA,
   getUserSA,
@@ -31,8 +32,8 @@ export const useGetUser = (address?: string) => {
 };
 
 export const useGetCurrentUser = () => {
-  const { getAccessToken } = usePrivy();
-  return useQuery(["useGetCurrentUser"], async () =>
+  const { getAccessToken, user } = usePrivy();
+  return useQuery(["useGetCurrentUser", user?.id], async () =>
     getCurrentUserSA({ authorization: await getAccessToken() }).then(res => res.data)
   );
 };
@@ -41,5 +42,14 @@ export const useRefreshCurrentUser = () => {
   const { getAccessToken } = usePrivy();
   return useMutation(async () =>
     refreshCurrentUserProfileSA({ authorization: await getAccessToken() }).then(res => res.data)
+  );
+};
+
+export const useCheckUsersExist = (wallets?: string[]) => {
+  const { getAccessToken } = usePrivy();
+  return useQuery(
+    ["useCheckUsersExist", wallets],
+    async () => checkUsersExistSA(wallets!, { authorization: await getAccessToken() }).then(res => res.data),
+    { enabled: !!wallets }
   );
 };

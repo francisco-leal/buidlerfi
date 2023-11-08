@@ -40,7 +40,8 @@ export async function serverActionWrapper<T>(
     : undefined;
   if (!payload?.payload.sub) throw new Error(ERRORS.UNAUTHORIZED);
   const res = await fn({ userId: payload.payload.sub })
-    .catch(() => {
+    .catch(err => {
+      console.error(err);
       throw new Error(ERRORS.SOMETHING_WENT_WRONG);
     })
     .then(res => {

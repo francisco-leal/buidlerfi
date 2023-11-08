@@ -64,3 +64,16 @@ export function buildQueryClauses(query: URLSearchParams) {
 export function isEVMAddress(str: string) {
   return /^0x[a-fA-F0-9]{40}$/gm.test(str);
 }
+
+export const ipfsToURL = (ipfsAddress?: string) => {
+  if (!ipfsAddress) return ipfsAddress;
+
+  //Infura IPFS gateway is not working properly
+  if (ipfsAddress.startsWith("https://ipfs.infura.io/")) {
+    return ipfsAddress.replace("https://ipfs.infura.io/", "https://cloudflare-ipfs.com/");
+  }
+  if (ipfsAddress.startsWith("http")) {
+    return ipfsAddress;
+  }
+  return "https://cloudflare-ipfs.com/" + ipfsAddress.replace("://", "/");
+};

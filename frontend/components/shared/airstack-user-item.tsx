@@ -1,46 +1,56 @@
 "use client";
-import { useSocialData } from "@/hooks/useSocialData";
+import { GetFollowersResponse } from "@/app/api/airstack/followers/route";
+import { useGetUser } from "@/hooks/useUserApi";
+import { ipfsToURL } from "@/lib/utils";
 import { ChevronRight } from "@mui/icons-material";
 import { Skeleton, Typography } from "@mui/joy";
 import Avatar from "@mui/joy/Avatar";
 import { useRouter } from "next/navigation";
+import { useMemo } from "react";
 import { Flex } from "./flex";
 
 interface Props {
-  address: `0x${string}`;
   dappName: string;
+  airstackUser: GetFollowersResponse["Follower"][number]["followerAddress"];
 }
 
-export function AirstackUserItem({ address, dappName }: Props) {
+export function AirstackUserItem({ dappName, airstackUser }: Props) {
   const router = useRouter();
+  const [address, avatar, name] = useMemo(() => {
+    const profile = airstackUser.socials.find(item => item.dappName === dappName);
+    console.log(airstackUser.addresses);
+    return [airstackUser.addresses[0], ipfsToURL(profile?.profileImage), profile?.profileName];
+  }, [airstackUser, dappName]);
 
-  const socialData = useSocialData(address);
+  const { data: user, isLoading } = useGetUser(address);
 
   return (
-    <Flex
-      x
-      xsb
-      yc
-      px={{ xs: 0, sm: 2 }}
-      py={1}
-      sx={{ ":hover": { backgroundColor: "neutral.100" } }}
-      className="transition-all cursor-pointer"
-      onClick={() => router.push(`/${address}`)}
-    >
-      <Flex x yc gap2>
-        <Avatar size="sm" src={socialData.avatar}>
-          <Skeleton loading={socialData.isLoading} />
-        </Avatar>
-        <Flex y gap={0.5}>
-          <Typography textColor={"neutral.800"} fontWeight={600} level="body-sm">
-            <Skeleton loading={socialData.isLoading}>{socialData.name}</Skeleton>
-          </Typography>
-          <Typography textColor={"neutral.500"} level="body-sm">
-            {dappName}
-          </Typography>
+    <>
+      <Flex
+        x
+        xsb
+        yc
+        px={{ xs: 0, sm: 2 }}
+        py={1}
+        sx={{ ":hover": { backgroundColor: "neutral.100" } }}
+        className="transition-all cursor-pointer"
+        onClick={() => user && router.push(`/profile/${user.wallet}`)}
+      >
+        <Flex x yc gap2>
+          <Avatar size="sm" src={avatar}>
+            <Skeleton loading={isLoading} />
+          </Avatar>
+          <Flex y gap={0.5}>
+            <Typography textColor={"neutral.800"} fontWeight={600} level="body-sm">
+              <Skeleton loading={isLoading}>{name}</Skeleton>
+            </Typography>
+            <Typography textColor={"neutral.500"} level="body-sm">
+              {dappName}
+            </Typography>
+          </Flex>
         </Flex>
+        {user && <ChevronRight />}
       </Flex>
-      <ChevronRight />
-    </Flex>
+    </>
   );
 }

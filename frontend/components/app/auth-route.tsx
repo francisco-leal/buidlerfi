@@ -48,6 +48,11 @@ export const AuthRoute = ({ children }: { children: ReactNode }) => {
         const redirected = redirect("/home");
         if (redirected) return;
       }
+
+      if (pathname.startsWith("/admin") && !user.user?.isAdmin) {
+        const redirected = redirect("/home");
+        if (redirected) return;
+      }
     }
     setIsReady(true);
   }, [handleAnonymousRedirect, pathname, redirect, router, user]);

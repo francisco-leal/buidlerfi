@@ -2,7 +2,7 @@
 
 import { ERRORS } from "@/lib/errors";
 import prisma from "@/lib/prisma";
-import { generateRandomString } from "@/lib/utils";
+import { generateRandomString, ipfsToURL } from "@/lib/utils";
 import { privyUser } from "@/models/helpers.model";
 import { GetTalentResponse } from "@/models/talentProtocol.model";
 import { SocialProfileType, User } from "@prisma/client";
@@ -10,6 +10,26 @@ import axios from "axios";
 import { getAirstackSocialData } from "../../lib/api/backend/airstack";
 import { fetchHolders } from "../../lib/api/common/builderfi";
 import { getEnsProfile } from "../../lib/api/common/ens";
+
+export const refreshAllUsersProfile = async (privyUserId: string) => {
+  //Check if user has admin role
+  const user = await prisma.user.findUnique({
+    where: {
+      privyUserId: privyUserId
+    }
+  });
+  if (!user?.isAdmin) return { error: ERRORS.UNAUTHORIZED };
+
+  const users = await prisma.user.findMany();
+  for (const user of users) {
+    try {
+      await updateUserSocialProfiles(user);
+    } catch (err) {
+      console.error("Error while updating social profiles for user: ", user.wallet, err);
+    }
+  }
+  return { data: users };
+};
 
 //Refresh socials profiles
 export const refreshCurrentUserProfile = async (privyUserId: string) => {
@@ -32,6 +52,18 @@ export const getCurrentUser = async (privyUserId: string) => {
       inviteCodes: true,
       socialProfiles: true,
       points: true
+    }
+  });
+  return { data: res };
+};
+
+export const checkUsersExist = async (wallets: string[]) => {
+  const addresses = wallets.map(wallet => wallet.toLowerCase());
+  const res = await prisma.user.findMany({
+    where: {
+      wallet: {
+        in: addresses
+      }
     }
   });
   return { data: res };
@@ -142,105 +174,132 @@ export const createUser = async (privyUser: privyUser, inviteCode: string) => {
 };
 
 export const updateUserSocialProfiles = async (user: User) => {
-  const ensProfile = await getEnsProfile(user.wallet as `0x${string}`);
-  const talentProtocolProfile = await axios
-    .get<GetTalentResponse>(`${process.env.TALENT_PROTOCOL_API_BASE_URL}/talents/${user.wallet}`)
-    .then(res => res.data)
-    .catch(() => undefined);
-  const airstackData = await getAirstackSocialData(user.wallet);
-  const lensProfile = airstackData.socials?.find(social => social.dappName === "lens");
-  const farcasterProfile = airstackData.socials?.find(social => social.dappName === "farcaster");
-
-  if (ensProfile.name) {
-    await prisma.socialProfile.upsert({
-      where: {
-        userId_type: {
-          userId: user.id,
-          type: SocialProfileType.ENS
-        }
-      },
-      update: {
-        profileName: ensProfile.name,
-        profileImage: ensProfile.avatar
-      },
-      create: {
-        profileName: ensProfile.name,
-        profileImage: ensProfile.avatar,
-        type: SocialProfileType.ENS,
-        userId: user.id
+  let ensProfile: { name?: string | null; avatar?: string } = {};
+  let talentProtocolProfile: GetTalentResponse | undefined;
+  let lensProfile:
+    | {
+        dappName: string;
+        profileName: string;
+        profileImage: string;
       }
-    });
+    | undefined;
+  let farcasterProfile:
+    | {
+        dappName: string;
+        profileName: string;
+        profileImage: string;
+      }
+    | undefined;
+  try {
+    ensProfile = await getEnsProfile(user.wallet as `0x${string}`);
+    if (ensProfile.name) {
+      await prisma.socialProfile.upsert({
+        where: {
+          userId_type: {
+            userId: user.id,
+            type: SocialProfileType.ENS
+          }
+        },
+        update: {
+          profileName: ensProfile.name,
+          profileImage: ensProfile.avatar
+        },
+        create: {
+          profileName: ensProfile.name,
+          profileImage: ensProfile.avatar,
+          type: SocialProfileType.ENS,
+          userId: user.id
+        }
+      });
+    }
+  } catch (err) {
+    console.error("Error while updating ENS profile: ", err);
   }
 
-  if (talentProtocolProfile) {
-    let url = "";
-    try {
-      const imageUrl = new URL(talentProtocolProfile.talent.profile_picture_url);
-      url = imageUrl.origin + imageUrl.pathname;
-    } catch {
-      // ignore, leave empty
+  try {
+    talentProtocolProfile = await axios
+      .get<GetTalentResponse>(`${process.env.TALENT_PROTOCOL_API_BASE_URL}/talents/${user.wallet}`)
+      .then(res => res.data)
+      .catch(() => undefined);
+    if (talentProtocolProfile) {
+      let url = "";
+      try {
+        const imageUrl = new URL(talentProtocolProfile.talent.profile_picture_url);
+        url = imageUrl.origin + imageUrl.pathname;
+      } catch {
+        // ignore, leave empty
+      }
+
+      await prisma.socialProfile.upsert({
+        where: {
+          userId_type: {
+            userId: user.id,
+            type: SocialProfileType.TALENT_PROTOCOL
+          }
+        },
+        update: {
+          profileName: talentProtocolProfile.talent.name,
+          profileImage: url
+        },
+        create: {
+          profileName: talentProtocolProfile.talent.name,
+          profileImage: url,
+          type: SocialProfileType.TALENT_PROTOCOL,
+          userId: user.id
+        }
+      });
+    }
+  } catch (err) {
+    console.error("Error while updating Talent Protocol profile: ", err);
+  }
+
+  try {
+    const airstackData = await getAirstackSocialData(user.wallet);
+    lensProfile = airstackData?.socials?.find(social => social.dappName === "lens");
+    farcasterProfile = airstackData?.socials?.find(social => social.dappName === "farcaster");
+    if (lensProfile) {
+      await prisma.socialProfile.upsert({
+        where: {
+          userId_type: {
+            userId: user.id,
+            type: SocialProfileType.LENS
+          }
+        },
+        update: {
+          profileName: lensProfile.profileName,
+          profileImage: ipfsToURL(lensProfile.profileImage)
+        },
+        create: {
+          profileName: lensProfile.profileName,
+          profileImage: ipfsToURL(lensProfile.profileImage),
+          type: SocialProfileType.LENS,
+          userId: user.id
+        }
+      });
     }
 
-    await prisma.socialProfile.upsert({
-      where: {
-        userId_type: {
-          userId: user.id,
-          type: SocialProfileType.TALENT_PROTOCOL
+    if (farcasterProfile) {
+      await prisma.socialProfile.upsert({
+        where: {
+          userId_type: {
+            userId: user.id,
+            type: SocialProfileType.FARCASTER
+          }
+        },
+        update: {
+          profileName: farcasterProfile.profileName,
+          profileImage: ipfsToURL(farcasterProfile.profileImage)
+        },
+        create: {
+          profileName: farcasterProfile.profileName,
+          profileImage: ipfsToURL(farcasterProfile.profileImage),
+          type: SocialProfileType.FARCASTER,
+          userId: user.id
         }
-      },
-      update: {
-        profileName: talentProtocolProfile.talent.name,
-        profileImage: url
-      },
-      create: {
-        profileName: talentProtocolProfile.talent.name,
-        profileImage: url,
-        type: SocialProfileType.TALENT_PROTOCOL,
-        userId: user.id
-      }
-    });
-  }
-
-  if (lensProfile) {
-    await prisma.socialProfile.upsert({
-      where: {
-        userId_type: {
-          userId: user.id,
-          type: SocialProfileType.LENS
-        }
-      },
-      update: {
-        profileName: lensProfile.profileName,
-        profileImage: lensProfile.profileImage
-      },
-      create: {
-        profileName: lensProfile.profileName,
-        profileImage: lensProfile.profileImage,
-        type: SocialProfileType.LENS,
-        userId: user.id
-      }
-    });
-  }
-
-  if (farcasterProfile) {
-    await prisma.socialProfile.upsert({
-      where: {
-        userId_type: {
-          userId: user.id,
-          type: SocialProfileType.FARCASTER
-        }
-      },
-      update: {
-        profileName: farcasterProfile.profileName,
-        profileImage: farcasterProfile.profileImage
-      },
-      create: {
-        profileName: farcasterProfile.profileName,
-        profileImage: farcasterProfile.profileImage,
-        type: SocialProfileType.FARCASTER,
-        userId: user.id
-      }
-    });
+      });
+    }
+  } catch (err) {
+    console.error("Error while updating Airstack profile: ", err);
   }
 
   const defaultAvatar =

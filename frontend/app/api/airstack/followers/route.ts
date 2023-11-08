@@ -18,7 +18,9 @@ const getSocialFollowersQuery = `query GetSocial($identity: Identity!) {
           resolvedAddress
         }
         socials {
+          dappName
           profileName
+          profileImage
           profileTokenId
           profileTokenIdHex
           userId
@@ -38,7 +40,9 @@ export interface GetFollowersResponse {
       identity: string;
       addresses: string[];
       socials: {
+        dappName: string;
         profileName: string;
+        profileImage: string;
         profileTokenId: string;
         profileTokenIdHex: string;
         userId: string;

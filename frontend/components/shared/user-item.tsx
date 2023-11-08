@@ -10,8 +10,8 @@ import { Flex } from "./flex";
 
 interface Props {
   address: `0x${string}`;
-  numberOfHolders: number;
-  buyPrice: bigint;
+  numberOfHolders?: number;
+  buyPrice?: bigint;
 }
 
 export function UserItem({ address, numberOfHolders, buyPrice }: Props) {
@@ -37,9 +37,11 @@ export function UserItem({ address, numberOfHolders, buyPrice }: Props) {
           <Typography textColor={"neutral.800"} fontWeight={600} level="body-sm">
             <Skeleton loading={socialData.isLoading}>{socialData.name}</Skeleton>
           </Typography>
-          <Typography textColor={"neutral.600"} level="body-sm">
-            {numberOfHolders.toString()} holders • Price {formatUnits(tryParseBigInt(buyPrice || 0), 18)} ETH
-          </Typography>
+          {!!numberOfHolders && !!buyPrice && (
+            <Typography textColor={"neutral.600"} level="body-sm">
+              {numberOfHolders.toString()} holders • Price {formatUnits(tryParseBigInt(buyPrice || 0), 18)} ETH
+            </Typography>
+          )}
         </Flex>
       </Flex>
       <ChevronRight />
