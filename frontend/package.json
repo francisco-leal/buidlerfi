@@ -21,6 +21,7 @@
     "@prisma/client": "^5.3.1",
     "@privy-io/react-auth": "^1.44.0",
     "@privy-io/wagmi-connector": "^0.1.5",
+    "@sentry/nextjs": "^7.78.0",
     "@tanstack/react-query": "^4.35.3",
     "autoprefixer": "10.4.15",
     "axios": "^1.5.1",
