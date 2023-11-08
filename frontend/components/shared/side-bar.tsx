@@ -92,6 +92,9 @@ export const Sidebar: FC<Props> = ({ isOpen, setOpen }) => {
           <Typography textColor={"neutral.600"} level="body-sm">
             {holders.data?.length || 0} holders • Balance {formatToDisplayString(balance?.value)} ETH
           </Typography>
+          <Button variant="plain" onClick={() => window.open("https://bridge.base.org/deposit")}>
+            Deposit Funds
+          </Button>
         </Flex>
       </Flex>
       <List>
