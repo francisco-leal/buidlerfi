@@ -60,6 +60,24 @@ export const checkUsersExist = async (wallets: string[]) => {
   return { data: res };
 };
 
+export const getAllUsers = async () => {
+  const res = await prisma.user.findMany({
+    where: {
+      isActive: true
+    },
+    include: {
+      inviteCodes: {
+        where: {
+          isActive: true
+        }
+      },
+      socialProfiles: true,
+      points: true
+    },
+  });
+  return { data: res };
+}
+
 export const getUser = async (wallet: string) => {
   const address = wallet.toLowerCase();
   const res = await prisma.user.findUnique({
