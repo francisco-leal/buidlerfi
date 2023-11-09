@@ -6,23 +6,17 @@ import { GetTalentResponse } from "@/models/talentProtocol.model";
 import { SocialProfileType, User } from "@prisma/client";
 import axios from "axios";
 
+interface airstackSocial {
+  dappName: string;
+  profileName: string;
+  profileImage: string;
+}
+
 export const updateUserSocialProfiles = async (user: User) => {
   let ensProfile: { name?: string | null; avatar?: string } = {};
   let talentProtocolProfile: GetTalentResponse | undefined;
-  let lensProfile:
-    | {
-        dappName: string;
-        profileName: string;
-        profileImage: string;
-      }
-    | undefined;
-  let farcasterProfile:
-    | {
-        dappName: string;
-        profileName: string;
-        profileImage: string;
-      }
-    | undefined;
+  let lensProfile: airstackSocial | undefined;
+  let farcasterProfile: airstackSocial | undefined;
   try {
     ensProfile = await getEnsProfile(user.wallet as `0x${string}`);
     if (ensProfile.name) {
@@ -55,10 +49,9 @@ export const updateUserSocialProfiles = async (user: User) => {
       .then(res => res.data)
       .catch(() => undefined);
     if (talentProtocolProfile) {
-      let url = "";
       try {
         const imageUrl = new URL(talentProtocolProfile.talent.profile_picture_url);
-        url = imageUrl.origin + imageUrl.pathname;
+        talentProtocolProfile.talent.profile_picture_url = imageUrl.origin + imageUrl.pathname;
       } catch {
         // ignore, leave empty
       }
@@ -72,11 +65,11 @@ export const updateUserSocialProfiles = async (user: User) => {
         },
         update: {
           profileName: talentProtocolProfile.talent.name,
-          profileImage: url
+          profileImage: talentProtocolProfile.talent.profile_picture_url
         },
         create: {
           profileName: talentProtocolProfile.talent.name,
-          profileImage: url,
+          profileImage: talentProtocolProfile.talent.profile_picture_url,
           type: SocialProfileType.TALENT_PROTOCOL,
           userId: user.id
         }
@@ -89,7 +82,18 @@ export const updateUserSocialProfiles = async (user: User) => {
   try {
     const airstackData = await getAirstackSocialData(user.wallet);
     lensProfile = airstackData?.socials?.find(social => social.dappName === "lens");
+    if (lensProfile?.profileName) {
+      lensProfile.profileName = lensProfile?.profileName.replace("lens/@", "");
+    }
+    if (lensProfile?.profileImage) {
+      lensProfile.profileImage = ipfsToURL(lensProfile.profileImage);
+    }
+
     farcasterProfile = airstackData?.socials?.find(social => social.dappName === "farcaster");
+    if (farcasterProfile?.profileImage) {
+      farcasterProfile.profileImage = ipfsToURL(farcasterProfile.profileImage);
+    }
+
     if (lensProfile) {
       await prisma.socialProfile.upsert({
         where: {
@@ -100,11 +104,11 @@ export const updateUserSocialProfiles = async (user: User) => {
         },
         update: {
           profileName: lensProfile.profileName,
-          profileImage: ipfsToURL(lensProfile.profileImage)
+          profileImage: lensProfile.profileImage
         },
         create: {
           profileName: lensProfile.profileName,
-          profileImage: ipfsToURL(lensProfile.profileImage),
+          profileImage: lensProfile.profileImage,
           type: SocialProfileType.LENS,
           userId: user.id
         }
@@ -121,11 +125,11 @@ export const updateUserSocialProfiles = async (user: User) => {
         },
         update: {
           profileName: farcasterProfile.profileName,
-          profileImage: ipfsToURL(farcasterProfile.profileImage)
+          profileImage: farcasterProfile.profileImage
         },
         create: {
           profileName: farcasterProfile.profileName,
-          profileImage: ipfsToURL(farcasterProfile.profileImage),
+          profileImage: farcasterProfile.profileImage,
           type: SocialProfileType.FARCASTER,
           userId: user.id
         }
