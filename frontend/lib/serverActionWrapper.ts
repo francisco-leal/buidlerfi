@@ -2,6 +2,7 @@
 
 import * as jose from "jose";
 import { ERRORS } from "./errors";
+import prisma from "./prisma";
 
 const SPKI = `-----BEGIN PUBLIC KEY-----
 MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAE0yFanm3yTbCe4Z4KM9yi/IGZf+ugrj+rn82e/guPcFlyLiudyubOWqFFmL/bVdxDY5LFhJdvBwfDYKR8LwcmPg==
@@ -19,17 +20,16 @@ export interface ServerActionOptions {
 }
 
 export interface ServerActionData {
-  userId: string;
+  privyUserId: string;
 }
 
 //This wrapper is used to check authorization
-//Servers actions need to throw an error in order to return a 500 error
-//Without this, the client can't know if an error occured
 export async function serverActionWrapper<T>(
   fn: (data: ServerActionData) => Promise<ServerActionResponse<T>>,
-  options?: ServerActionOptions
+  options: ServerActionOptions,
+  isAdminRoute?: boolean
 ) {
-  if (!options?.authorization) throw new Error(ERRORS.UNAUTHORIZED);
+  if (!options?.authorization) return { error: ERRORS.UNAUTHORIZED } as ServerActionResponse<T>;
   const verifKey = await verificationKey;
   const authToken = options.authorization.replace("Bearer ", "");
   const payload = authToken
@@ -38,15 +38,18 @@ export async function serverActionWrapper<T>(
         audience: process.env.PRIVY_APP_ID
       })
     : undefined;
-  if (!payload?.payload.sub) throw new Error(ERRORS.UNAUTHORIZED);
-  const res = await fn({ userId: payload.payload.sub })
+  if (!payload?.payload.sub) return { error: ERRORS.UNAUTHORIZED } as ServerActionResponse<T>;
+  if (isAdminRoute) {
+    const user = await prisma.user.findUnique({ where: { privyUserId: payload.payload.sub } });
+    if (!user?.isAdmin) return { error: ERRORS.UNAUTHORIZED } as ServerActionResponse<T>;
+  }
+  const res = await fn({ privyUserId: payload.payload.sub })
     .catch(err => {
       console.error(err);
-      throw new Error(ERRORS.SOMETHING_WENT_WRONG);
+      return { error: ERRORS.SOMETHING_WENT_WRONG } as ServerActionResponse<T>;
     })
     .then(res => {
-      if (res.error) throw new Error(res.error);
-      else return res;
+      return res as ServerActionResponse<T>;
     });
 
   return res;

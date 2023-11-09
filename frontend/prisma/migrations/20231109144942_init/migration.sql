@@ -7,11 +7,13 @@ CREATE TYPE "ReactionType" AS ENUM ('LIKE', 'DISLIKE', 'LOVE', 'HATE', 'LAUGH', 
 -- CreateTable
 CREATE TABLE "User" (
     "wallet" VARCHAR(50) NOT NULL,
-    "invitedById" INTEGER,
+    "socialWallet" VARCHAR(50),
+    "privyUserId" TEXT,
     "displayName" VARCHAR(255),
     "avatarUrl" VARCHAR(500),
-    "privyUserId" TEXT,
     "isActive" BOOLEAN NOT NULL DEFAULT false,
+    "isAdmin" BOOLEAN NOT NULL DEFAULT false,
+    "invitedById" INTEGER,
     "id" SERIAL NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
@@ -77,6 +79,7 @@ CREATE TABLE "InviteCode" (
     "userId" INTEGER NOT NULL,
     "maxUses" INTEGER NOT NULL,
     "used" INTEGER NOT NULL,
+    "isActive" BOOLEAN NOT NULL DEFAULT false,
     "id" SERIAL NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
@@ -97,17 +100,38 @@ CREATE TABLE "Points" (
     CONSTRAINT "Points_pkey" PRIMARY KEY ("id")
 );
 
+-- CreateTable
+CREATE TABLE "RecommendedUser" (
+    "sourceUserId" INTEGER NOT NULL,
+    "recommendedUserId" INTEGER NOT NULL,
+    "recommendationScore" INTEGER NOT NULL,
+    "id" SERIAL NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "RecommendedUser_pkey" PRIMARY KEY ("id")
+);
+
 -- CreateIndex
 CREATE UNIQUE INDEX "User_wallet_key" ON "User"("wallet");
 
 -- CreateIndex
+CREATE UNIQUE INDEX "User_socialWallet_key" ON "User"("socialWallet");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "User_privyUserId_key" ON "User"("privyUserId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "SocialProfile_userId_type_key" ON "SocialProfile"("userId", "type");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "Reaction_userId_questionId_key" ON "Reaction"("userId", "questionId");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "InviteCode_code_key" ON "InviteCode"("code");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "RecommendedUser_sourceUserId_recommendedUserId_key" ON "RecommendedUser"("sourceUserId", "recommendedUserId");
 
 -- AddForeignKey
 ALTER TABLE "User" ADD CONSTRAINT "User_invitedById_fkey" FOREIGN KEY ("invitedById") REFERENCES "InviteCode"("id") ON DELETE SET NULL ON UPDATE CASCADE;
@@ -138,3 +162,9 @@ ALTER TABLE "InviteCode" ADD CONSTRAINT "InviteCode_userId_fkey" FOREIGN KEY ("u
 
 -- AddForeignKey
 ALTER TABLE "Points" ADD CONSTRAINT "Points_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "RecommendedUser" ADD CONSTRAINT "RecommendedUser_sourceUserId_fkey" FOREIGN KEY ("sourceUserId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "RecommendedUser" ADD CONSTRAINT "RecommendedUser_recommendedUserId_fkey" FOREIGN KEY ("recommendedUserId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
