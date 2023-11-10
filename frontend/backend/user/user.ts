@@ -78,6 +78,27 @@ export const getAllUsers = async () => {
   return { data: res };
 }
 
+export const getUsersByAddresses = async (addresses: string[]) => {
+  const res = await prisma.user.findMany({
+    where: {
+      isActive: true,
+      wallet: {
+        in: addresses
+      }
+    },
+    include: {
+      inviteCodes: {
+        where: {
+          isActive: true
+        }
+      },
+      socialProfiles: true,
+      points: true
+    },
+  });
+  return { data: res };
+}
+
 export const getUser = async (wallet: string) => {
   const address = wallet.toLowerCase();
   const res = await prisma.user.findUnique({

@@ -1,6 +1,6 @@
-import axios, { AxiosRequestConfig, Method } from 'axios';
+import axios, { AxiosRequestConfig, Method } from "axios";
 
-import { FollowTalentProtocol } from '../airstack/onchain-graph/interfaces/recommended-user';
+import { FollowTalentProtocol } from "../airstack/onchain-graph/interfaces/recommended-user";
 
 export enum TalentProtocolConnectionType {
   MUTUAL = 'mutual_subscription',
@@ -29,7 +29,7 @@ export const paginateTalentProtocolApiRequest = async <T>(
   method: Method,
   url: string,
   queryParams: { key: string; value: string }[] = [],
-  handleResponse: (data: any) => { items: T[]; nextCursor?: string }
+  handleResponse: (data: Record<string, never> & {pagination: {next_cursor?: string}}) => { items: T[]; nextCursor?: string }
 ): Promise<T[]> => {
   let result: T[] = [];
   const parsedUrl = new URL(url);
@@ -48,7 +48,6 @@ export const paginateTalentProtocolApiRequest = async <T>(
     };
 
     // Make the request using the config
-    // eslint-disable-next-line no-await-in-loop
     response = await axios.request(config).catch((e) => {
       console.error(e);
       return null;
@@ -56,14 +55,14 @@ export const paginateTalentProtocolApiRequest = async <T>(
 
     if (!response) break;
 
-    const { items, nextCursor } = handleResponse(response.data);
+    const { items, nextCursor }: {items: T[], nextCursor?: string} = handleResponse(response.data);
     result = result.concat(items);
 
     // Update the URL with the new cursor if it exists
     if (nextCursor) {
-      parsedUrl.searchParams.set('next_cursor', nextCursor);
+      parsedUrl.searchParams.set("next_cursor", nextCursor);
     }
-  } while (response && response.data && response.data.length > 0 && handleResponse(response.data).nextCursor);
+  } while (response && response.data && response.data.length > 0 && handleResponse(response.data as never).nextCursor);
 
   return result;
 };
