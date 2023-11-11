@@ -6,10 +6,22 @@ import {
   AccountBalanceWalletOutlined,
   AdminPanelSettings,
   ContentCopy,
+  Logout,
   PersonOutlineOutlined,
   SearchOutlined
 } from "@mui/icons-material";
-import { Avatar, Button, Drawer, IconButton, List, ListItem, ListItemButton, Typography } from "@mui/joy";
+import {
+  Avatar,
+  Button,
+  Divider,
+  Drawer,
+  IconButton,
+  List,
+  ListItem,
+  ListItemButton,
+  Typography,
+  useTheme
+} from "@mui/joy";
 import { ListItemIcon, ListItemText } from "@mui/material";
 import { usePrivy } from "@privy-io/react-auth";
 import Image from "next/image";
@@ -26,6 +38,7 @@ interface Props {
 
 export const Sidebar: FC<Props> = ({ isOpen, setOpen }) => {
   const { address, user } = useUserContext();
+  const theme = useTheme();
   const holders = useGetHolders(address);
   const { data: balance } = useBalance({
     address
@@ -70,16 +83,11 @@ export const Sidebar: FC<Props> = ({ isOpen, setOpen }) => {
   return (
     <Drawer open={isOpen} onClose={() => setOpen(false)}>
       <Flex y gap2 p={2}>
-        <Flex x xsb yc>
-          <Avatar
-            src={user?.avatarUrl || DEFAULT_PROFILE_PICTURE}
-            onClick={() => setOpen(false)}
-            sx={{ position: "relative" }}
-          />
-          <Button variant="soft" onClick={handleLogout}>
-            Log out
-          </Button>
-        </Flex>
+        <Avatar
+          src={user?.avatarUrl || DEFAULT_PROFILE_PICTURE}
+          onClick={() => setOpen(false)}
+          sx={{ position: "relative" }}
+        />
         <Flex y gap={0.5}>
           <Flex x yc>
             <Typography textColor={"neutral.800"} fontWeight={600} level="body-sm">
@@ -113,6 +121,20 @@ export const Sidebar: FC<Props> = ({ isOpen, setOpen }) => {
               </ListItemButton>
             </ListItem>
           ))}
+        <Divider sx={{ my: 1 }} />
+        <ListItem>
+          <ListItemButton
+            onClick={() => {
+              handleLogout();
+              setOpen(false);
+            }}
+          >
+            <ListItemIcon>
+              <Logout sx={{ color: theme.palette.danger[500] + " !important" }} />
+            </ListItemIcon>
+            <ListItemText sx={{ ".MuiTypography-root": { color: theme.palette.danger[500] } }} primary="Log out" />
+          </ListItemButton>
+        </ListItem>
       </List>
       <Flex y xs p={2} gap3>
         <Button

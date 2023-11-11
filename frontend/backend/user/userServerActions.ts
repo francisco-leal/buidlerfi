@@ -12,7 +12,7 @@ import {
 } from "./user";
 
 export const getCurrentUserSA = (options: ServerActionOptions) => {
-  return serverActionWrapper(data => getCurrentUser(data.userId), options);
+  return serverActionWrapper(data => getCurrentUser(data.privyUserId), options);
 };
 
 export const getUserSA = (wallet: string, options: ServerActionOptions) => {
@@ -24,14 +24,14 @@ export const createUserSA = (privyUser: privyUser, inviteCode: string, options: 
 };
 
 export const refreshCurrentUserProfileSA = (options: ServerActionOptions) => {
-  return serverActionWrapper(data => refreshCurrentUserProfile(data.userId), options);
-};
-
-//This is an admin action
-export const refreshAllUsersProfileSA = (options: ServerActionOptions) => {
-  return serverActionWrapper(data => refreshAllUsersProfile(data.userId), options);
+  return serverActionWrapper(data => refreshCurrentUserProfile(data.privyUserId), options);
 };
 
 export const checkUsersExistSA = (wallets: string[], options: ServerActionOptions) => {
   return serverActionWrapper(() => checkUsersExist(wallets), options);
+};
+
+//This is an admin action
+export const refreshAllUsersProfileSA = (options: ServerActionOptions) => {
+  return serverActionWrapper(() => refreshAllUsersProfile(), options, true);
 };

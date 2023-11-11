@@ -1,11 +1,10 @@
 "use client";
 import { useSocialData } from "@/hooks/useSocialData";
-import { tryParseBigInt } from "@/lib/utils";
+import { formatToDisplayString } from "@/lib/utils";
 import { ChevronRight } from "@mui/icons-material";
 import { Skeleton, Typography } from "@mui/joy";
 import Avatar from "@mui/joy/Avatar";
 import { useRouter } from "next/navigation";
-import { formatUnits } from "viem";
 import { Flex } from "./flex";
 
 interface Props {
@@ -37,9 +36,9 @@ export function UserItem({ address, numberOfHolders, buyPrice }: Props) {
           <Typography textColor={"neutral.800"} fontWeight={600} level="body-sm">
             <Skeleton loading={socialData.isLoading}>{socialData.name}</Skeleton>
           </Typography>
-          {!!numberOfHolders && !!buyPrice && (
+          {numberOfHolders !== undefined && buyPrice !== undefined && (
             <Typography textColor={"neutral.600"} level="body-sm">
-              {numberOfHolders.toString()} holders • Price {formatUnits(tryParseBigInt(buyPrice || 0), 18)} ETH
+              {numberOfHolders.toString()} holders • Price {formatToDisplayString(buyPrice, 18)} ETH
             </Typography>
           )}
         </Flex>

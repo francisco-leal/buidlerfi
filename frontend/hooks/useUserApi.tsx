@@ -5,9 +5,11 @@ import {
   getUserSA,
   refreshCurrentUserProfileSA
 } from "@/backend/user/userServerActions";
+import { ServerActionOptions } from "@/lib/serverActionWrapper";
 import { Prisma } from "@prisma/client";
 import { User as PrivyUser, usePrivy } from "@privy-io/react-auth";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutationSA } from "./useMutationSA";
+import { useQuerySA } from "./useQuerySA";
 
 export type GetCurrentUserResponse = Prisma.UserGetPayload<{
   include: { inviteCodes: true; points: true; socialProfiles: true };
@@ -16,40 +18,28 @@ export type GetCurrentUserResponse = Prisma.UserGetPayload<{
 export type GetUserResponse = Prisma.UserGetPayload<{ include: { socialProfiles: true } }>;
 
 export const useCreateUser = () => {
-  const { getAccessToken } = usePrivy();
-  return useMutation(async ({ privyUser, inviteCode }: { privyUser: PrivyUser; inviteCode: string }) => {
-    return createUserSA(privyUser, inviteCode, { authorization: await getAccessToken() }).then(res => res.data);
-  });
+  return useMutationSA(
+    async (options: ServerActionOptions, { privyUser, inviteCode }: { privyUser: PrivyUser; inviteCode: string }) => {
+      return createUserSA(privyUser, inviteCode, options);
+    }
+  );
 };
 
 export const useGetUser = (address?: string) => {
-  const { getAccessToken } = usePrivy();
-  return useQuery(
-    ["useGetUser", address],
-    async () => getUserSA(address!, { authorization: await getAccessToken() }).then(res => res.data),
-    { enabled: !!address }
-  );
+  return useQuerySA(["useGetUser", address], async options => getUserSA(address!, options), { enabled: !!address });
 };
 
 export const useGetCurrentUser = () => {
-  const { getAccessToken, user } = usePrivy();
-  return useQuery(["useGetCurrentUser", user?.id], async () =>
-    getCurrentUserSA({ authorization: await getAccessToken() }).then(res => res.data)
-  );
+  const { user } = usePrivy();
+  return useQuerySA(["useGetCurrentUser", user?.id], getCurrentUserSA);
 };
 
 export const useRefreshCurrentUser = () => {
-  const { getAccessToken } = usePrivy();
-  return useMutation(async () =>
-    refreshCurrentUserProfileSA({ authorization: await getAccessToken() }).then(res => res.data)
-  );
+  return useMutationSA(async options => refreshCurrentUserProfileSA(options));
 };
 
 export const useCheckUsersExist = (wallets?: string[]) => {
-  const { getAccessToken } = usePrivy();
-  return useQuery(
-    ["useCheckUsersExist", wallets],
-    async () => checkUsersExistSA(wallets!, { authorization: await getAccessToken() }).then(res => res.data),
-    { enabled: !!wallets }
-  );
+  return useQuerySA(["useCheckUsersExist", wallets], async options => checkUsersExistSA(wallets!, options), {
+    enabled: !!wallets
+  });
 };

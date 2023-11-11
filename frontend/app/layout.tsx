@@ -10,7 +10,7 @@ export const metadata: Metadata = {
     type: "website",
     title: "builder.fi by Talent Protocol",
     description: "Where experienced builders can monetize their knowledge and earn crypto by answering questions.",
-    url: "https://buidlerfi.vercel.app/"
+    url: "https://app.builder.fi/"
   },
   twitter: {
     images: ["https://builder.fi/thumbnail.jpg?2"],
