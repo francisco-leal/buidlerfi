@@ -69,6 +69,7 @@ export const Overview: FC<Props> = ({ socialData, isOwnProfile }) => {
           hasKeys={hasKeys}
           sellPrice={sellPrice}
           buyPriceWithFees={buyPriceAfterFee}
+          isFirstKey={isOwnProfile && holders.data?.length === 0}
           side={buyModalState}
           close={() => {
             refetch();

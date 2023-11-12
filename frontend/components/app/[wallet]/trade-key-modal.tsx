@@ -17,6 +17,7 @@ interface Props {
   socialData: SocialData;
   supporterKeysCount?: number;
   side: "buy" | "sell";
+  isFirstKey: boolean;
 }
 
 export const TradeKeyModal: FC<Props> = ({
@@ -26,6 +27,7 @@ export const TradeKeyModal: FC<Props> = ({
   socialData,
   supporterKeysCount,
   buyPriceWithFees,
+  isFirstKey,
   side
 }) => {
   const { address } = useUserContext();
@@ -65,6 +67,7 @@ export const TradeKeyModal: FC<Props> = ({
 
   const enableTradeButton = () => {
     if (side === "sell") return true;
+    if (isFirstKey) return true;
     if (!buyPriceWithFees) return false;
 
     return hasEnoughBalance;
