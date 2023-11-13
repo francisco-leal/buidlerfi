@@ -8,6 +8,7 @@ interface UserContextType {
   privyUser?: PrivyUser;
   isAuthenticatedAndActive: boolean;
   isLoading: boolean;
+  isOnboarded: boolean;
   address?: `0x${string}`;
   refetch: () => Promise<unknown>;
 }
@@ -17,6 +18,7 @@ const userContext = createContext<UserContextType>({
   isLoading: true,
   isAuthenticatedAndActive: false,
   address: undefined,
+  isOnboarded: false,
   refetch: () => Promise.resolve()
 });
 
@@ -38,6 +40,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
       privyUser: privyUser || undefined,
       isLoading: !ready || (!!privyUser && user.isLoading),
       isAuthenticatedAndActive: ready && !user.isLoading && !!user.data && user.data.isActive && privyAuthenticated,
+      isOnboarded: ready && !user.isLoading && !!user.data && user.data.onboardingFinished && privyAuthenticated,
       address: privyUser?.wallet?.address ? (privyUser?.wallet?.address as `0x${string}`) : undefined,
       refetch: user.refetch
     }),

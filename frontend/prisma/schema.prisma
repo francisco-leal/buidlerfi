@@ -22,6 +22,9 @@ model User {
   isActive     Boolean @default(false)
   isAdmin      Boolean @default(false)
 
+  // in order to guarantee the user does the onboarding atleast once we need a flag to control it
+  onboardingFinished Boolean @default(false)
+
   questions      Question[]      @relation("questioner")
   replies        Question[]      @relation("replier")
   inviteCodes    InviteCode[]

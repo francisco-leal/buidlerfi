@@ -45,6 +45,9 @@ export const AuthRoute = ({ children }: { children: ReactNode }) => {
     if (!user.isAuthenticatedAndActive) {
       const redirected = handleAnonymousRedirect();
       if (redirected) return;
+    } else if (!user.isOnboarded) {
+      const redirected = redirect("/onboarding");
+      if (redirected) return;
     } else {
       if (pathname.startsWith("/signup") || pathname === "/") {
         const redirected = redirect("/home");
