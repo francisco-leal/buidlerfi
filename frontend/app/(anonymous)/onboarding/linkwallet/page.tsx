@@ -24,7 +24,7 @@ export default function CreateWallet() {
 
   const linkedWallet = useMemo(() => wallets.find(wal => wal.connectorType !== "embedded"), [wallets]);
   //We use useQuery to ensure function is executed only once, and only when a wallet is found.
-  const { isLoading } = useQuery(
+  const { isLoading, error, data } = useQuery(
     ["linkNewWallet", linkedWallet?.address],
     () => {
       return linkNewWallet(linkedWallet!.address)
@@ -37,6 +37,9 @@ export default function CreateWallet() {
   const handleLinkWallet = () => {
     linkWallet();
   };
+
+  console.log("Linked wallet: ", linkedWallet);
+  console.log({ isLoading, error, data });
 
   return (
     <Flex y ysb height={"350px"}>
@@ -73,11 +76,8 @@ export default function CreateWallet() {
       </Flex>
 
       <Flex y gap1>
-        <Button loading={isLoading} onClick={handleLinkWallet}>
-          Link your wallet
-        </Button>
+        <Button onClick={handleLinkWallet}>Link your wallet</Button>
         <Button
-          disabled={isLoading}
           variant="plain"
           onClick={() => router.push({ searchParams: { skiplink: "1" } }, { preserveSearchParams: true })}
         >
