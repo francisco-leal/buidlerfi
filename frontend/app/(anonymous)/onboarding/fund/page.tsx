@@ -17,11 +17,11 @@ export default function FundPage() {
     <Flex y gap={4}>
       <Flex y>
         <Typography textColor="neutral.800" level="h2" whiteSpace="pre-line">
-          Get some ETH on Base.
+          Deposit funds
         </Typography>
         <Typography level="body-sm" mt={1}>
-          You will use ETH, the official currency of Base, when you buy and sell keys. We recommend adding at least
-          0.001 ETH to your wallet to get started.
+          Builder.fi is built on Base and uses ETH as a currency to buy and sell keys. You need to transfer at least
+          0.001 ETH to your builder.fi address. If you don't have funds on Base, please bridge from other network first.
         </Typography>
       </Flex>
 
@@ -30,11 +30,15 @@ export default function FundPage() {
           <Flex x yc gap3>
             <CopyAll fontSize="large" />
             <Flex y gap1>
-              <Typography level="title-md">Bridge from Ethereum Mainnet</Typography>
+              <Typography level="title-md">Step 1: Add ETH to Base</Typography>
+              <Typography level="body-sm">If you don't already have ETH</Typography>
             </Flex>
           </Flex>
-          <NextLink href="https://bridge.base.org/deposit" target="_blank">
-            <Link>Go to Bridge</Link>
+          <NextLink
+            href="https://www.sushi.com/swap/cross-chain?chainId1=8453&token1=NATIVE&swapAmount=0.01"
+            target="_blank"
+          >
+            <Link>Swap ETH</Link>
           </NextLink>
         </Flex>
 
@@ -43,7 +47,7 @@ export default function FundPage() {
             <Flex x yc gap3>
               <ContentCopy fontSize="large" />
               <Flex y gap1>
-                <Typography level="title-md">Receive on Base</Typography>
+                <Typography level="title-md">Step 2: Transfer ETH to builder.fi</Typography>
                 <Typography level="body-sm">{shortAddress(address)}</Typography>
               </Flex>
             </Flex>
@@ -60,13 +64,18 @@ export default function FundPage() {
       </Flex>
 
       <Flex y gap2>
-        <Button onClick={() => router.replace({ searchParams: { skipfund: "1" } }, { preserveSearchParams: true })}>
-          Continue
+        <Button
+          disabled={(balance || 0) < 1000000000000000n}
+          onClick={() => router.replace({ searchParams: { skipfund: "1" } }, { preserveSearchParams: true })}
+        >
+          {(balance || 0) < 1000000000000000n ? "Add at least 0.001 ETH" : "Continue"}
         </Button>
 
         <Flex x yc xc gap1 fullwidth>
           <Typography level="body-sm" textAlign="center">
-            <Skeleton loading={balanceIsLoading}>Wallet balance: {formatToDisplayString(balance, 18)} ETH</Skeleton>
+            <Skeleton loading={balanceIsLoading}>
+              Your builder.fi balance: {formatToDisplayString(balance, 18)} ETH
+            </Skeleton>
           </Typography>
           <IconButton onClick={refetchBalance}>
             <Refresh fontSize="small" htmlColor={theme.palette.neutral[500]} />
