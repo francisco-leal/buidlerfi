@@ -10,7 +10,6 @@ export async function POST(req: NextRequest) {
       return Response.json({ error: ERRORS.INVALID_REQUEST }, { status: 400 });
     }
 
-    //TODO check if user isActive = true. Removed for now
     const questioner = await prisma.user.findUnique({ where: { privyUserId: req.headers.get("privyUserId")! } });
     const replier = await prisma.user.findUnique({ where: { wallet: replierWallet.toLowerCase() } });
     if (!questioner || !replier) {
