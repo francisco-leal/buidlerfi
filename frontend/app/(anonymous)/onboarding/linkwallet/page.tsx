@@ -42,7 +42,7 @@ export default function CreateWallet() {
   console.log({ isLoading, error, data });
 
   return (
-    <Flex y ysb height={"350px"}>
+    <Flex y ysb>
       <Flex y gap1>
         <Typography textColor="neutral.800" level="h2" whiteSpace="pre-line">
           builder.fi is better with friends.
