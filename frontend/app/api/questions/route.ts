@@ -42,6 +42,7 @@ export async function GET(req: NextRequest) {
       return Response.json({ error: ERRORS.INVALID_REQUEST }, { status: 400 });
     }
 
+    //TODO Check if current user holds keys of replier
     //TODO check if user isActive = true. Removed for now
     const replier = await prisma.user.findUnique({ where: { wallet: replierWallet.toLowerCase() } });
     if (!replier) {

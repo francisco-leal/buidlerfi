@@ -19,6 +19,7 @@ interface Props {
 }
 export const QuestionEntry: FC<Props> = ({ question, isOwnChat, refetch, socialData, index }) => {
   const answerRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   const [isAnswerTooLong, setIsAnswerTooLong] = useState(false);
   const [reply, setReply] = useState("");
@@ -34,7 +35,8 @@ export const QuestionEntry: FC<Props> = ({ question, isOwnChat, refetch, socialD
   };
 
   useLayoutEffect(() => {
-    if (answerRef.current && answerRef.current.clientWidth < answerRef.current.scrollWidth) {
+    if (!containerRef.current || !answerRef.current) return;
+    if (containerRef.current.clientWidth < answerRef.current.scrollWidth) {
       setIsAnswerTooLong(true);
     }
   }, [answerRef]);
@@ -60,20 +62,18 @@ export const QuestionEntry: FC<Props> = ({ question, isOwnChat, refetch, socialD
         </Flex>
         <Typography level="body-sm">{index}</Typography>
       </Flex>
-      <Flex x ys gap1>
+      <Flex x ys gap1 ref={containerRef}>
         <Avatar size="sm" src={socialData.avatar || DEFAULT_PROFILE_PICTURE} />
         {question.reply || !isOwnChat ? (
-          <Flex y gap2>
+          <Flex y gap2 sx={{ overflow: "hidden" }}>
             <Typography
               ref={answerRef}
               sx={{
                 whiteSpace: isShowMore ? "pre-line" : "nowrap",
-                overflow: "hidden",
                 textOverflow: "ellipsis"
               }}
               textColor={question.reply ? "neutral.800" : "neutral.400"}
               level="body-sm"
-              maxWidth="100%"
             >
               {question.reply || "Waiting for answer"}
             </Typography>
@@ -83,7 +83,6 @@ export const QuestionEntry: FC<Props> = ({ question, isOwnChat, refetch, socialD
                 variant="plain"
                 onClick={() => setIsShowMore(curr => !curr)}
                 startDecorator={isShowMore ? <KeyboardArrowUp /> : <KeyboardArrowDown />}
-                sx={{ mb: -1 }}
               >
                 {isShowMore ? "Show less" : "Show more"}
               </Button>

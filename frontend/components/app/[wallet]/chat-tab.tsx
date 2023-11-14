@@ -1,6 +1,7 @@
 "use client";
 import { Flex } from "@/components/shared/flex";
 import { PageMessage } from "@/components/shared/page-message";
+import { useUserContext } from "@/contexts/userContext";
 import { useGetQuestions, usePostQuestion } from "@/hooks/useQuestionsApi";
 import { SocialData } from "@/hooks/useSocialData";
 import { builderFIV1Abi } from "@/lib/abi/BuidlerFiV1";
@@ -20,6 +21,7 @@ interface Props {
 
 export const ChatTab: FC<Props> = ({ socialData, isOwnProfile }) => {
   const [chatValue, setChatValue] = useState<string>("");
+  const { user } = useUserContext();
   const { address } = useAccount();
   const { data: supporterKeys } = useContractRead({
     address: BUILDERFI_CONTRACT.address,
@@ -29,7 +31,7 @@ export const ChatTab: FC<Props> = ({ socialData, isOwnProfile }) => {
     enabled: !!address
   });
 
-  const ownsKeys = supporterKeys !== undefined && supporterKeys > BigInt(0);
+  const ownsKeys = (supporterKeys !== undefined && supporterKeys > BigInt(0)) || user?.isAdmin;
 
   const { data: questions, refetch, isLoading } = useGetQuestions(socialData.address);
 
