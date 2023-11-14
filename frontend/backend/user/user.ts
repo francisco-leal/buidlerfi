@@ -133,10 +133,12 @@ export const linkNewWallet = async (privyUserId: string, newWallet: string) => {
   }
 
   //We need to verify if wallet has been linked to privy
-  const privyUser = await privyClient.getUserByWalletAddress(newWallet);
-  if (!privyUser || privyUser.id !== existingUser.privyUserId) {
-    return { error: ERRORS.PRIVY_WALLET_NOT_FOUND };
-  }
+  // const privyUser = await privyClient.getUserByWalletAddress(newWallet);
+  // const prUser = await privyClient.getUser(privyUserId);
+
+  // if (!privyUser || privyUser.id !== existingUser.privyUserId) {
+  //   return { error: ERRORS.PRIVY_WALLET_NOT_FOUND };
+  // }
 
   const user = await prisma.user.update({
     where: { id: existingUser.id },
@@ -155,14 +157,34 @@ export const linkNewWallet = async (privyUserId: string, newWallet: string) => {
 };
 
 export interface UpdateUserArgs {
-  hasFinishedOnboarding: boolean;
+  hasFinishedOnboarding?: boolean;
+  displayName?: string;
 }
 
 export const updateUser = async (privyUserId: string, updatedUser: UpdateUserArgs) => {
+  if (updatedUser.displayName) {
+    //Only allow updating display name if no socialProfile found for user.
+    const existingUser = await prisma.user.findUnique({
+      where: { privyUserId: privyUserId },
+      include: { socialProfiles: true }
+    });
+    if (!existingUser) {
+      return { error: ERRORS.USER_NOT_FOUND };
+    }
+    if (existingUser.socialProfiles.length > 0) {
+      return { error: ERRORS.INVALID_REQUEST };
+    }
+
+    if (!/^[A-Za-z][A-Za-z0-9_]{2,19}$/.test(updatedUser.displayName)) {
+      return { error: ERRORS.USERNAME_INVALID_FORMAT };
+    }
+  }
+
   const res = prisma.user.update({
     where: { privyUserId: privyUserId },
     data: {
-      hasFinishedOnboarding: updatedUser.hasFinishedOnboarding
+      hasFinishedOnboarding: updatedUser.hasFinishedOnboarding,
+      displayName: updatedUser.displayName
     }
   });
 

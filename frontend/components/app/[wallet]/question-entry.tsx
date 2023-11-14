@@ -60,7 +60,7 @@ export const QuestionEntry: FC<Props> = ({ question, isOwnChat, refetch, socialD
         </Flex>
         <Typography level="body-sm">{index}</Typography>
       </Flex>
-      <Flex x yc gap1>
+      <Flex x ys gap1>
         <Avatar size="sm" src={socialData.avatar || DEFAULT_PROFILE_PICTURE} />
         {question.reply || !isOwnChat ? (
           <Flex y gap2>
@@ -90,7 +90,7 @@ export const QuestionEntry: FC<Props> = ({ question, isOwnChat, refetch, socialD
             )}
           </Flex>
         ) : (
-          <Flex y={isSm} yc gap2>
+          <Flex y={isSm} yc gap2 width={"100%"}>
             <Textarea
               sx={{ flexGrow: 1 }}
               value={reply}
