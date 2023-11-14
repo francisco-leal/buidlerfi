@@ -3,6 +3,7 @@
 import { ERRORS } from "@/lib/errors";
 import prisma from "@/lib/prisma";
 import privyClient from "@/lib/privyClient";
+import { Wallet } from "@privy-io/server-auth";
 import { updateUserSocialProfiles } from "../socialProfile/socialProfile";
 
 export const refreshAllUsersProfile = async () => {
@@ -47,6 +48,7 @@ export const getCurrentUser = async (privyUserId: string) => {
       points: true
     }
   });
+
   return { data: res };
 };
 
@@ -89,11 +91,15 @@ export const createUser = async (privyUserId: string, inviteCode: string) => {
     return { error: ERRORS.USER_ALREADY_EXISTS };
   }
 
-  if (!privyUser.wallet) {
+  const embeddedWallet = privyUser.linkedAccounts.find(
+    account => account.type === "wallet" && account.walletClientType === "privy" && account.connectorType === "embedded"
+  ) as Wallet;
+
+  if (!embeddedWallet) {
     return { error: ERRORS.WALLET_MISSING };
   }
 
-  const address = privyUser.wallet.address.toLowerCase();
+  const address = embeddedWallet.address.toLowerCase();
 
   const existingCode = await prisma.inviteCode.findUnique({ where: { code: inviteCode } });
   if (!existingCode || existingCode.isActive === false) {
@@ -175,7 +181,7 @@ export const updateUser = async (privyUserId: string, updatedUser: UpdateUserArg
       return { error: ERRORS.INVALID_REQUEST };
     }
 
-    if (!/^[A-Za-z][A-Za-z0-9_]{2,19}$/.test(updatedUser.displayName)) {
+    if (!/^[A-Za-z][A-Za-z0-9_.]{2,19}$/.test(updatedUser.displayName)) {
       return { error: ERRORS.USERNAME_INVALID_FORMAT };
     }
   }
