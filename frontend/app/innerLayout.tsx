@@ -47,7 +47,7 @@ export default function InnerLayout({ children }: { children: React.ReactNode })
       grow
       m={0}
       sx={{
-        maxWidth: "500px",
+        maxWidth: "min(100vw, 500px)",
         margin: "auto",
         minHeight: "100vh",
         border: theme => "1px solid " + theme.palette.neutral[300]
@@ -77,7 +77,7 @@ const InnerProviders = ({ children }: { children: React.ReactNode }) => {
       <PrivyProvider
         appId={process.env.NEXT_PUBLIC_PRIVY_APP_ID}
         config={{
-          loginMethods: ["google", "email", "github"],
+          loginMethods: ["google", "email", "github", "apple", "twitter"],
           supportedChains: [supportedChain],
           embeddedWallets: {
             createOnLogin: "users-without-wallets"
