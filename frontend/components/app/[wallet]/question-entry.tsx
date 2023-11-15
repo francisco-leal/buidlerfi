@@ -19,7 +19,6 @@ interface Props {
 }
 export const QuestionEntry: FC<Props> = ({ question, isOwnChat, refetch, socialData, index }) => {
   const answerRef = useRef<HTMLDivElement>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
 
   const [isAnswerTooLong, setIsAnswerTooLong] = useState(false);
   const [reply, setReply] = useState("");
@@ -35,8 +34,8 @@ export const QuestionEntry: FC<Props> = ({ question, isOwnChat, refetch, socialD
   };
 
   useLayoutEffect(() => {
-    if (!containerRef.current || !answerRef.current) return;
-    if (containerRef.current.clientWidth < answerRef.current.scrollWidth) {
+    if (!answerRef.current) return;
+    if (answerRef.current.clientWidth < answerRef.current.scrollWidth) {
       setIsAnswerTooLong(true);
     }
   }, [answerRef]);
@@ -62,7 +61,7 @@ export const QuestionEntry: FC<Props> = ({ question, isOwnChat, refetch, socialD
         </Flex>
         <Typography level="body-sm">{index}</Typography>
       </Flex>
-      <Flex x ys gap1 ref={containerRef}>
+      <Flex x ys gap1>
         <Avatar size="sm" src={socialData.avatar || DEFAULT_PROFILE_PICTURE} />
         {question.reply || !isOwnChat ? (
           <Flex y gap2 sx={{ overflow: "hidden" }}>
