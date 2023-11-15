@@ -1,7 +1,6 @@
 "use client";
 import { Flex } from "@/components/shared/flex";
 import { PageMessage } from "@/components/shared/page-message";
-import { useUserContext } from "@/contexts/userContext";
 import { useGetQuestions, usePostQuestion } from "@/hooks/useQuestionsApi";
 import { SocialData } from "@/hooks/useSocialData";
 import { builderFIV1Abi } from "@/lib/abi/BuidlerFiV1";
@@ -17,11 +16,11 @@ import { QuestionEntry } from "./question-entry";
 interface Props {
   socialData: SocialData;
   isOwnProfile: boolean;
+  onBuyKeyClick: () => void;
 }
 
-export const ChatTab: FC<Props> = ({ socialData, isOwnProfile }) => {
+export const ChatTab: FC<Props> = ({ socialData, isOwnProfile, onBuyKeyClick }) => {
   const [chatValue, setChatValue] = useState<string>("");
-  const { user } = useUserContext();
   const { address } = useAccount();
   const { data: supporterKeys } = useContractRead({
     address: BUILDERFI_CONTRACT.address,
@@ -31,7 +30,7 @@ export const ChatTab: FC<Props> = ({ socialData, isOwnProfile }) => {
     enabled: !!address
   });
 
-  const ownsKeys = (supporterKeys !== undefined && supporterKeys > BigInt(0)) || user?.isAdmin;
+  const ownsKeys = supporterKeys !== undefined && supporterKeys > BigInt(0);
 
   const { data: questions, refetch, isLoading } = useGetQuestions(socialData.address);
 
@@ -62,11 +61,15 @@ export const ChatTab: FC<Props> = ({ socialData, isOwnProfile }) => {
 
   if (!ownsKeys && isOwnProfile) {
     return (
-      <PageMessage
-        title={"Unlock Q&A"}
-        icon={<KeyOutlined />}
-        text="Create your keys to allow others to ask you direct questions."
-      />
+      <Flex y gap2 xc grow yc>
+        <PageMessage
+          title={"Unlock Q&A"}
+          icon={<KeyOutlined />}
+          text="Create your keys to allow others to ask you direct questions."
+          sx={{ flexGrow: 0 }}
+        />
+        <Button onClick={() => onBuyKeyClick()}>Create keys</Button>
+      </Flex>
     );
   }
 
@@ -77,6 +80,14 @@ export const ChatTab: FC<Props> = ({ socialData, isOwnProfile }) => {
         icon={<Chat />}
         text="Your Q&A will appear here as soon as one of your holders asks you a question"
       />
+    );
+  }
+
+  if (isLoading) {
+    return (
+      <Flex y xc yc grow>
+        <CircularProgress />
+      </Flex>
     );
   }
 
@@ -104,28 +115,24 @@ export const ChatTab: FC<Props> = ({ socialData, isOwnProfile }) => {
           <Typography level="body-sm">{chatValue.length}/500</Typography>
         </Flex>
       )}
-      {isLoading ? (
-        <CircularProgress />
-      ) : (
-        <Flex y grow>
-          {ownsKeys && !questions?.length ? (
-            <PageMessage text={`Congratulations. You can now chat with ${socialData.name}`} icon={<LockOpen />} />
-          ) : (
-            questions?.map((question, i) => {
-              return (
-                <QuestionEntry
-                  key={question.id}
-                  socialData={socialData}
-                  question={question}
-                  isOwnChat={isOwnProfile}
-                  refetch={refetch}
-                  index={`${questions.length - i}/${questions.length}`}
-                />
-              );
-            })
-          )}
-        </Flex>
-      )}
+      <Flex y grow>
+        {ownsKeys && !questions?.length ? (
+          <PageMessage text={`Congratulations. You can now chat with ${socialData.name}`} icon={<LockOpen />} />
+        ) : (
+          questions?.map((question, i) => {
+            return (
+              <QuestionEntry
+                key={question.id}
+                socialData={socialData}
+                question={question}
+                isOwnChat={isOwnProfile}
+                refetch={refetch}
+                index={`${questions.length - i}/${questions.length}`}
+              />
+            );
+          })
+        )}
+      </Flex>
     </Flex>
   );
 };
