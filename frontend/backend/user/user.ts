@@ -3,7 +3,9 @@
 import { ERRORS } from "@/lib/errors";
 import prisma from "@/lib/prisma";
 import privyClient from "@/lib/privyClient";
+import viemClient from "@/lib/viemClient";
 import { Wallet } from "@privy-io/server-auth";
+import { differenceInMinutes } from "date-fns";
 import { updateUserSocialProfiles } from "../socialProfile/socialProfile";
 
 export const refreshAllUsersProfile = async () => {
@@ -56,7 +58,7 @@ export const checkUsersExist = async (wallets: string[]) => {
   const addresses = wallets.map(wallet => wallet.toLowerCase());
   const res = await prisma.user.findMany({
     where: {
-      socialWallet: {
+      wallet: {
         in: addresses
       }
     }
@@ -133,29 +135,47 @@ export const createUser = async (privyUserId: string, inviteCode: string) => {
   return { data: newUser };
 };
 
-export const linkNewWallet = async (privyUserId: string, newWallet: string) => {
-  const existingUser = await prisma.user.findUnique({ where: { privyUserId: privyUserId } });
-  if (!existingUser) {
-    return { error: ERRORS.USER_NOT_FOUND };
-  }
+export const linkNewWallet = async (privyUserId: string, signedMessage: string) => {
+  const existingUser = await prisma.user.findUniqueOrThrow({ where: { privyUserId: privyUserId } });
 
-  //We need to verify if wallet has been linked to privy
-  // const privyUser = await privyClient.getUserByWalletAddress(newWallet);
-  // const prUser = await privyClient.getUser(privyUserId);
-
-  // if (!privyUser || privyUser.id !== existingUser.privyUserId) {
-  //   return { error: ERRORS.PRIVY_WALLET_NOT_FOUND };
-  // }
-
-  const user = await prisma.user.update({
-    where: { id: existingUser.id },
-    data: {
-      socialWallet: newWallet.toLowerCase()
+  const challenge = await prisma.signingChallenge.findFirstOrThrow({
+    where: {
+      userId: existingUser.id
     }
   });
 
+  if (Math.abs(differenceInMinutes(new Date(), challenge.updatedAt)) > 15) {
+    return { error: ERRORS.CHALLENGE_EXPIRED };
+  }
+
+  const verified = await viemClient.verifyMessage({
+    address: challenge.publicKey as `0x${string}`,
+    message: challenge.message,
+    signature: signedMessage as `0x${string}`
+  });
+
+  if (!verified) {
+    return { error: ERRORS.INVALID_SIGNATURE };
+  }
+
+  const user = await prisma.$transaction(async tx => {
+    //Clear challenge
+    await tx.signingChallenge.delete({
+      where: {
+        userId: existingUser.id
+      }
+    });
+
+    return await tx.user.update({
+      where: { id: existingUser.id },
+      data: {
+        socialWallet: challenge.publicKey.toLowerCase()
+      }
+    });
+  });
+
   try {
-    await updateUserSocialProfiles(user.id, newWallet.toLowerCase());
+    await updateUserSocialProfiles(user.id, challenge.publicKey.toLowerCase());
   } catch (err) {
     console.error("Error while updating social profiles: ", err);
   }
@@ -192,6 +212,37 @@ export const updateUser = async (privyUserId: string, updatedUser: UpdateUserArg
     data: {
       hasFinishedOnboarding: updatedUser.hasFinishedOnboarding,
       displayName: updatedUser.displayName
+    }
+  });
+
+  return { data: res };
+};
+
+export const generateChallenge = async (privyUserId: string, publicKey: string) => {
+  const user = await prisma.user.findUniqueOrThrow({
+    where: {
+      privyUserId
+    }
+  });
+
+  const challenge = `
+I'm verifying the ownership of this wallet for builderfi.
+Timestamp: ${Date.now()}
+Wallet: ${publicKey}
+  `;
+
+  const res = await prisma.signingChallenge.upsert({
+    where: {
+      userId: user.id
+    },
+    update: {
+      message: challenge,
+      publicKey
+    },
+    create: {
+      message: challenge,
+      userId: user.id,
+      publicKey
     }
   });
 

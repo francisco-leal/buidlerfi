@@ -3,40 +3,16 @@
 import { Flex } from "@/components/shared/flex";
 import { useUserContext } from "@/contexts/userContext";
 import { useBetterRouter } from "@/hooks/useBetterRouter";
-import { useLinkWallet } from "@/hooks/useUserApi";
+import { useLinkExternalWallet } from "@/hooks/useLinkWallet";
 import { DEFAULT_PROFILE_PICTURE, EXAMPLE_PROFILE_PICTURE } from "@/lib/assets";
-import { formatError, shortAddress } from "@/lib/utils";
+import { shortAddress } from "@/lib/utils";
 import { ArrowDownward } from "@mui/icons-material";
 import { Avatar, Button, Typography } from "@mui/joy";
-import { usePrivy, useWallets } from "@privy-io/react-auth";
-import { useQuery } from "@tanstack/react-query";
-import { useMemo } from "react";
-import { toast } from "react-toastify";
 
 export default function CreateWallet() {
   const router = useBetterRouter();
-  const { refetch } = useUserContext();
-  const { linkWallet } = usePrivy();
-  const { wallets } = useWallets();
   const { user } = useUserContext();
-
-  const { mutateAsync: linkNewWallet } = useLinkWallet();
-
-  const linkedWallet = useMemo(() => wallets.find(wal => wal.connectorType !== "embedded"), [wallets]);
-  //We use useQuery to ensure function is executed only once, and only when a wallet is found.
-  const {} = useQuery(
-    ["linkNewWallet", linkedWallet?.address],
-    () => {
-      return linkNewWallet(linkedWallet!.address)
-        .catch(err => toast.error(formatError(err)))
-        .then(() => refetch());
-    },
-    { enabled: !!linkedWallet?.address }
-  );
-
-  const handleLinkWallet = () => {
-    linkWallet();
-  };
+  const { isLoading, linkWallet } = useLinkExternalWallet();
 
   return (
     <Flex y ysb>
@@ -73,7 +49,9 @@ export default function CreateWallet() {
       </Flex>
 
       <Flex y gap1>
-        <Button onClick={handleLinkWallet}>Connect your wallet</Button>
+        <Button loading={isLoading} onClick={linkWallet}>
+          Connect your wallet
+        </Button>
         <Button
           variant="plain"
           onClick={() => router.push({ searchParams: { skiplink: "1" } }, { preserveSearchParams: true })}
