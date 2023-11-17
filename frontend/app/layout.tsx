@@ -1,6 +1,7 @@
 import { Flex } from "@/components/shared/flex";
 import { Metadata } from "next";
 import Script from "next/script";
+import "./globals.css";
 import InnerLayout from "./innerLayout";
 
 export const metadata: Metadata = {

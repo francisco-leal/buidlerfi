@@ -1,1 +1,4 @@
-@tailwind utilities;
+/* force lowercase for builder.fi */
+* {
+	text-transform: lowercase !important;
+}
