@@ -18,3 +18,4 @@ export const BUILDERFI_CONTRACT = {
   abi: builderFIV1Abi
 } as const;
 export const THE_GRAPH_PAGE_SIZE = 50;
+export const MAX_QUESTION_SIZE = 280;
