@@ -22,6 +22,14 @@ export default function FundPage() {
         <Typography level="body-sm" mt={1}>
           Builder.fi is built on Base and uses ETH to buy and sell keys. You need to transfer at least 0.001 ETH to your
           new builder.fi address. If you don&apos;t have funds on Base, please bridge from other network first.
+          Don&apos;t know how? Check this{" "}
+          <a
+            href="https://www.notion.so/talentprotocol/builder-fi-FAQ-dcebfe7103b34d11aba90de032173b39#0ca25dc581354952abe8a2b327360f94"
+            target="_blank"
+          >
+            guide
+          </a>
+          .
         </Typography>
       </Flex>
 
@@ -34,10 +42,7 @@ export default function FundPage() {
               <Typography level="body-sm">If you don&apos;t have any ETH on Base</Typography>
             </Flex>
           </Flex>
-          <NextLink
-            href="https://www.sushi.com/swap/cross-chain?chainId1=8453&token1=NATIVE&swapAmount=0.01"
-            target="_blank"
-          >
+          <NextLink href="https://www.bungee.exchange/" target="_blank">
             <Link>Swap ETH</Link>
           </NextLink>
         </Flex>
