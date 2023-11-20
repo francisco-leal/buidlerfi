@@ -112,7 +112,9 @@ export const ChatTab: FC<Props> = ({ socialData, isOwnProfile, onBuyKeyClick }) 
               Ask
             </Button>
           </Flex>
-          <Typography level="body-sm">{chatValue.length}/MAX_QUESTION_SIZE</Typography>
+          <Typography level="body-sm">
+            {chatValue.length}/{MAX_QUESTION_SIZE}
+          </Typography>
         </Flex>
       )}
       <Flex y grow>
