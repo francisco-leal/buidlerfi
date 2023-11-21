@@ -19,3 +19,5 @@ export const BUILDERFI_CONTRACT = {
 } as const;
 export const THE_GRAPH_PAGE_SIZE = 50;
 export const MAX_QUESTION_SIZE = 280;
+
+export const FAQ_LINK = "https://www.notion.so/talentprotocol/builder-fi-FAQ-dcebfe7103b34d11aba90de032173b39";
