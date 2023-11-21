@@ -3,12 +3,12 @@
   "name": "builder.fi by Talent Protocol",
   "icons": [
     {
-      "src": "assets/logo.png",
+      "src": "assets/192.png",
       "type": "image/png",
       "sizes": "192x192"
     },
     {
-      "src": "assets/logo-big.png",
+      "src": "assets/512.png",
       "type": "image/png",
       "sizes": "512x512"
     }
