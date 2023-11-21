@@ -43,6 +43,10 @@ export function AddToHomePage() {
     });
   };
 
+  if (!installEvent) {
+    return null;
+  }
+
   return (
     <Button onClick={handleInstallClick} disabled={!!installEvent}>
       <AddToHomeScreen />
