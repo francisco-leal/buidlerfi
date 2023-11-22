@@ -111,7 +111,7 @@ export const QuestionEntry: FC<Props> = ({ question, isOwnChat, refetch, socialD
                 whiteSpace="pre-line"
                 textColor={"neutral.800"}
                 sx={{ cursor: "pointer" }}
-                onClick={() => router.push("profile/" + question.questioner.wallet)}
+                onClick={() => router.push("/profile/" + question.questioner.wallet)}
               >
                 {socialData.name || shortAddress(socialData.address as `0x${string}`)}{" "}
               </Typography>
