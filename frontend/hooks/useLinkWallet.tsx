@@ -9,6 +9,7 @@ import { useGenerateChallenge, useLinkWallet } from "./useUserApi";
 export const useLinkExternalWallet = () => {
   const [walletToSign, setWalletToSign] = useState<ConnectedWallet>();
   const [isLoading, setIsLoading] = useState(false);
+  const [successCB, setSuccessCB] = useState<() => Promise<void>>();
   const { refetch } = useUserContext();
 
   const linkNewWallet = useLinkWallet();
@@ -16,14 +17,14 @@ export const useLinkExternalWallet = () => {
   const { connectWallet } = useConnectWallet({
     onSuccess: async wallet => {
       setWalletToSign(wallet as ConnectedWallet);
-      setIsLoading(false);
     },
     onError: () => {
       setIsLoading(false);
     }
   });
 
-  const linkWallet = () => {
+  const linkWallet = (onSuccess?: () => Promise<void>) => {
+    if (onSuccess) setSuccessCB(onSuccess);
     setIsLoading(true);
     connectWallet();
   };
@@ -39,15 +40,14 @@ export const useLinkExternalWallet = () => {
         const signature = await walletToSign!.sign(challenge.message);
         const user = await linkNewWallet.mutateAsync(signature);
         if (user?.socialWallet) toast.success("Wallet successfully linked");
-        refetch();
+        await refetch();
+        if (successCB) await successCB();
         setIsLoading(false);
         return user;
       } catch (err) {
         toast.error("An error occured while linking wallet: " + formatError(err));
         setIsLoading(false);
         return err;
-      } finally {
-        setIsLoading(false);
       }
     },
     {
