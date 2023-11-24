@@ -55,7 +55,7 @@ export const Overview: FC<Props> = ({ socialData, isOwnProfile, setBuyModalState
     await socialData.refetch();
   };
 
-  const { isLoading: isLoadingLinkWallet, linkWallet } = useLinkExternalWallet();
+  const { linkWallet } = useLinkExternalWallet();
 
   const { buyPrice, isLoading, supply } = useGetBuilderInfo(socialData.address);
   const refreshData = useRefreshCurrentUser();
@@ -135,11 +135,11 @@ export const Overview: FC<Props> = ({ socialData, isOwnProfile, setBuyModalState
           <Button
             sx={{ alignSelf: "flex-start" }}
             variant="soft"
-            loading={user?.socialWallet ? refreshData.isLoading : isLoadingLinkWallet}
+            loading={!!user?.socialWallet && refreshData.isLoading}
             onClick={handleLinkOrRefreshWallet}
           >
             <Typography level="body-sm">
-              {user?.socialWallet ? "Refresh social data" : "Connect web3 socials"}
+              {user?.socialWallet ? "Refresh social data" : "Import web3 socials"}
             </Typography>
           </Button>
         )}
