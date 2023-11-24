@@ -7,7 +7,7 @@ import { useGetSocialFollowers } from "@/hooks/useAirstackApi";
 import { useOnchainUsers } from "@/hooks/useBuilderFiApi";
 import { useCheckUsersExist } from "@/hooks/useUserApi";
 import { SupervisorAccountOutlined } from "@mui/icons-material";
-import { CircularProgress, Tab, TabList, TabPanel, Tabs } from "@mui/joy";
+import { Button, CircularProgress, Tab, TabList, TabPanel, Tabs } from "@mui/joy";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 export default function Home() {
@@ -66,13 +66,21 @@ export default function Home() {
           ) : (
             users.map((user, index) => (
               <div key={user.id} ref={users.length === index + 1 ? lastUserElementRef : undefined}>
-                <UserItem user={user} />
+                <UserItem
+                  user={{
+                    ...user,
+                    avatarUrl: user.avatarUrl || undefined,
+                    displayName: user.displayName || undefined
+                  }}
+                />
               </div>
             ))
           )}
-          {isLoadingMoreUsers && (
-            <Flex height="80px" y yc xc>
-              <CircularProgress />
+          {!isInitialLoading && hasMoreUsers && (
+            <Flex x xc>
+              <Button loading={isLoadingMoreUsers} onClick={() => nextPage()}>
+                Load More
+              </Button>
             </Flex>
           )}
         </TabPanel>
