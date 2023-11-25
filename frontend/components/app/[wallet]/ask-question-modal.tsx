@@ -41,7 +41,7 @@ export const AskQuestionModal: FC<Props> = ({ close, refetch }) => {
 
   return (
     <Modal open={true} onClose={handleClose}>
-      <ModalDialog layout="center" sx={{ width: "min(100vw, 500px)", padding: 0 }}>
+      <ModalDialog layout="center" sx={{ width: "min(100vw, 500px)", padding: 0, overflowY: "auto" }}>
         <Flex y gap2 p={2} grow>
           <Flex x xsb yc>
             <Typography level="title-sm">Ask to {socialData.displayName}</Typography>
@@ -53,7 +53,7 @@ export const AskQuestionModal: FC<Props> = ({ close, refetch }) => {
             </Button>
           </Flex>
           <FullTextArea
-            placeholder={`Ask a question to ${socialData.displayName}...`}
+            placeholder={`Ask ${socialData.displayName} a question...`}
             avatarUrl={user?.avatarUrl || undefined}
             onChange={e => setQuestionContent(e.target.value)}
             value={questionContent}

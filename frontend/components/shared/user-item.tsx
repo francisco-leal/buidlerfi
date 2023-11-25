@@ -1,5 +1,6 @@
 "use client";
 import { useSocialData } from "@/hooks/useSocialData";
+import { DEFAULT_PROFILE_PICTURE } from "@/lib/assets";
 import { formatToDisplayString } from "@/lib/utils";
 import { ChevronRight } from "@mui/icons-material";
 import { Skeleton, Typography, TypographySystem } from "@mui/joy";
@@ -85,7 +86,12 @@ const UserItemInner: FC<UserItemInnerProps> = ({
       onClick={isButton ? () => router.push(`/profile/${address}`) : undefined}
     >
       <Flex x yc gap2>
-        <Avatar size="sm" src={avatar} sx={{ cursor: "pointer" }} onClick={() => router.push(`/profile/${address}`)}>
+        <Avatar
+          size="sm"
+          src={avatar || DEFAULT_PROFILE_PICTURE}
+          sx={{ cursor: "pointer" }}
+          onClick={() => router.push(`/profile/${address}`)}
+        >
           <Skeleton loading={isLoading} />
         </Avatar>
         <Flex y>

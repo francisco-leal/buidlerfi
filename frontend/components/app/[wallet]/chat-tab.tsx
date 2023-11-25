@@ -72,7 +72,7 @@ export const ChatTab: FC<Props> = ({ onBuyKeyClick }) => {
               icon={<LockOpen />}
             />
           ) : (
-            questions?.map((question, i) => {
+            questions?.map(question => {
               return (
                 <QuestionEntry
                   key={question.id}
@@ -81,7 +81,6 @@ export const ChatTab: FC<Props> = ({ onBuyKeyClick }) => {
                   isOwnChat={isOwnProfile}
                   ownsKeys={hasKeys}
                   refetch={refetch}
-                  index={`${questions.length - i}/${questions.length}`}
                   onClick={() => router.replace({ searchParams: { question: question.id.toString() } })}
                 />
               );

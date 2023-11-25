@@ -8,13 +8,13 @@ import { UserItemFromAddress } from "@/components/shared/user-item";
 import { OpenDialog } from "@/contexts/DialogContainer";
 import { useProfileContext } from "@/contexts/profileContext";
 import { useGetBuilderInfo } from "@/hooks/useBuilderFiContract";
-import { useDateDifferenceFromNow } from "@/hooks/useDateDifference";
 import { useGetQuestion, usePutQuestion } from "@/hooks/useQuestionsApi";
 import { DEFAULT_PROFILE_PICTURE } from "@/lib/assets";
+import { getDifference } from "@/lib/utils";
 import { FileUpload, LockOutlined } from "@mui/icons-material";
 import { Avatar, Button, Divider, IconButton, Modal, ModalDialog, Typography } from "@mui/joy";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { toast } from "react-toastify";
 
 export default function QuestionModal({ questionId, close }: { questionId: number; close: () => void }) {
@@ -31,10 +31,11 @@ export default function QuestionModal({ questionId, close }: { questionId: numbe
       id: question.id,
       answerContent: reply
     });
+    setReply("");
     refetch();
   };
 
-  const repliedOn = useDateDifferenceFromNow(question?.repliedOn || undefined);
+  const repliedOn = useMemo(() => getDifference(question?.repliedOn || undefined), [question?.repliedOn]);
 
   const handleClose = () => {
     if (reply.length > 10) {
@@ -51,7 +52,7 @@ export default function QuestionModal({ questionId, close }: { questionId: numbe
 
   return (
     <Modal open={true} onClose={handleClose}>
-      <ModalDialog layout="center" sx={{ width: "min(100vw, 500px)", padding: 0 }}>
+      <ModalDialog layout="center" sx={{ width: "min(100vw, 500px)", padding: 0, overflowY: "auto" }}>
         <Flex y gap2 p={2} grow>
           <Flex x yc xsb>
             <UserItemFromAddress
@@ -81,7 +82,7 @@ export default function QuestionModal({ questionId, close }: { questionId: numbe
                 e.preventDefault();
                 e.stopPropagation();
                 navigator.clipboard.writeText(location.origin + pathname + `?question=${question.id}`);
-                toast.success("Copied share link to clipboard");
+                toast.success("question url copied to clipboard");
               }}
             >
               <FileUpload fontSize="small" />

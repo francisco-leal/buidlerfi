@@ -1,4 +1,5 @@
 import { AxiosError } from "axios";
+import { differenceInMinutes } from "date-fns";
 import { URLSearchParams } from "url";
 import { formatUnits } from "viem";
 
@@ -88,3 +89,13 @@ export function convertParamsToString(searchParams: Record<string, string>) {
     .map(([key, value]) => `${encodeURIComponent(key)}=${encodeURIComponent(value)}`)
     .join("&");
 }
+
+export const getDifference = (date?: Date) => {
+  if (!date) return "";
+  const minutes = differenceInMinutes(new Date(), date);
+  if (minutes < 60) return `${minutes}m`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h`;
+  const days = Math.floor(hours / 24);
+  if (days < 30) return `${days}d`;
+};

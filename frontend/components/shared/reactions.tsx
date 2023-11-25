@@ -70,7 +70,7 @@ export const Reactions: FC<Props> = ({ question, refetch, type, sx }) => {
         <IconButton onClick={e => handleAddReaction(e, "UPVOTE")} color={myVote === "UPVOTE" ? "primary" : undefined}>
           <ArrowUpward fontSize="small" />
         </IconButton>
-        <Typography textColor={myVote && "primary.500"} level="body-sm">
+        <Typography textColor={myVote && "primary.500"} level="body-sm" textAlign="center" sx={{ minWidth: "35px" }}>
           {upvotes}
         </Typography>
         <IconButton
