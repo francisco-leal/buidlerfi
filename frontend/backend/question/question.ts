@@ -38,6 +38,9 @@ export const getQuestions = async (userId: number) => {
         replier: true,
         reactions: true,
         replyReactions: true
+      },
+      orderBy: {
+        id: "desc"
       }
     })
   };
