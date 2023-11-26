@@ -42,9 +42,13 @@ export const QuestionEntry: FC<Props> = ({ question, refetch, onClick }) => {
               <Typography level="body-sm">•</Typography>
               <Typography level="body-sm">{askedOn}</Typography>
             </Flex>
-            {!question.reply && (
+            {!question.reply ? (
               <Chip size="sm" color="neutral" variant="outlined">
                 Waiting answer
+              </Chip>
+            ) : (
+              <Chip size="sm" color="primary" variant="outlined">
+                Answered
               </Chip>
             )}
           </Flex>
