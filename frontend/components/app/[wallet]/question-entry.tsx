@@ -6,7 +6,7 @@ import { SocialData } from "@/hooks/useSocialData";
 import { DEFAULT_PROFILE_PICTURE } from "@/lib/assets";
 import { getDifference, shortAddress } from "@/lib/utils";
 import theme from "@/theme";
-import { FileUpload } from "@mui/icons-material";
+import { FileUploadOutlined } from "@mui/icons-material";
 import { Avatar, Chip, IconButton, Typography } from "@mui/joy";
 import { usePathname } from "next/navigation";
 import { FC, useMemo } from "react";
@@ -67,7 +67,7 @@ export const QuestionEntry: FC<Props> = ({ question, refetch, onClick }) => {
             toast.success("question url copied to clipboard");
           }}
         >
-          <FileUpload fontSize="small" />
+          <FileUploadOutlined fontSize="small" />
         </IconButton>
       </Flex>
     </Flex>
