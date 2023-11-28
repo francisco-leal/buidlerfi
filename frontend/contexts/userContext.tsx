@@ -37,7 +37,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     isLoading: balanceIsLoading
   } = useBalance({ address: user.data?.wallet as `0x${string}` });
   const { wallets } = useWallets();
-  const { setActiveWallet } = usePrivyWagmi();
+  const { wallet, setActiveWallet } = usePrivyWagmi();
   const [socialWallet, setSocialWallet] = useState<string | undefined>(undefined);
 
   //Ensure the active wallet is the embedded wallet from Privy
@@ -66,7 +66,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
       privyUser: privyUser || undefined,
       isLoading: !ready || (!!privyUser && user.isLoading),
       isAuthenticatedAndActive: ready && !user.isLoading && !!user.data && user.data.isActive && privyAuthenticated,
-      address: user.data?.wallet ? (user.data?.wallet as `0x${string}`) : undefined,
+      address: wallet?.address ? (wallet.address as `0x${string}`) : undefined,
       socialAddress: socialWallet as `0x${string}`,
       refetch: user.refetch,
       balance: balance?.value,
@@ -80,6 +80,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
       privyUser,
       ready,
       refetchBalance,
+      socialWallet,
       user.data,
       user.isLoading,
       user.refetch
