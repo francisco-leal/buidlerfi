@@ -26,6 +26,10 @@ export default function BuyKeyPage() {
     tx.executeTx({ args: [address!], value: buyPriceAfterFee });
   };
 
+  const skip = () => {
+    router.replace("/onboarding/linkwallet?skipLaunchingKeys=1");
+  };
+
   return (
     <Flex y gap={5}>
       <Flex y>
@@ -40,6 +44,9 @@ export default function BuyKeyPage() {
       <Flex y gap1>
         <Button loading={buyingKey} onClick={handleBuy}>
           Create key
+        </Button>
+        <Button variant="plain" onClick={skip}>
+          Skip
         </Button>
       </Flex>
     </Flex>
