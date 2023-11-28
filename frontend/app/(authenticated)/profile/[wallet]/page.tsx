@@ -58,12 +58,6 @@ export default function ProfilePage({ params }: { params: { wallet: `0x${string}
     }
   };
 
-  console.log({
-    width: window.innerWidth,
-    diff: window.innerWidth - 500,
-    computedRight: (window.innerHeight - 500) / 2 + 37 + 16
-  });
-
   return (
     <Flex component={"main"} y grow gap2>
       {hasKeys && !isOwnProfile && (
