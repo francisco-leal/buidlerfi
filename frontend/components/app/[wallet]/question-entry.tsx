@@ -45,7 +45,7 @@ export const QuestionEntry: FC<Props> = ({ question, refetch, onClick }) => {
             </Flex>
             {!question.repliedOn ? (
               <Chip size="sm" color="neutral" variant="outlined">
-                Waiting answer
+                Awaiting answer
               </Chip>
             ) : (
               <Chip size="sm" color="primary" variant="outlined">
