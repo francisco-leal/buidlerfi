@@ -7,12 +7,14 @@ import { Reactions } from "@/components/shared/reactions";
 import { UserItemFromAddress } from "@/components/shared/user-item";
 import { OpenDialog } from "@/contexts/DialogContainer";
 import { useProfileContext } from "@/contexts/profileContext";
+import { useGetHolders } from "@/hooks/useBuilderFiApi";
 import { useGetBuilderInfo } from "@/hooks/useBuilderFiContract";
 import { useGetQuestion, usePutQuestion } from "@/hooks/useQuestionsApi";
 import { DEFAULT_PROFILE_PICTURE } from "@/lib/assets";
-import { convertLinksToHyperlinks, getDifference } from "@/lib/utils";
-import { FileUpload, LockOutlined } from "@mui/icons-material";
+import { getDifference } from "@/lib/utils";
+import { FileUploadOutlined, LockOutlined } from "@mui/icons-material";
 import { Avatar, Button, Divider, IconButton, Modal, ModalDialog, Typography } from "@mui/joy";
+import anchorme from "anchorme";
 import { usePathname } from "next/navigation";
 import { useMemo, useState } from "react";
 import { toast } from "react-toastify";
@@ -20,10 +22,11 @@ import sanitize from "sanitize-html";
 
 export default function QuestionModal({ questionId, close }: { questionId: number; close: () => void }) {
   const { data: question, refetch } = useGetQuestion(Number(questionId));
-  const { hasKeys, socialData, isOwnProfile, holders } = useProfileContext();
+  const { hasKeys, socialData, isOwnProfile } = useProfileContext();
   const [reply, setReply] = useState("");
   const putQuestion = usePutQuestion();
   const { buyPrice } = useGetBuilderInfo(socialData.wallet);
+  const { data: holders } = useGetHolders(question?.questioner.wallet as `0x${string}`);
   const pathname = usePathname();
 
   const replyQuestion = async () => {
@@ -50,11 +53,14 @@ export default function QuestionModal({ questionId, close }: { questionId: numbe
   };
 
   const sanitizedContent = useMemo(
-    () => sanitize(convertLinksToHyperlinks(question?.questionContent)),
+    () => (question?.questionContent ? sanitize(anchorme(question?.questionContent)) : ""),
     [question?.questionContent]
   );
 
-  const sanitizedReply = useMemo(() => sanitize(convertLinksToHyperlinks(question?.reply || "")), [question?.reply]);
+  const sanitizedReply = useMemo(
+    () => (question?.reply ? sanitize(anchorme(question?.reply || "")) : ""),
+    [question?.reply]
+  );
 
   if (!question) return <></>;
 
@@ -97,11 +103,11 @@ export default function QuestionModal({ questionId, close }: { questionId: numbe
                 toast.success("question url copied to clipboard");
               }}
             >
-              <FileUpload fontSize="small" />
+              <FileUploadOutlined fontSize="small" />
             </IconButton>
           </Flex>
           <Divider sx={{ mx: -2 }} />
-          {isOwnProfile && !question.reply && (
+          {isOwnProfile && !question.repliedOn && (
             <FullTextArea
               placeholder={`Answer ${question.questioner.displayName} ...`}
               avatarUrl={question.questioner.avatarUrl || undefined}
@@ -109,7 +115,7 @@ export default function QuestionModal({ questionId, close }: { questionId: numbe
               value={reply}
             />
           )}
-          {question.reply && hasKeys && (
+          {question.repliedOn && hasKeys && (
             <Flex x ys gap={1} grow>
               <Avatar size="sm" src={question.replier.avatarUrl || DEFAULT_PROFILE_PICTURE} />
               <Flex y gap={0.5}>
@@ -130,7 +136,7 @@ export default function QuestionModal({ questionId, close }: { questionId: numbe
               </Flex>
             </Flex>
           )}
-          {!hasKeys && question.reply && (
+          {!hasKeys && question.repliedOn && (
             <PageMessage
               title="Unlock answer"
               icon={<LockOutlined />}
@@ -138,7 +144,7 @@ export default function QuestionModal({ questionId, close }: { questionId: numbe
             />
           )}
 
-          {!question.reply && !isOwnProfile && (
+          {!question.repliedOn && !isOwnProfile && (
             <PageMessage
               title="Waiting for answer ..."
               icon={<Avatar size="sm" src={socialData.avatarUrl} />}
@@ -149,7 +155,7 @@ export default function QuestionModal({ questionId, close }: { questionId: numbe
               }
             />
           )}
-          {question.reply && hasKeys && <Reactions question={question} type="like" refetch={refetch} />}
+          {question.repliedOn && hasKeys && <Reactions question={question} type="like" refetch={refetch} />}
         </Flex>
       </ModalDialog>
     </Modal>
