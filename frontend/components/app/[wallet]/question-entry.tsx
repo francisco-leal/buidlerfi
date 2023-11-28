@@ -45,7 +45,7 @@ export const QuestionEntry: FC<Props> = ({ question, refetch, onClick }) => {
             </Flex>
             {!question.repliedOn ? (
               <Chip size="sm" color="neutral" variant="outlined">
-                Waiting answer
+                Awaiting answer
               </Chip>
             ) : (
               <Chip size="sm" color="primary" variant="outlined">
@@ -59,7 +59,7 @@ export const QuestionEntry: FC<Props> = ({ question, refetch, onClick }) => {
         </Flex>
       </Flex>
       <Flex x yc xsb grow>
-        <Reactions sx={{ ml: 4 }} question={question} refetch={refetch} /> : <Flex />
+        <Reactions sx={{ ml: 4 }} question={question} refetch={refetch} /> <Flex />
         <IconButton
           onClick={e => {
             e.preventDefault();
