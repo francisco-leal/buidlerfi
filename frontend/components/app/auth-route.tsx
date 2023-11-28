@@ -60,12 +60,16 @@ export const AuthRoute = ({ children }: { children: ReactNode }) => {
 
     // user has not logged in with privy yet so send him to the signup page
     if (!user.privyUser) {
-      if (redirect("/signup")) return;
+      redirect("/signup");
+      setIsReady(true);
+      return;
     }
 
     // this means the user does not have an invite code
     if (!user.user?.invitedById) {
-      if (redirect("/signup/invitation")) return;
+      redirect("/signup/invitation");
+      setIsReady(true);
+      return;
     }
 
     // this means that the user has not done the onboarding
@@ -92,7 +96,7 @@ export const AuthRoute = ({ children }: { children: ReactNode }) => {
     }
 
     setIsReady(true);
-  }, [handleOnboardingRedirect, pathname, redirect, router, user, user.isLoading]);
+  }, [handleOnboardingRedirect, pathname, redirect, router, user, user.isLoading, user.privyUser]);
 
   if (user.isLoading || !isReady) {
     return (

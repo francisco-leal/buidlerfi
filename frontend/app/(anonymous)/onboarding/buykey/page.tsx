@@ -5,15 +5,24 @@ import { useUserContext } from "@/contexts/userContext";
 import { useGetBuilderInfo, useTradeKey } from "@/hooks/useBuilderFiContract";
 import { Button, Typography } from "@mui/joy";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 
 export default function BuyKeyPage() {
   const router = useRouter();
   const { address } = useUserContext();
   const { buyPriceAfterFee } = useGetBuilderInfo(address!);
+  const [buyingKey, setBuyingKey] = useState(false);
 
-  const tx = useTradeKey("buy", () => router.replace("/onboarding/linkwallet"));
+  const tx = useTradeKey("buy", () => {
+    // give time for the TX to actually process
+    setTimeout(() => {
+      router.replace("/onboarding/linkwallet");
+      setBuyingKey(false);
+    }, 2000);
+  });
 
   const handleBuy = () => {
+    setBuyingKey(true);
     tx.executeTx({ args: [address!], value: buyPriceAfterFee });
   };
 
@@ -29,7 +38,9 @@ export default function BuyKeyPage() {
         </Typography>
       </Flex>
       <Flex y gap1>
-        <Button onClick={handleBuy}>Create key</Button>
+        <Button loading={buyingKey} onClick={handleBuy}>
+          Create key
+        </Button>
       </Flex>
     </Flex>
   );
