@@ -8,14 +8,24 @@ import { useBuilderFIData, useGetHoldings } from "@/hooks/useBuilderFiApi";
 import { formatToDisplayString, tryParseBigInt } from "@/lib/utils";
 import { KeyOutlined, TransitEnterexitOutlined } from "@mui/icons-material";
 import { Button, Card, CircularProgress, Divider, Typography, useTheme } from "@mui/joy";
-import { usePrivy } from "@privy-io/react-auth";
+import { useWallets } from "@privy-io/react-auth";
+import { usePrivyWagmi } from "@privy-io/wagmi-connector";
 import { Transak, TransakConfig } from "@transak/transak-sdk";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useBalance } from "wagmi";
 
 export default function ChatsPage() {
-  const { user } = usePrivy();
-  const address = (user?.wallet?.address as `0x${string}`) || "0x0";
+  const { wallet: activeWallet, setActiveWallet } = usePrivyWagmi();
+  const { wallets } = useWallets();
+
+  //Ensure the active wallet is the embedded wallet from Privy
+  useEffect(() => {
+    const found = wallets.find(wal => wal.connectorType === "embedded");
+    if (found) setActiveWallet(found);
+  }, [setActiveWallet, wallets]);
+
+  const address = (activeWallet?.address as `0x${string}`) || "0x0";
+
   const theme = useTheme();
   const { data: builderFiData, isLoading } = useBuilderFIData();
   const { data: balance } = useBalance({
