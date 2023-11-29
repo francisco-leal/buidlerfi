@@ -3,6 +3,7 @@
 import { ERRORS } from "@/lib/errors";
 import prisma from "@/lib/prisma";
 import privyClient from "@/lib/privyClient";
+import { ipfsToURL } from "@/lib/utils";
 import viemClient from "@/lib/viemClient";
 import { Wallet } from "@privy-io/server-auth";
 import { differenceInMinutes } from "date-fns";
@@ -279,6 +280,21 @@ export const getBulkUsers = async (addresses: string[]) => {
   };
 };
 
+const sanitizeAvatarUrl = (avatarUrl: string) => {
+  if (!avatarUrl) return avatarUrl;
+
+  if (avatarUrl.includes("talentprotocol")) {
+    const imageUrl = new URL(avatarUrl);
+    return imageUrl.origin + imageUrl.pathname;
+  }
+
+  if (avatarUrl.includes("ipfs://")) {
+    return ipfsToURL(avatarUrl);
+  }
+
+  return avatarUrl;
+};
+
 export const getRecommendedUsers = async (address: string) => {
   const user = await prisma.user.findUnique({ where: { wallet: address.toLowerCase() } });
   if (!user) return { error: ERRORS.USER_NOT_FOUND };
@@ -297,6 +313,7 @@ export const getRecommendedUsers = async (address: string) => {
     const foundUser = usersFromRecommendations.find(u => u.id === rec.userId);
     return {
       ...rec,
+      avatarUrl: sanitizeAvatarUrl(rec.avatarUrl),
       wallet: foundUser?.wallet || rec.wallet,
       socialWallet: rec.wallet,
       userId: rec.userId,
