@@ -313,7 +313,7 @@ export const getRecommendedUsers = async (address: string) => {
     const foundUser = usersFromRecommendations.find(u => u.id === rec.userId);
     return {
       ...rec,
-      avatarUrl: sanitizeAvatarUrl(rec.avatarUrl),
+      avatarUrl: sanitizeAvatarUrl(rec.avatarUrl || ""),
       wallet: foundUser?.wallet || rec.wallet,
       socialWallet: rec.wallet,
       userId: rec.userId,
