@@ -12,6 +12,7 @@ import { usePathname } from "next/navigation";
 import { FC, useMemo } from "react";
 import { toast } from "react-toastify";
 import sanitize from "sanitize-html";
+import { QuestionContextMenu } from "./question-context-menu";
 
 interface Props {
   question?: NonNullable<ReturnType<typeof useGetQuestions>["data"]>[number];
@@ -31,7 +32,7 @@ export const QuestionEntry: FC<Props> = ({ question, refetch, onClick }) => {
   if (!question) return <></>;
 
   return (
-    <Flex y gap2 p={2} borderBottom={"1px solid " + theme.palette.divider} onClick={onClick} pointer>
+    <Flex y gap2 p={2} borderBottom={"1px solid " + theme.palette.divider}>
       <Flex x ys gap1>
         <Avatar size="sm" sx={{ cursor: "pointer" }} src={question.questioner?.avatarUrl || DEFAULT_PROFILE_PICTURE} />
         <Flex y basis="100%">
@@ -40,21 +41,35 @@ export const QuestionEntry: FC<Props> = ({ question, refetch, onClick }) => {
               <Typography level="title-sm" whiteSpace="pre-line" sx={{ cursor: "pointer" }}>
                 {question.questioner.displayName || shortAddress(question.questioner.wallet as `0x${string}`)}
               </Typography>
-              <Typography level="body-sm">•</Typography>
+              <Typography level="helper">•</Typography>
               <Typography level="body-sm">{askedOn}</Typography>
             </Flex>
-            {!question.repliedOn ? (
-              <Chip size="sm" color="neutral" variant="outlined">
-                Awaiting answer
-              </Chip>
-            ) : (
-              <Chip size="sm" color="primary" variant="outlined">
-                Answered
-              </Chip>
-            )}
+            <Flex x yc gap2>
+              {!question.repliedOn ? (
+                <Chip size="sm" color="neutral" variant="outlined">
+                  Awaiting answer
+                </Chip>
+              ) : (
+                <Chip size="sm" color="primary" variant="outlined">
+                  Answered
+                </Chip>
+              )}
+
+              <QuestionContextMenu question={question} />
+            </Flex>
           </Flex>
-          <Typography fontWeight={400} level="body-sm" whiteSpace="pre-line" textTransform={"none"}>
-            <div dangerouslySetInnerHTML={{ __html: sanitizedContent }} />
+          <Typography
+            onClick={e => {
+              e.preventDefault();
+              e.stopPropagation();
+              onClick();
+            }}
+            style={{ cursor: "pointer" }}
+            fontWeight={400}
+            level="body-sm"
+            whiteSpace="pre-line"
+          >
+            <span style={{ textTransform: "none" }} dangerouslySetInnerHTML={{ __html: sanitizedContent }} />
           </Typography>
         </Flex>
       </Flex>

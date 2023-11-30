@@ -1,9 +1,11 @@
 "use client";
+import { WelcomeModal } from "@/components/app/welcome-modal";
 import { Flex } from "@/components/shared/flex";
 import { PageMessage } from "@/components/shared/page-message";
 import { RecommendedUserItem } from "@/components/shared/recommended-user-item";
 import { UserItem } from "@/components/shared/user-item";
 import { useUserContext } from "@/contexts/userContext";
+import { useBetterRouter } from "@/hooks/useBetterRouter";
 import { useOnchainUsers } from "@/hooks/useBuilderFiApi";
 import { useRecommendedUsers } from "@/hooks/useUserApi";
 import { SupervisorAccountOutlined } from "@mui/icons-material";
@@ -13,6 +15,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 export default function Home() {
   const { user } = useUserContext();
   const { users, nextPage, isInitialLoading, hasMoreUsers, isLoading: isLoadingMoreUsers } = useOnchainUsers();
+  const router = useBetterRouter();
   const [selectedTab, setSelectedTab] = useState("friends");
 
   const { isLoading: isLoadingRecommendedUsers, data: recommendedUsers } = useRecommendedUsers(
@@ -52,6 +55,7 @@ export default function Home() {
 
   return (
     <Flex component={"main"} y grow>
+      {router.searchParams.welcome === "1" && <WelcomeModal />}
       <Tabs defaultValue="top" value={selectedTab} onChange={(_, val) => val && setSelectedTab(val as string)}>
         <TabList tabFlex={1} className="grid w-full grid-cols-2">
           <Tab value="friends">Friends</Tab>
