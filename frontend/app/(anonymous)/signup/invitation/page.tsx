@@ -3,7 +3,7 @@
 import { Flex } from "@/components/shared/flex";
 import { useUserContext } from "@/contexts/userContext";
 import { useCreateUser } from "@/hooks/useUserApi";
-import { FAQ_LINK, WAITLIST_LINK } from "@/lib/constants";
+import { INTRO_BLOG_POST_LINK, WAITLIST_LINK } from "@/lib/constants";
 import { formatError } from "@/lib/utils";
 import { Button, FormControl, FormHelperText, Input, Typography } from "@mui/joy";
 import { usePrivy } from "@privy-io/react-auth";
@@ -39,13 +39,17 @@ export default function InvitationCode() {
     <Flex y ysb grow fullwidth p={2}>
       <Flex y gap={3}>
         <Typography textAlign="center" level="body-sm" textColor="neutral.800">
-          Invite code
+          Welcome to builder.fi
         </Typography>
         <Flex y>
-          <Typography level="h3">Welcome, builder</Typography>
+          <Typography level="h3">gm builder</Typography>
           <Typography level="body-md" textColor="neutral.600">
             On builder.fi you can monetize your knowledge by answering questions from other builders. Discover how to
-            get early access in this <a href={FAQ_LINK}>blog post</a>.
+            get early access in this{" "}
+            <a href={INTRO_BLOG_POST_LINK} target="_blank">
+              blog post
+            </a>
+            .
           </Typography>
         </Flex>
         <FormControl error={!!createUser.error} sx={{ width: "100%" }}>
@@ -55,19 +59,18 @@ export default function InvitationCode() {
       </Flex>
       <Flex y gap3>
         <Typography textColor={"neutral.600"} textAlign="center">
-          Don&apos;t have an invite code ? <a href={WAITLIST_LINK}>Join waitlist</a>
+          Don&apos;t have an invite code?{" "}
+          <a href={WAITLIST_LINK} target="_blank">
+            Join waitlist
+          </a>
         </Typography>
-        <Button loading={createUser.isLoading || overrideLoading} fullWidth size="lg" onClick={handleOnClickProceed}>
-          Continue
-        </Button>
-      </Flex>
-    </Flex>
-  );
-
-  return (
-    <Flex y ysb xs height="300px" fullwidth>
-      <Flex y xc gap2 fullwidth>
-        <Button loading={createUser.isLoading || overrideLoading} fullWidth size="lg" onClick={handleOnClickProceed}>
+        <Button
+          loading={createUser.isLoading || overrideLoading}
+          disabled={inviteCode.length === 0}
+          fullWidth
+          size="lg"
+          onClick={handleOnClickProceed}
+        >
           Continue
         </Button>
         <Button disabled={createUser.isLoading} fullWidth onClick={handleLogout} variant="plain">

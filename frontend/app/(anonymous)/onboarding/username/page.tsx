@@ -30,7 +30,7 @@ export default function UsernamePage() {
             )}
           </Flex>
           <Typography textAlign="center" level="body-sm" textColor="neutral.800" flexBasis={"100%"}>
-            Username
+            Welcome to builder.fi
           </Typography>
           <Flex basis="100%" />
         </Flex>
