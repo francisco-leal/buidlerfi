@@ -55,7 +55,7 @@ export default function FundPage() {
     <Flex y ysb grow fullwidth>
       <Flex y gap={3}>
         <Typography textAlign="center" level="body-sm" textColor="neutral.800">
-          Top up
+          Welcome to builder.fi
         </Typography>
         <Flex y>
           <Typography level="h3">Top up your account</Typography>

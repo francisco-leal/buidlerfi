@@ -52,8 +52,6 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [setActiveWallet, wallets]);
 
-  console.log({ privyUser, ready });
-
   //Get the non embed wallet
   useEffect(() => {
     const socialW = wallets.find(wal => wal.connectorType !== "embedded");

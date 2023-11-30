@@ -45,7 +45,7 @@ export default function CreateWallet() {
             )}
           </Flex>
           <Typography textAlign="center" level="body-sm" textColor="neutral.800" flexBasis={"100%"}>
-            Verify account
+            Welcome to builder.fi
           </Typography>
           <Flex basis="100%" />
         </Flex>

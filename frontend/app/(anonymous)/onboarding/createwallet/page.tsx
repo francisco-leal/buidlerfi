@@ -14,7 +14,7 @@ export default function CreateWalletPage() {
     <Flex y ysb grow fullwidth>
       <Flex y gap={3}>
         <Typography textAlign="center" level="body-sm" textColor="neutral.800">
-          Wallet
+          Welcome to builder.fi
         </Typography>
         <Flex y>
           <Typography level="h3">Your builder.fi wallet</Typography>

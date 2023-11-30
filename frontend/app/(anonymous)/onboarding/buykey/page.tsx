@@ -50,7 +50,7 @@ export default function BuyKeyPage() {
             )}
           </Flex>
           <Typography textAlign="center" level="body-sm" textColor="neutral.800" flexBasis={"100%"}>
-            Create your key
+            Welcome to builder.fi
           </Typography>
           <Flex basis="100%" />
         </Flex>
@@ -74,7 +74,7 @@ export default function BuyKeyPage() {
         </Flex>
       </Flex>
       <Flex y gap1>
-        <Button size="lg" fullWidth loading={buyingKey} onClick={handleBuy}>
+        <Button size="lg" fullWidth loading={buyingKey} onClick={handleBuy} disabled={!hasEnoughBalance}>
           Create keys
         </Button>
         <Button size="lg" fullWidth variant="plain" onClick={skip}>
