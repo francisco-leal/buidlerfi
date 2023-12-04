@@ -50,7 +50,8 @@ export const getCurrentUser = async (privyUserId: string) => {
         }
       },
       socialProfiles: true,
-      points: true
+      points: true,
+      tags: true
     }
   });
 
@@ -190,14 +191,30 @@ export const linkNewWallet = async (privyUserId: string, signedMessage: string) 
 };
 
 export interface UpdateUserArgs {
+  tags?: string[];
   hasFinishedOnboarding?: boolean;
 }
 
 export const updateUser = async (privyUserId: string, updatedUser: UpdateUserArgs) => {
+  if (updatedUser.tags && updatedUser.tags.length > 3) {
+    return { error: ERRORS.TAGS_COUNT_INVALID };
+  }
+
+  const existingUser = await prisma.user.findUniqueOrThrow({
+    where: { privyUserId: privyUserId },
+    include: { socialProfiles: true, tags: true }
+  });
+
   const res = await prisma.user.update({
     where: { privyUserId: privyUserId },
     data: {
-      hasFinishedOnboarding: updatedUser.hasFinishedOnboarding
+      hasFinishedOnboarding: updatedUser.hasFinishedOnboarding,
+      tags: updatedUser.tags
+        ? {
+            disconnect: existingUser.tags.map(tag => ({ id: tag.id })),
+            connect: updatedUser.tags.map(tag => ({ name: tag }))
+          }
+        : undefined
     }
   });
 
