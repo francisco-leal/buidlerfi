@@ -46,7 +46,7 @@ export default function InvitationCode() {
         </Flex>
         <Flex y>
           <Typography level="h3">gm builder</Typography>
-          <Typography level="body-md" textColor="neutral.600">
+          <Typography level="body-md" textColor="neutral.600" className="remove-text-transform">
             On builder.fi you can monetize your knowledge by answering questions from other builders. Discover how to
             get early access in this{" "}
             <a href={INTRO_BLOG_POST_LINK} target="_blank">

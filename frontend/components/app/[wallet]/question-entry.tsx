@@ -69,7 +69,7 @@ export const QuestionEntry: FC<Props> = ({ question, refetch, onClick }) => {
             level="body-sm"
             whiteSpace="pre-line"
           >
-            <span style={{ textTransform: "none" }} dangerouslySetInnerHTML={{ __html: sanitizedContent }} />
+            <span className="remove-text-transform" dangerouslySetInnerHTML={{ __html: sanitizedContent }} />
           </Typography>
         </Flex>
       </Flex>

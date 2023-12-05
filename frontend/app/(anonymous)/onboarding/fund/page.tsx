@@ -52,11 +52,11 @@ export default function FundPage() {
   const hasEnoughBalance = balance && balance >= MIN_BALANCE_ONBOARDING;
 
   return (
-    <Flex y ysb grow fullwidth>
+    <Flex y ysb grow fullwidth className="remove-text-transform">
       <Flex y gap={3}>
         <Flex y>
           <Typography level="h3">Top up your account</Typography>
-          <Typography level="body-md" textColor="neutral.600">
+          <Typography level="body-md" textColor="neutral.600" className="remove-text-transform">
             builder.fi is built on Base and uses ETH as currency. We suggest a deposit of {">"} 0.001 ETH (~$2) to fully
             test the app. You can withdraw your funds at any time.
           </Typography>
