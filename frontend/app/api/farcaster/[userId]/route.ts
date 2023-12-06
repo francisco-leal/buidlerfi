@@ -14,7 +14,7 @@ export async function POST(req: Request) {
       return Response.json({ error: ERRORS.USER_NOT_ON_FARCASTER }, { status: 400 });
     }
     const castHash = await publishNewUserKeysCast(
-      userFarcaster.profileName,
+      `@${userFarcaster.profileName}`,
       `https://app.builder.fi/profile/${user?.wallet}`
     );
     return Response.json({ castUrl: getCastUrl(castHash) });
