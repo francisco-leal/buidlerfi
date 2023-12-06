@@ -29,12 +29,12 @@ export const createQuestion = async (privyUserId: string, questionContent: strin
   if (process.env.ENABLE_FARCASTER === "true") {
     const questionerFarcaster = questioner.socialProfiles.find(sp => sp.type === SocialProfileType.FARCASTER);
     const replierFarcaster = replier.socialProfiles.find(sp => sp.type === SocialProfileType.FARCASTER);
-    
+
     if (questionerFarcaster || replierFarcaster) {
       // if one of the two has farcaster, publish the cast
       publishNewQuestionCast(
-        questionerFarcaster?.profileName || questioner.displayName!,
-        replierFarcaster?.profileName || replier.displayName!,
+        questionerFarcaster?.profileName ? `@${questionerFarcaster?.profileName}` : questioner.displayName!,
+        replierFarcaster?.profileName ? `@${replierFarcaster?.profileName}` : replier.displayName!,
         `https://app.builder.fi/profile/${replier.wallet}?question=${question.id}`
       );
     }

@@ -34,8 +34,8 @@ export async function PUT(req: Request, { params }: { params: { id: number } }) 
       if (questionerFarcaster || replierFarcaster) {
         // if one of the two has farcaster, publish the cast
         await publishNewAnswerCast(
-          replierFarcaster?.profileName || replier.displayName!,
-          questionerFarcaster?.profileName || questioner!.displayName!,
+          replierFarcaster?.profileName ? `@${replierFarcaster?.profileName}` : replier.displayName!,
+          questionerFarcaster?.profileName ? `@${questionerFarcaster?.profileName}` : questioner!.displayName!,
           `https://app.builder.fi/profile/${replier.wallet}?question=${question.id}`
         );
       }
