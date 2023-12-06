@@ -11,7 +11,7 @@ export async function publishNewUserCast(privyUserId: string) {
       return { error: ERRORS.USER_NOT_ON_FARCASTER };
     }
     const castHash = await publishNewUserKeysCast(
-      userFarcaster.profileName,
+      `@${userFarcaster.profileName}`,
       `https://app.builder.fi/profile/${user?.wallet}`
     );
     return { data: { hash: castHash } };
