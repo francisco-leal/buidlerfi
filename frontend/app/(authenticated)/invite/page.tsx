@@ -49,7 +49,7 @@ export default function Invite() {
   return (
     <Flex y p={2}>
       <Typography textColor="neutral.800" level="h2" whiteSpace="pre-line">
-        Refer builders. <br /> Earn points.
+        Invite builders. <br /> Earn points.
       </Typography>
       <Typography level="body-sm" mt={1}>
         Points are airdropped every Friday and will have future uses in builder.fi. Earn points by asking and answering
