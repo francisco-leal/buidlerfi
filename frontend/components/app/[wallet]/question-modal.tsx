@@ -57,12 +57,22 @@ export default function QuestionModal({ questionId, close }: { questionId: numbe
   };
 
   const sanitizedContent = useMemo(
-    () => (question?.questionContent ? sanitize(anchorme(question?.questionContent)) : ""),
+    () =>
+      question?.questionContent
+        ? sanitize(
+            anchorme({ input: question?.questionContent, options: { attributes: { target: "_blank", truncate: 20 } } })
+          )
+        : "",
     [question?.questionContent]
   );
 
   const sanitizedReply = useMemo(
-    () => (question?.reply ? sanitize(anchorme(question?.reply || "")) : ""),
+    () =>
+      question?.reply
+        ? sanitize(
+            anchorme({ input: question?.reply || "", options: { attributes: { target: "_blank", truncate: 20 } } })
+          )
+        : "",
     [question?.reply]
   );
 
@@ -112,7 +122,7 @@ export default function QuestionModal({ questionId, close }: { questionId: numbe
             {isOwnProfile && (!question.repliedOn || isEditingReply) && (
               <FullTextArea
                 placeholder={`Answer ${question.questioner.displayName} ...`}
-                avatarUrl={question.questioner.avatarUrl || undefined}
+                avatarUrl={question.replier.avatarUrl || undefined}
                 onChange={e => setReply(e.target.value)}
                 value={reply}
               />
