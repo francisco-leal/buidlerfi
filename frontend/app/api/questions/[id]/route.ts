@@ -25,6 +25,7 @@ export async function PUT(req: Request, { params }: { params: { id: number } }) 
       }
     });
 
+    console.log("Farcaster enabled -> ", process.env.ENABLE_FARCASTER);
     if (process.env.ENABLE_FARCASTER === "true") {
       const questioner = await prisma.user.findUnique({
         where: { id: question.questionerId },
@@ -32,6 +33,10 @@ export async function PUT(req: Request, { params }: { params: { id: number } }) 
       });
       const questionerFarcaster = questioner?.socialProfiles.find(sp => sp.type === SocialProfileType.FARCASTER);
       const replierFarcaster = replier?.socialProfiles.find(sp => sp.type === SocialProfileType.FARCASTER);
+
+      console.log("FOUND questioner -> ", !!questionerFarcaster);
+      console.log("FOUND replier -> ", !!replierFarcaster);
+
       if (questionerFarcaster || replierFarcaster) {
         const replierName = replierFarcaster?.profileName
           ? `@${replierFarcaster?.profileName}`
@@ -40,6 +45,7 @@ export async function PUT(req: Request, { params }: { params: { id: number } }) 
           ? `@${questionerFarcaster?.profileName}`
           : questioner?.displayName || shortAddress(questioner?.wallet || "");
         // if one of the two has farcaster, publish the cast
+        console.log("CASTING NEW ANSWER");
         await publishNewAnswerCast(
           replierName,
           questionerName,

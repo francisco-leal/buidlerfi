@@ -27,9 +27,13 @@ export const createQuestion = async (privyUserId: string, questionContent: strin
     data: { questionerId: questioner.id, replierId: replier.id, questionContent: questionContent }
   });
   // if in production, push the question to farcaster
+  console.log("Farcaster enabled -> ", process.env.ENABLE_FARCASTER);
   if (process.env.ENABLE_FARCASTER === "true") {
     const questionerFarcaster = questioner.socialProfiles.find(sp => sp.type === SocialProfileType.FARCASTER);
     const replierFarcaster = replier.socialProfiles.find(sp => sp.type === SocialProfileType.FARCASTER);
+
+    console.log("FOUND questioner -> ", !!questionerFarcaster);
+    console.log("FOUND replier -> ", !!replierFarcaster);
 
     if (questionerFarcaster || replierFarcaster) {
       const replierName = replierFarcaster?.profileName
@@ -39,7 +43,8 @@ export const createQuestion = async (privyUserId: string, questionContent: strin
         ? `@${questionerFarcaster?.profileName}`
         : questioner?.displayName || shortAddress(questioner?.wallet || "");
       // if one of the two has farcaster, publish the cast
-      publishNewQuestionCast(
+      console.log("CASTING NEW QUESTION");
+      await publishNewQuestionCast(
         questionerName,
         replierName,
         `https://app.builder.fi/profile/${replier.wallet}?question=${question.id}`
