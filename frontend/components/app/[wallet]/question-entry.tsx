@@ -30,7 +30,7 @@ export const QuestionEntry: FC<Props> = ({ question, refetch, onClick }) => {
   const sanitizedContent = useMemo(
     () =>
       sanitize(
-        anchorme({ input: question?.questionContent, options: { attributes: { target: "_blank", truncate: 20 } } })
+        anchorme({ input: question?.questionContent, options: { attributes: { target: "_blank" }, truncate: 20 } })
       ),
     [question?.questionContent]
   );

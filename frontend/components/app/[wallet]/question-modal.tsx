@@ -60,7 +60,7 @@ export default function QuestionModal({ questionId, close }: { questionId: numbe
     () =>
       question?.questionContent
         ? sanitize(
-            anchorme({ input: question?.questionContent, options: { attributes: { target: "_blank", truncate: 20 } } })
+            anchorme({ input: question?.questionContent, options: { attributes: { target: "_blank" }, truncate: 20 } })
           )
         : "",
     [question?.questionContent]
@@ -70,7 +70,7 @@ export default function QuestionModal({ questionId, close }: { questionId: numbe
     () =>
       question?.reply
         ? sanitize(
-            anchorme({ input: question?.reply || "", options: { attributes: { target: "_blank", truncate: 20 } } })
+            anchorme({ input: question?.reply || "", options: { attributes: { target: "_blank" }, truncate: 20 } })
           )
         : "",
     [question?.reply]
