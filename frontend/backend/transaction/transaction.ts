@@ -91,9 +91,15 @@ const storeTransactionInternal = async (log: EventLog, hash: string, blockNumber
 };
 
 export const storeTransaction = async (hash: `0x${string}`) => {
-  const onchainTransaction = await viemClient.getTransactionReceipt({
-    hash
-  });
+  let onchainTransaction = null;
+  try {
+    onchainTransaction = await viemClient.getTransactionReceipt({
+      hash
+    });
+  } catch (err) {
+    console.log("Transaction not mined yet... waiting for confirmations for: ", hash);
+    onchainTransaction = await viemClient.waitForTransactionReceipt({ hash });
+  }
 
   if (!onchainTransaction) {
     console.log("No transaction found for hash: ", hash);
