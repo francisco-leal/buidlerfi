@@ -1,18 +1,23 @@
-import { UpdateUserArgs } from "@/backend/user/user";
+import { GetUsersArgs, UpdateUserArgs } from "@/backend/user/user";
 import {
   checkUsersExistSA,
   createUserSA,
   generateChallengeSA,
-  getCurrentUserSA,
   getRecommendedUserSA,
   getRecommendedUsersSA,
+  getTopUsersSA,
   getUserSA,
+  getUserStatsSA,
+  getUsersSA,
   linkNewWalletSA,
   refreshCurrentUserProfileSA,
+  searchSA,
   updateUserSA
 } from "@/backend/user/userServerActions";
+import { SimpleUseQueryOptions } from "@/models/helpers.model";
 import { Prisma } from "@prisma/client";
-import { usePrivy } from "@privy-io/react-auth";
+import { useDebounce } from "./useDebounce";
+import { useInfiniteQuerySA } from "./useInfiniteQuerySA";
 import { useMutationSA } from "./useMutationSA";
 import { useQuerySA } from "./useQuerySA";
 
@@ -35,9 +40,12 @@ export const useGetUser = (address?: string, reactQueryOptions?: { enabled?: boo
   });
 };
 
-export const useGetCurrentUser = () => {
-  const { user } = usePrivy();
-  return useQuerySA(["useGetCurrentUser", user?.id], getCurrentUserSA);
+export const useGetUsers = (args: GetUsersArgs) => {
+  return useInfiniteQuerySA(["useGetUsers"], async options => getUsersSA(args, options));
+};
+
+export const useGetTopUsers = () => {
+  return useInfiniteQuerySA(["useGetTopUsers"], async options => getTopUsersSA(options));
 };
 
 export const useRefreshCurrentUser = () => {
@@ -70,4 +78,18 @@ export const useGetRecommendedUser = (address?: string) => {
 
 export const useRecommendedUsers = (wallet: string) => {
   return useQuerySA(["useRecommendedUsers", wallet], async options => getRecommendedUsersSA(wallet, options));
+};
+
+export const useSearch = (searchValue: string, queryOptions?: SimpleUseQueryOptions) => {
+  const debouncedValue = useDebounce(searchValue, 500);
+  return useInfiniteQuerySA(["useSearch", debouncedValue], async options => searchSA(debouncedValue, options), {
+    enabled: !!debouncedValue,
+    ...queryOptions
+  });
+};
+
+export const useGetUserStats = (userId?: number) => {
+  return useQuerySA(["useGetUserStats", userId], async options => getUserStatsSA(userId!, options), {
+    enabled: !!userId
+  });
 };

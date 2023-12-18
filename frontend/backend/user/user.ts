@@ -1,12 +1,15 @@
 "use server";
 
+import { PAGINATION_LIMIT } from "@/lib/constants";
 import { ERRORS } from "@/lib/errors";
 import prisma from "@/lib/prisma";
 import privyClient from "@/lib/privyClient";
 import { ipfsToURL } from "@/lib/utils";
 import viemClient from "@/lib/viemClient";
+import { Prisma } from "@prisma/client";
 import { Wallet } from "@privy-io/server-auth";
 import { differenceInMinutes } from "date-fns";
+import { sendNotification } from "../notification/notification";
 import { updateRecommendations } from "../socialProfile/recommendation";
 import { updateUserSocialProfiles } from "../socialProfile/socialProfile";
 
@@ -39,7 +42,7 @@ export const refreshCurrentUserProfile = async (privyUserId: string) => {
 };
 
 export const getCurrentUser = async (privyUserId: string) => {
-  const res = await prisma.user.findUnique({
+  const res = await prisma.user.findUniqueOrThrow({
     where: {
       privyUserId: privyUserId
     },
@@ -137,6 +140,8 @@ export const createUser = async (privyUserId: string, inviteCode: string) => {
 
     return newUser;
   });
+
+  await sendNotification(existingCode.userId, newUser.id, "USER_INVITED", newUser.id);
 
   return { data: newUser };
 };
@@ -252,6 +257,69 @@ Wallet: ${publicKey}
   return { data: res };
 };
 
+export type GetUsersArgs = Omit<Prisma.UserFindManyArgs, "include" | "take" | "skip">;
+
+export const getUsers = async (privyUserId: string, args: GetUsersArgs, offset: number) => {
+  const currentUser = await prisma.user.findUnique({ where: { privyUserId } });
+
+  const users = await prisma.user.findMany({
+    where: {
+      ...args.where
+    },
+    include: {
+      keysOfSelf: {
+        where: {
+          amount: {
+            gt: 0
+          }
+        }
+      },
+      keysOwned: {
+        where: {
+          amount: {
+            gt: 0
+          }
+        }
+      },
+      recommendedTo: {
+        where: {
+          forId: currentUser?.id
+        }
+      }
+    },
+    take: PAGINATION_LIMIT,
+    orderBy: args.orderBy,
+    skip: offset
+  });
+
+  return { data: users };
+};
+
+type TopUser = Prisma.$UserPayload["scalars"] & {
+  soldKeys: number;
+  numberOfHolders: number;
+  numberOfQuestions: number;
+  numberOfReplies: number;
+};
+
+export const getTopUsers = async (offset: number) => {
+  const users = (await prisma.$queryRaw`
+    SELECT "User".*, CAST(COALESCE(SUM(DISTINCT "KeyRelationship".amount), 0) AS INTEGER) as "soldKeys",
+    CAST(COUNT(DISTINCT "KeyRelationship"."holderId") AS INTEGER) as "numberOfHolders",
+    CAST(COUNT(DISTINCT "Question".id) AS INTEGER) as "numberOfQuestions",
+    CAST(COUNT(DISTINCT CASE WHEN "Question".reply IS NOT NULL THEN "Question".id END) AS INTEGER) as "numberOfReplies"
+    FROM "User"
+    LEFT JOIN "KeyRelationship" ON "User".id = "KeyRelationship"."ownerId"
+    LEFT JOIN "Question" ON "User".id = "Question"."replierId"
+    WHERE "User"."isActive" = true AND "User"."hasFinishedOnboarding" = true AND "User"."displayName" IS NOT NULL
+    GROUP BY "User".id
+    ORDER BY "soldKeys" DESC
+    LIMIT ${PAGINATION_LIMIT} OFFSET ${offset};
+  `) as TopUser[];
+
+  return { data: users };
+};
+
 export const getBulkUsers = async (addresses: string[]) => {
   // get all users
   const usersWithReplies = await prisma.user.findMany({
@@ -334,4 +402,70 @@ export const getRecommendedUser = async (wallet: string) => {
   if (!res) return { error: ERRORS.USER_NOT_FOUND };
 
   return { data: { ...res, avatarUrl: sanitizeAvatarUrl(res.avatarUrl || "") } };
+};
+
+type SearchUser = Prisma.$UserPayload["scalars"] & {
+  soldKeys: number;
+  numberOfHolders: number;
+  numberOfQuestions: number;
+  numberOfReplies: number;
+};
+
+export const search = async (searchValue: string, offset: number) => {
+  //We use raw query to order by soldKeys
+  const users = (await prisma.$queryRaw`
+    SELECT "User".*, CAST(COALESCE(SUM(DISTINCT "KeyRelationship".amount), 0) AS INTEGER) as "soldKeys",
+    CAST(COUNT(DISTINCT "KeyRelationship"."holderId") AS INTEGER) as "numberOfHolders",
+    CAST(COUNT(DISTINCT "Question".id) AS INTEGER) as "numberOfQuestions",
+    CAST(COUNT(DISTINCT CASE WHEN "Question".reply IS NOT NULL THEN "Question".id END) AS INTEGER) as "numberOfReplies"
+    FROM "User"
+    LEFT JOIN "KeyRelationship" ON "User".id = "KeyRelationship"."ownerId"
+    LEFT JOIN "SocialProfile" ON "User".id = "SocialProfile"."userId"
+    LEFT JOIN "Question" ON "User".id = "Question"."replierId"
+    WHERE "User"."isActive" = true 
+      AND "User"."hasFinishedOnboarding" = true 
+      AND (
+        "User"."wallet" ILIKE '%' || ${searchValue} || '%'
+        OR "User"."socialWallet" ILIKE '%' || ${searchValue} || '%'
+        OR EXISTS (
+          SELECT 1
+          FROM "SocialProfile"
+          WHERE "SocialProfile"."userId" = "User".id
+            AND "SocialProfile"."profileName" ILIKE '%' || ${searchValue} || '%'
+        )
+      )
+    GROUP BY "User".id
+    ORDER BY "soldKeys" DESC
+    LIMIT ${PAGINATION_LIMIT} OFFSET ${offset};
+  `) as SearchUser[];
+
+  return {
+    data: users
+  };
+};
+
+export const getUserStats = async (id: number) => {
+  const user = await prisma.user.findUniqueOrThrow({
+    where: {
+      id: id
+    },
+    include: {
+      replies: true,
+      keysOfSelf: {
+        where: {
+          amount: {
+            gt: 0
+          }
+        }
+      }
+    }
+  });
+
+  return {
+    data: {
+      numberOfHolders: user.keysOfSelf.length,
+      numberOfQuestions: user.replies.length,
+      numberOfReplies: user.replies.filter(reply => !!reply.repliedOn).length
+    }
+  };
 };

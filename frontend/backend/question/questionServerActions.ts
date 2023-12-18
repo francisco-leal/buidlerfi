@@ -8,8 +8,11 @@ import {
   deleteReaction,
   deleteReply,
   editQuestion,
+  getHotQuestions,
   getQuestion,
-  getQuestions
+  getQuestions,
+  getQuestionsArgs,
+  getReactions
 } from "./question";
 
 export const getQuestionSA = async (questionId: number, options: ServerActionOptions) => {
@@ -28,8 +31,8 @@ export const deleteReactionSA = async (
   return serverActionWrapper(data => deleteReaction(data.privyUserId, questionId, reactionType), options);
 };
 
-export const getQuestionsSA = (userId: number, options: ServerActionOptions) => {
-  return serverActionWrapper(() => getQuestions(userId), options);
+export const getQuestionsSA = (args: getQuestionsArgs, options: ServerActionOptions) => {
+  return serverActionWrapper(() => getQuestions(args, options.pagination?.offset || 0), options);
 };
 
 export const createQuestionSA = (questionContent: string, replierId: number, options: ServerActionOptions) => {
@@ -46,4 +49,12 @@ export const editQuestionSA = async (questionId: number, questionContent: string
 
 export const deleteReplySA = async (questionId: number, options: ServerActionOptions) => {
   return serverActionWrapper(data => deleteReply(data.privyUserId, questionId), options);
+};
+
+export const getHotQuestionsSA = (options: ServerActionOptions) => {
+  return serverActionWrapper(() => getHotQuestions(options.pagination?.offset || 0), options);
+};
+
+export const getReactionsSA = async (questionId: number, type: "like" | "upvote", options: ServerActionOptions) => {
+  return serverActionWrapper(() => getReactions(questionId, type), options);
 };

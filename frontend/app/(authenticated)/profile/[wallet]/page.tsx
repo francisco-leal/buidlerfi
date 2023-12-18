@@ -4,12 +4,12 @@ import { ChatTab } from "@/components/app/[wallet]/chat-tab";
 import { Overview } from "@/components/app/[wallet]/overview";
 import { TradeKeyModal } from "@/components/app/[wallet]/trade-key-modal";
 import { Flex } from "@/components/shared/flex";
-import { HolderItem } from "@/components/shared/holder-item";
 import { PageMessage } from "@/components/shared/page-message";
-import { UserItemFromAddress } from "@/components/shared/user-item";
+import { InjectTopBar } from "@/components/shared/top-bar";
+import { UnifiedUserItem } from "@/components/shared/unified-user-item";
 import { useProfileContext } from "@/contexts/profileContext";
-import { useGetHoldings } from "@/hooks/useBuilderFiApi";
-import { isEVMAddress, tryParseBigInt } from "@/lib/utils";
+import { useBetterRouter } from "@/hooks/useBetterRouter";
+import { isEVMAddress } from "@/lib/utils";
 import { Chat, Lock } from "@mui/icons-material";
 import { Button, Tab, TabList, TabPanel, Tabs } from "@mui/joy";
 import { useEffect, useMemo, useState } from "react";
@@ -18,16 +18,15 @@ export default function ProfilePage({ params }: { params: { wallet: `0x${string}
   const {
     hasKeys,
     holders,
+    holdings,
     ownedKeysCount,
     refetch: refetchProfileInfo,
     socialData,
     isOwnProfile
   } = useProfileContext();
-
-  const holdings = useGetHoldings(params.wallet);
+  const router = useBetterRouter();
 
   const [buyModalState, setBuyModalState] = useState<"closed" | "buy" | "sell">("closed");
-  const [isAskingQuestion, setIsAskingQuestion] = useState(false);
 
   const isValidWallet = useMemo(() => {
     return isEVMAddress(params.wallet);
@@ -39,24 +38,9 @@ export default function ProfilePage({ params }: { params: { wallet: `0x${string}
 
   if (!isValidWallet) return <></>;
 
-  const holderNumber = () => {
-    if (holders?.length) {
-      return `(${holders?.length})`;
-    } else {
-      return null;
-    }
-  };
-
-  const holdingNumber = () => {
-    if (holdings.data?.length) {
-      return `(${holdings.data?.length})`;
-    } else {
-      return null;
-    }
-  };
-
   return (
     <Flex component={"main"} y grow gap2>
+      <InjectTopBar withBack />
       {hasKeys && !isOwnProfile && (
         <Flex
           x
@@ -70,18 +54,25 @@ export default function ProfilePage({ params }: { params: { wallet: `0x${string}
             left: "50%",
             transform: "translateX(-50%)",
             top: 0,
-            bottom: 0,
+            bottom: "56px",
             mb: 2,
             pr: 4
           }}
         >
-          <Button sx={{ pointerEvents: "auto" }} size="lg" onClick={() => setIsAskingQuestion(true)}>
+          <Button
+            sx={{ pointerEvents: "auto" }}
+            size="lg"
+            onClick={() => router.replace({ searchParams: { ask: true } })}
+          >
             Ask
           </Button>
         </Flex>
       )}
-      {isAskingQuestion && (
-        <AskQuestionModal refetch={() => refetchProfileInfo()} close={() => setIsAskingQuestion(false)} />
+      {router.searchParams.ask && (
+        <AskQuestionModal
+          refetch={() => refetchProfileInfo()}
+          close={() => router.replace({ searchParams: { ask: undefined } })}
+        />
       )}
       {buyModalState !== "closed" && (
         <TradeKeyModal
@@ -93,7 +84,7 @@ export default function ProfilePage({ params }: { params: { wallet: `0x${string}
             await refetchProfileInfo();
             setBuyModalState("closed");
           }}
-          targetBuilderAddress={socialData.wallet}
+          targetBuilderAddress={socialData?.wallet}
         />
       )}
 
@@ -101,27 +92,29 @@ export default function ProfilePage({ params }: { params: { wallet: `0x${string}
       <Tabs defaultValue={"chat"}>
         <TabList tabFlex={1} className="grid w-full grid-cols-3">
           <Tab value="chat">Q&A</Tab>
-          <Tab value="holders">Holders{holderNumber()}</Tab>
-          <Tab value="holding">Holding{holdingNumber()}</Tab>
+          <Tab value="holders">Holders ({holders?.length})</Tab>
+          <Tab value="holding">Holding ({holdings?.length})</Tab>
         </TabList>
         <TabPanel value="chat" sx={{ p: 0 }}>
           <ChatTab onBuyKeyClick={() => setBuyModalState("buy")} />
         </TabPanel>
         <TabPanel value="holding">
-          {holdings.data?.length === 0 && isOwnProfile && (
+          {holdings?.length === 0 && isOwnProfile && (
             <PageMessage
               icon={<Chat />}
               text={"Buy other people's keys to ask them a question and access all answers."}
             />
           )}
-          {holdings.data?.length === 0 && !isOwnProfile && (
+          {holdings?.length === 0 && !isOwnProfile && (
             <PageMessage icon={<Lock />} text={"This user has not bought any keys yet."} />
           )}
-          {holdings.data?.map(holdingItem => (
-            <UserItemFromAddress
-              address={holdingItem.owner.owner as `0x${string}`}
-              buyPrice={tryParseBigInt(holdingItem.owner.buyPrice)}
-              numberOfHolders={Number(holdingItem.owner.numberOfHolders)}
+          {holdings?.map((holdingItem, i) => (
+            <UnifiedUserItem
+              user={holdingItem.owner}
+              holderInfo={{
+                holderNumber: i + 1,
+                numberOfKeys: Number(holdingItem.amount)
+              }}
               key={`home-${holdingItem.id}`}
             />
           ))}
@@ -133,11 +126,13 @@ export default function ProfilePage({ params }: { params: { wallet: `0x${string}
           {holders?.length === 0 && !isOwnProfile && (
             <PageMessage icon={<Lock />} text="This user hasn't created their keys yet." />
           )}
-          {holders?.map(holdingItem => (
-            <HolderItem
-              address={holdingItem.holder.owner as `0x${string}`}
-              numberOfKeys={Number(holdingItem.heldKeyNumber)}
-              holderNumber={Number(holdingItem.supporterNumber)}
+          {holders?.map((holdingItem, i) => (
+            <UnifiedUserItem
+              user={holdingItem.holder}
+              holderInfo={{
+                holderNumber: i + 1,
+                numberOfKeys: Number(holdingItem.amount)
+              }}
               key={`home-${holdingItem.id}`}
             />
           ))}

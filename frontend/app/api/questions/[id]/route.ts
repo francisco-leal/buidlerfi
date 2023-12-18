@@ -1,3 +1,4 @@
+import { sendNotification } from "@/backend/notification/notification";
 import { publishNewAnswerCast } from "@/lib/api/backend/farcaster";
 import { ERRORS } from "@/lib/errors";
 import prisma from "@/lib/prisma";
@@ -10,19 +11,23 @@ export async function PUT(req: Request, { params }: { params: { id: number } }) 
     const question = await prisma.question.findUnique({ where: { id: Number(params.id) } });
     if (!question) return Response.json({ error: ERRORS.QUESTION_NOT_FOUND }, { status: 404 });
 
-    const replier = await prisma.user.findUnique({
+    const replier = await prisma.user.findUniqueOrThrow({
       where: { privyUserId: req.headers.get("privyUserId")! },
       include: { socialProfiles: true }
     });
 
     if (question.replierId !== replier?.id) return Response.json({ error: ERRORS.UNAUTHORIZED }, { status: 401 });
 
-    const res = await prisma.question.update({
-      where: { id: Number(params.id) },
-      data: {
-        reply: body["answerContent"],
-        repliedOn: new Date()
-      }
+    const res = await prisma.$transaction(async tx => {
+      const question = await tx.question.update({
+        where: { id: Number(params.id) },
+        data: {
+          reply: body["answerContent"],
+          repliedOn: new Date()
+        }
+      });
+      await sendNotification(question.questionerId, replier.id, "REPLIED_YOUR_QUESTION", question.id, tx);
+      return question;
     });
 
     console.log("Farcaster enabled -> ", process.env.ENABLE_FARCASTER);

@@ -4,12 +4,11 @@ import { Flex } from "@/components/shared/flex";
 import { FullTextArea } from "@/components/shared/full-text-area";
 import { PageMessage } from "@/components/shared/page-message";
 import { Reactions } from "@/components/shared/reactions";
-import { UserItemFromAddress } from "@/components/shared/user-item";
+import { UnifiedUserItem } from "@/components/shared/unified-user-item";
 import { OpenDialog } from "@/contexts/DialogContainer";
 import { useProfileContext } from "@/contexts/profileContext";
-import { useGetHolders } from "@/hooks/useBuilderFiApi";
-import { useGetBuilderInfo } from "@/hooks/useBuilderFiContract";
 import { useGetQuestion, usePutQuestion } from "@/hooks/useQuestionsApi";
+import { useGetUserStats } from "@/hooks/useUserApi";
 import { DEFAULT_PROFILE_PICTURE } from "@/lib/assets";
 import { getDifference } from "@/lib/utils";
 import { FileUploadOutlined, LockOutlined } from "@mui/icons-material";
@@ -20,6 +19,7 @@ import { usePathname } from "next/navigation";
 import { useMemo, useState } from "react";
 import { toast } from "react-toastify";
 import sanitize from "sanitize-html";
+import { QuestionContextMenu } from "./question-context-menu";
 import { ReplyContextMenu } from "./reply-context-menu";
 
 export default function QuestionModal({ questionId, close }: { questionId: number; close: () => void }) {
@@ -28,9 +28,8 @@ export default function QuestionModal({ questionId, close }: { questionId: numbe
   const { hasKeys, socialData, isOwnProfile } = useProfileContext();
   const [reply, setReply] = useState("");
   const putQuestion = usePutQuestion();
-  const { buyPrice } = useGetBuilderInfo(socialData.wallet);
-  const { data: holders } = useGetHolders(question?.questioner.wallet as `0x${string}`);
   const pathname = usePathname();
+  const { data: questionerStats } = useGetUserStats(question?.questioner?.id);
 
   const replyQuestion = async () => {
     if (!question) return;
@@ -84,19 +83,19 @@ export default function QuestionModal({ questionId, close }: { questionId: numbe
         <Flex y grow>
           <Flex y p={2} gap1>
             <Flex x yc xsb>
-              <UserItemFromAddress
-                isButton={false}
-                px={0}
-                py={0}
-                address={question.questioner.wallet as `0x${string}`}
-                buyPrice={buyPrice}
-                numberOfHolders={holders?.length}
+              <UnifiedUserItem
+                nonClickable
+                sx={{ px: 0, py: 0 }}
+                user={question.questioner}
                 nameLevel="title-sm"
+                holdersAndReplies={questionerStats}
               />
-              {isOwnProfile && (!question.repliedOn || isEditingReply) && (
+              {isOwnProfile && (!question.repliedOn || isEditingReply) ? (
                 <Button loading={putQuestion.isLoading} disabled={reply.length < 10} onClick={replyQuestion}>
                   Reply
                 </Button>
+              ) : (
+                <QuestionContextMenu question={question} refetch={() => refetch()} />
               )}
             </Flex>
             <Typography fontWeight={300} level="body-sm" whiteSpace="pre-line" textColor={"neutral.800"}>
@@ -104,7 +103,7 @@ export default function QuestionModal({ questionId, close }: { questionId: numbe
             </Typography>
             <Typography level="helper">{format(question.createdAt, "MMM dd, yyyy")}</Typography>
             <Flex x yc xsb>
-              <Reactions question={question} refetch={refetch} />
+              <Reactions questionId={question.id} />
               <IconButton
                 onClick={e => {
                   e.preventDefault();
@@ -158,24 +157,22 @@ export default function QuestionModal({ questionId, close }: { questionId: numbe
               <PageMessage
                 title="Unlock answer"
                 icon={<LockOutlined />}
-                text={`Hold at least one key to ask ${socialData.displayName} a question and access all answers.`}
+                text={`Hold at least one key to ask ${socialData?.displayName} a question and access all answers.`}
               />
             )}
 
             {!question.repliedOn && !isOwnProfile && (
               <PageMessage
                 title="Waiting for answer ..."
-                icon={<Avatar size="sm" src={socialData.avatarUrl} />}
+                icon={<Avatar size="sm" src={socialData?.avatarUrl} />}
                 text={
                   hasKeys
-                    ? `You will get notified when ${socialData.displayName} answers`
-                    : `Buy a key, and get notified when ${socialData.displayName} answers`
+                    ? `You will get notified when ${socialData?.displayName} answers`
+                    : `Buy a key, and get notified when ${socialData?.displayName} answers`
                 }
               />
             )}
-            {question.repliedOn && hasKeys && !isEditingReply && (
-              <Reactions question={question} type="like" refetch={refetch} />
-            )}
+            {question.repliedOn && hasKeys && !isEditingReply && <Reactions questionId={question.id} type="like" />}
           </Flex>
         </Flex>
       </ModalDialog>

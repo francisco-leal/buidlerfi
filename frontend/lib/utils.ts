@@ -1,14 +1,14 @@
 import { AxiosError } from "axios";
-import { differenceInMinutes } from "date-fns";
+import { differenceInMinutes, startOfDay, subDays, subMonths } from "date-fns";
 import { URLSearchParams } from "url";
-import { formatUnits } from "viem";
+import { formatUnits, parseEther } from "viem";
 
 export const shortAddress = (address: string) => {
   return `${address.toLowerCase().slice(0, 6)}...${address.toLowerCase().slice(-4)}`;
 };
 
-export const formatEth = (eth?: bigint) => {
-  return `${formatUnits(eth || BigInt(0), 18)}`;
+export const formatEth = (eth?: bigint, decimals = 18) => {
+  return `${formatUnits(eth || BigInt(0), decimals)}`;
 };
 
 export const encodeQueryData = (data: Record<string, string>) => {
@@ -25,8 +25,8 @@ export const tryParseBigInt = (value?: string | bigint | number) => {
   else return BigInt(value);
 };
 
-export const toEthNumber = (value?: string | bigint | number) => {
-  return Number(formatEth(tryParseBigInt(value)));
+export const toEthNumber = (value?: string | bigint | number, decimals = 18) => {
+  return Number(formatEth(tryParseBigInt(value), decimals));
 };
 
 export const formatToDisplayString = (value?: string | bigint | number, decimals = 18, significantDigits = 6) => {
@@ -89,7 +89,7 @@ export const ipfsToURL = (ipfsAddress?: string): string => {
   return "https://cloudflare-ipfs.com/" + ipfsAddress.replace("://", "/");
 };
 
-export function convertParamsToString(searchParams: Record<string, string | undefined>) {
+export function convertParamsToString(searchParams: Record<string, string | number | boolean | undefined>) {
   return Object.entries(searchParams)
     .filter(([key, value]) => key && value !== undefined)
     .map(([key, value]) => `${encodeURIComponent(key)}=${encodeURIComponent(value as string)}`)
@@ -99,9 +99,52 @@ export function convertParamsToString(searchParams: Record<string, string | unde
 export const getDifference = (date?: Date) => {
   if (!date) return "";
   const minutes = differenceInMinutes(new Date(), date);
+  if (minutes < 1) return "Just now";
   if (minutes < 60) return `${minutes}m`;
   const hours = Math.floor(minutes / 60);
   if (hours < 24) return `${hours}h`;
   const days = Math.floor(hours / 24);
   if (days < 30) return `${days}d`;
 };
+
+export function isNumeric(n: string) {
+  return !isNaN(parseFloat(n)) && isFinite(parseFloat(n));
+}
+
+export const calculateSharePrice = (supply: number) => {
+  if (supply === 0) {
+    return 0;
+  }
+
+  const sum1 = ((supply - 1) * supply * (2 * supply - 1)) / 6;
+  const sum2 = (supply * (supply + 1) * (2 * supply + 1)) / 6;
+
+  return (BigInt(sum2 - sum1) * parseEther("1")) / BigInt(16000);
+};
+
+//Sort any item into periods. Param must be any array of items with a createdAt field
+export function sortIntoPeriods<T extends { createdAt: Date }>(toSort: T[]) {
+  const now = new Date();
+  const today = startOfDay(now);
+  const lastWeek = subDays(now, 7);
+  const lastMonth = subMonths(now, 1);
+  const lastYear = subMonths(now, 12);
+
+  const sorted = {
+    today: [] as T[],
+    "last 7 days": [] as T[],
+    "last 30 days": [] as T[],
+    "last year": [] as T[],
+    "all time": [] as T[]
+  };
+
+  toSort.forEach(item => {
+    if (item.createdAt > today) sorted["today"].push(item);
+    else if (item.createdAt > lastWeek) sorted["last 7 days"].push(item);
+    else if (item.createdAt > lastMonth) sorted["last 30 days"].push(item);
+    else if (item.createdAt > lastYear) sorted["last year"].push(item);
+    else sorted["all time"].push(item);
+  });
+
+  return sorted;
+}

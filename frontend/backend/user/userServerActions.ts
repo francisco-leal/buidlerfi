@@ -2,6 +2,7 @@
 
 import { ServerActionOptions, serverActionWrapper } from "../../lib/serverActionWrapper";
 import {
+  GetUsersArgs,
   UpdateUserArgs,
   checkUsersExist,
   createUser,
@@ -10,10 +11,14 @@ import {
   getCurrentUser,
   getRecommendedUser,
   getRecommendedUsers,
+  getTopUsers,
   getUser,
+  getUserStats,
+  getUsers,
   linkNewWallet,
   refreshAllUsersProfile,
   refreshCurrentUserProfile,
+  search,
   updateUser
 } from "./user";
 
@@ -23,6 +28,14 @@ export const getCurrentUserSA = (options: ServerActionOptions) => {
 
 export const getUserSA = (wallet: string, options: ServerActionOptions) => {
   return serverActionWrapper(() => getUser(wallet), options);
+};
+
+export const getUsersSA = (args: GetUsersArgs, options: ServerActionOptions) => {
+  return serverActionWrapper(data => getUsers(data.privyUserId, args, options.pagination?.offset || 0), options);
+};
+
+export const getTopUsersSA = (options: ServerActionOptions) => {
+  return serverActionWrapper(() => getTopUsers(options.pagination?.offset || 0), options);
 };
 
 export const createUserSA = (inviteCode: string, options: ServerActionOptions) => {
@@ -64,4 +77,12 @@ export const getRecommendedUserSA = (wallet: string, options: ServerActionOption
 
 export const getRecommendedUsersSA = (address: string, options: ServerActionOptions) => {
   return serverActionWrapper(() => getRecommendedUsers(address), options);
+};
+
+export const searchSA = (searchValue: string, options: ServerActionOptions) => {
+  return serverActionWrapper(() => search(searchValue, options.pagination?.offset || 0), options);
+};
+
+export const getUserStatsSA = (userId: number, options: ServerActionOptions) => {
+  return serverActionWrapper(() => getUserStats(userId), options);
 };

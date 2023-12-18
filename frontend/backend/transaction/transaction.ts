@@ -1,10 +1,13 @@
 "use server";
 import { builderFIV1Abi } from "@/lib/abi/BuidlerFiV1";
-import { BUIILDER_FI_V1_EVENT_SIGNATURE, BUILDERFI_CONTRACT, IN_USE_CHAIN_ID } from "@/lib/constants";
+import { BUIILDER_FI_V1_EVENT_SIGNATURE, BUILDERFI_CONTRACT, IN_USE_CHAIN_ID, PAGINATION_LIMIT } from "@/lib/constants";
 import { ERRORS } from "@/lib/errors";
 import { prisma } from "@/lib/prisma";
 import viemClient from "@/lib/viemClient";
+import { NotificationType } from "@prisma/client";
+import _ from "lodash";
 import { decodeEventLog, parseAbiItem } from "viem";
+import { sendNotification } from "../notification/notification";
 
 interface EventLog {
   eventName: "Trade";
@@ -59,7 +62,7 @@ const storeTransactionInternal = async (log: EventLog, hash: string, blockNumber
     }
   });
 
-  await prisma.$transaction(async tx => {
+  const res = await prisma.$transaction(async tx => {
     const key = await tx.keyRelationship.findFirst({
       where: {
         holderId: holder.id,
@@ -68,26 +71,26 @@ const storeTransactionInternal = async (log: EventLog, hash: string, blockNumber
     });
 
     if (!key) {
-      await tx.keyRelationship.create({
+      return await tx.keyRelationship.create({
         data: {
           holderId: holder.id,
           ownerId: owner.id,
           amount: log.args.isBuy ? log.args.shareAmount : -log.args.shareAmount
         }
       });
-    } else {
-      await tx.keyRelationship.update({
-        where: {
-          id: key.id
-        },
-        data: {
-          amount: key.amount + (log.args.isBuy ? log.args.shareAmount : -log.args.shareAmount)
-        }
-      });
     }
+
+    return await tx.keyRelationship.update({
+      where: {
+        id: key.id
+      },
+      data: {
+        amount: key.amount + (log.args.isBuy ? log.args.shareAmount : -log.args.shareAmount)
+      }
+    });
   });
 
-  return true;
+  return res;
 };
 
 export const storeTransaction = async (hash: `0x${string}`) => {
@@ -126,7 +129,18 @@ export const storeTransaction = async (hash: `0x${string}`) => {
     blockHash: onchainTransaction.blockHash
   });
 
-  await storeTransactionInternal(eventLog, hash, onchainTransaction.blockNumber, block.timestamp);
+  const keyRelationship = await storeTransactionInternal(
+    eventLog,
+    hash,
+    onchainTransaction.blockNumber,
+    block.timestamp
+  );
+
+  await sendNotification(
+    keyRelationship.ownerId,
+    keyRelationship.holderId,
+    eventLog.args.isBuy ? NotificationType.KEYBUY : NotificationType.KEYSELL
+  );
 
   return { data: hash };
 };
@@ -194,4 +208,68 @@ export const processAnyPendingTransactions = async (privyUserId: string) => {
   }
 
   return { data: "success" };
+};
+
+export const getMyTransactions = async (privyUserId: string, side: "holder" | "owner" | "both", offset: number) => {
+  const user = await prisma.user.findUniqueOrThrow({
+    where: {
+      privyUserId: privyUserId
+    }
+  });
+
+  const transactions = await prisma.trade.findMany({
+    where:
+      side === "both"
+        ? {
+            OR: [
+              {
+                holderAddress: user.wallet.toLowerCase()
+              },
+              {
+                ownerAddress: user.wallet.toLowerCase()
+              }
+            ]
+          }
+        : side === "owner"
+        ? {
+            ownerAddress: user.wallet.toLowerCase()
+          }
+        : {
+            holderAddress: user.wallet.toLowerCase()
+          },
+    orderBy: {
+      timestamp: "desc"
+    },
+    skip: offset,
+    take: PAGINATION_LIMIT
+  });
+
+  console.log(transactions);
+
+  const uniqueWallets = _.uniq([...transactions.map(t => t.holderAddress), ...transactions.map(t => t.ownerAddress)]);
+
+  const users = await prisma.user.findMany({
+    where: {
+      wallet: {
+        in: uniqueWallets
+      }
+    }
+  });
+
+  const userMap = new Map<string, (typeof users)[number]>();
+  for (const user of users) {
+    userMap.set(user.wallet.toLowerCase(), user);
+  }
+
+  const res = transactions
+    .filter(tx => userMap.has(tx.holderAddress.toLowerCase()) && userMap.has(tx.ownerAddress.toLowerCase()))
+    .map(transaction => ({
+      ...transaction,
+      holder: userMap.get(transaction.holderAddress.toLowerCase()),
+      owner: userMap.get(transaction.ownerAddress.toLowerCase())
+    }));
+
+  console.log(res);
+
+  return { data: res };
 };

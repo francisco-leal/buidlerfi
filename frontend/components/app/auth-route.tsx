@@ -3,11 +3,10 @@ import { useBetterRouter } from "@/hooks/useBetterRouter";
 import { useUpdateUser } from "@/hooks/useUserApi";
 import { builderFIV1Abi } from "@/lib/abi/BuidlerFiV1";
 import { BUILDERFI_CONTRACT, MIN_BALANCE_ONBOARDING, ONBOARDING_WALLET_CREATED_KEY } from "@/lib/constants";
-import { CircularProgress } from "@mui/joy";
 import { usePathname } from "next/navigation";
 import { ReactNode, useCallback, useEffect, useState } from "react";
 import { useContractRead } from "wagmi";
-import { Flex } from "../shared/flex";
+import { LoadingPage } from "../shared/loadingPage";
 
 export const AuthRoute = ({ children }: { children: ReactNode }) => {
   const [isReady, setIsReady] = useState(false);
@@ -59,7 +58,8 @@ export const AuthRoute = ({ children }: { children: ReactNode }) => {
   }, [user, router, supporterKeys, redirect, updateUser]);
 
   useEffect(() => {
-    if (router.searchParams.inviteCode) window.localStorage.setItem("inviteCode", router.searchParams.inviteCode);
+    if (router.searchParams.inviteCode)
+      window.localStorage.setItem("inviteCode", router.searchParams.inviteCode.toString());
     if (user.isLoading || updateUser.isLoading) return;
 
     // user has not logged in with privy yet so send him to the signup page
@@ -103,11 +103,7 @@ export const AuthRoute = ({ children }: { children: ReactNode }) => {
   }, [handleOnboardingRedirect, pathname, redirect, router, user, user.isLoading, user.privyUser]);
 
   if (user.isLoading || !isReady) {
-    return (
-      <Flex y yc xc grow>
-        <CircularProgress />
-      </Flex>
-    );
+    return <LoadingPage />;
   }
 
   return children;

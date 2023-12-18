@@ -1,10 +1,11 @@
 "use client";
 import { Flex } from "@/components/shared/flex";
+import { LoadingPage } from "@/components/shared/loadingPage";
 import { PageMessage } from "@/components/shared/page-message";
 import { useProfileContext } from "@/contexts/profileContext";
 import { useBetterRouter } from "@/hooks/useBetterRouter";
 import { Chat, KeyOutlined, LockOpen, LockOutlined } from "@mui/icons-material";
-import { Button, CircularProgress } from "@mui/joy";
+import { Button } from "@mui/joy";
 import { FC } from "react";
 import { QuestionEntry } from "./question-entry";
 import QuestionModal from "./question-modal";
@@ -22,7 +23,7 @@ export const ChatTab: FC<Props> = ({ onBuyKeyClick }) => {
       <PageMessage
         title="Unlock Q&A"
         icon={<LockOutlined />}
-        text={`Hold at least one key to ask ${socialData.displayName} a question and access the answers`}
+        text={`Hold at least one key to ask ${socialData?.displayName} a question and access the answers`}
       />
     );
   }
@@ -52,11 +53,7 @@ export const ChatTab: FC<Props> = ({ onBuyKeyClick }) => {
   }
 
   if (isLoading) {
-    return (
-      <Flex y xc yc grow>
-        <CircularProgress />
-      </Flex>
-    );
+    return <LoadingPage />;
   }
 
   return (
@@ -74,7 +71,7 @@ export const ChatTab: FC<Props> = ({ onBuyKeyClick }) => {
         <Flex y grow sx={{ "& > div:last-child": { border: "none" } }}>
           {hasKeys && !questions?.length ? (
             <PageMessage
-              text={`Congratulations. You can now ask ${socialData.displayName} a question.`}
+              text={`Congratulations. You can now ask ${socialData?.displayName} a question.`}
               icon={<LockOpen />}
             />
           ) : (
@@ -82,11 +79,8 @@ export const ChatTab: FC<Props> = ({ onBuyKeyClick }) => {
               return (
                 <QuestionEntry
                   key={question.id}
-                  socialData={socialData}
                   question={question}
-                  isOwnChat={isOwnProfile}
-                  ownsKeys={hasKeys}
-                  refetch={refetch}
+                  type={"profile"}
                   onClick={() => router.replace({ searchParams: { question: question.id.toString() } })}
                 />
               );

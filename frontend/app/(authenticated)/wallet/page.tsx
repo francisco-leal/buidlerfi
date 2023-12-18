@@ -1,38 +1,36 @@
 "use client";
+import { ExportIcon } from "@/components/icons/export";
 import { Flex } from "@/components/shared/flex";
+import { FundWalletModal } from "@/components/shared/fundTransferModal";
+import { LoadMoreButton } from "@/components/shared/loadMoreButton";
+import { LoadingPage } from "@/components/shared/loadingPage";
 import { PageMessage } from "@/components/shared/page-message";
-import { UserItemFromAddress } from "@/components/shared/user-item";
+import { RoundButton } from "@/components/shared/roundButton";
+import { InjectTopBar } from "@/components/shared/top-bar";
+import { TransactionEntry } from "@/components/shared/transaction-entry";
 import { WalletAddress } from "@/components/shared/wallet-address";
 import { WithdrawDialog } from "@/components/shared/withdraw-modal";
+import { useUserContext } from "@/contexts/userContext";
+import { useBetterRouter } from "@/hooks/useBetterRouter";
 import { useBuilderFIData, useGetHoldings } from "@/hooks/useBuilderFiApi";
-import { useGetCurrentUser } from "@/hooks/useUserApi";
-import { formatToDisplayString, shortAddress, tryParseBigInt } from "@/lib/utils";
-import { Close, CopyAll, KeyOutlined, TransitEnterexitOutlined } from "@mui/icons-material";
-import {
-  Button,
-  Card,
-  CircularProgress,
-  DialogTitle,
-  Divider,
-  IconButton,
-  Modal,
-  ModalDialog,
-  Tooltip,
-  Typography,
-  useTheme
-} from "@mui/joy";
+import { useGetMyGetTransactions } from "@/hooks/useTransaction";
+import { LOGO_BLUE_BACK } from "@/lib/assets";
+import { formatToDisplayString, sortIntoPeriods, tryParseBigInt } from "@/lib/utils";
+import { ArrowDownwardOutlined, ArrowUpwardOutlined, HistoryOutlined } from "@mui/icons-material";
+import { Button, DialogTitle, Divider, Modal, ModalClose, ModalDialog, Typography } from "@mui/joy";
 import { MoonpayConfig, useWallets } from "@privy-io/react-auth";
 import { usePrivyWagmi } from "@privy-io/wagmi-connector";
 import { useEffect, useMemo, useState } from "react";
-import { toast } from "react-toastify";
 import { useBalance } from "wagmi";
 
 export default function ChatsPage() {
-  const user = useGetCurrentUser();
+  const { user } = useUserContext();
+  const [fundModalType, setFundModalType] = useState<"deposit" | "transfer" | "bridge" | "none">("none");
+  const router = useBetterRouter();
+
   const { setActiveWallet, wallet } = usePrivyWagmi();
   const { wallets } = useWallets();
   const [mainWallet, setMainWallet] = useState<string | undefined>(undefined);
-  const [showBridgeModal, setShowBridgeModal] = useState<boolean>(false);
 
   //Ensure the active wallet is the embedded wallet from Privy
   useEffect(() => {
@@ -41,34 +39,40 @@ export default function ChatsPage() {
       setActiveWallet(found);
       setMainWallet(found.address);
     } else {
-      setMainWallet(user.data?.wallet);
+      setMainWallet(user?.wallet);
     }
   }, [setActiveWallet, wallets]);
-
-  const theme = useTheme();
   const { data: builderFiData, isLoading } = useBuilderFIData();
-  const { data: balance } = useBalance({
+  const { data: balance, refetch: refetchBalance } = useBalance({
     address: mainWallet as `0x${string}`,
-    enabled: mainWallet !== "0x0"
+    enabled: !!mainWallet
   });
   const { data: allHolding } = useGetHoldings(mainWallet as `0x${string}`);
   const [openWithdraw, setOpenWithdraw] = useState<boolean>(false);
 
-  const [portfolio, tradingFees] = useMemo(() => {
-    if (!allHolding || !builderFiData) return [BigInt(0), BigInt(0)];
+  const portfolio = useMemo(() => {
+    if (!allHolding || !builderFiData) return BigInt(0);
     const holding = allHolding.reduce((prev, curr) => prev + tryParseBigInt(curr.owner.sellPrice), BigInt(0));
-    const tradingFees = builderFiData.shareParticipants.find(
-      user => user.owner == mainWallet?.toLowerCase()
-    )?.tradingFeesAmount;
-    return [holding, tradingFees];
-  }, [mainWallet, allHolding, builderFiData]);
+    return holding;
+  }, [allHolding, builderFiData]);
+
+  const {
+    data: myTransactions,
+    isLoading: isTransactionHistoryLoading,
+    fetchNextPage,
+    hasNextPage
+  } = useGetMyGetTransactions("both");
+
+  const tradingFees = useMemo(() => {
+    return myTransactions
+      ?.filter(tx => tx.owner?.id === user?.id)
+      ?.reduce((prev, curr) => prev + BigInt(curr.ownerFee || 0), BigInt(0));
+  }, [myTransactions, user?.id]);
+
+  const sortedTransactions = sortIntoPeriods(myTransactions || []);
 
   if (isLoading) {
-    return (
-      <Flex y yc xc grow>
-        <CircularProgress />
-      </Flex>
-    );
+    return <LoadingPage />;
   }
 
   const openMoonpay = async () => {
@@ -84,7 +88,7 @@ export default function ChatsPage() {
   };
 
   return (
-    <Flex y grow gap2 component={"main"}>
+    <Flex y grow component={"main"}>
       {openWithdraw && (
         <WithdrawDialog
           formattedBalance={formatToDisplayString(balance?.value, balance?.decimals)}
@@ -92,105 +96,124 @@ export default function ChatsPage() {
           close={() => setOpenWithdraw(false)}
         />
       )}
-      <Flex x gap2 ys px={2} mt={2}>
-        <Flex grow component={Card} sx={{ gap: 0 }}>
-          <KeyOutlined htmlColor={theme.palette.primary[300]} />
-          <Typography level="h4">{formatToDisplayString(portfolio, 18)} ETH</Typography>
-          <Typography level="body-sm">Portfolio value</Typography>
+      <InjectTopBar title="Wallet" withBack />
+      <Flex y xc p={2} gap2>
+        <img src={LOGO_BLUE_BACK} width="40px" alt="builderfi logo" />
+        <Flex y xc>
+          <Typography fontWeight="600" textAlign={"center"} level="body-sm">
+            Builderfi balance
+          </Typography>
+          <Typography textAlign={"center"} level="h2" lineHeight="150%">
+            {formatToDisplayString(balance?.value, balance?.decimals)} ETH
+          </Typography>
+          {!!mainWallet && <WalletAddress address={mainWallet} level="body-sm" />}
         </Flex>
-        <Tooltip title="every time one of your keys is bought or sold, we charge a 7.5% fee (5% goes to you, 2.5% goes to the protocol)">
-          <Flex grow component={Card} sx={{ gap: 0 }}>
-            <TransitEnterexitOutlined htmlColor={theme.palette.primary[300]} />
-            <Typography level="h4">{formatToDisplayString(tradingFees, 18)} ETH</Typography>
-            <Typography level="body-sm">Fees earned</Typography>
-          </Flex>
-        </Tooltip>
       </Flex>
-      <Flex y xc p={2}>
-        <Typography textAlign={"center"} level="body-sm">
-          Wallet balance
-        </Typography>
-        <Typography textAlign={"center"} level="h2">
-          {formatToDisplayString(balance?.value, balance?.decimals)} ETH
-        </Typography>
-        {!!mainWallet && <WalletAddress address={mainWallet} level="body-md" />}
+      <Flex x xc gap3>
+        <RoundButton variant="soft" icon={<ExportIcon />} title={"Bridge"} onClick={() => setFundModalType("bridge")} />
+        <RoundButton
+          variant="soft"
+          icon={<ArrowUpwardOutlined />}
+          title={"Withdraw"}
+          onClick={() => setOpenWithdraw(true)}
+        />
+        <RoundButton icon={<ArrowDownwardOutlined />} title={"Deposit"} onClick={() => setFundModalType("deposit")} />
       </Flex>
-      <Flex x xc p={2} gap1>
-        <Button onClick={() => setShowBridgeModal(true)}>Bridge</Button>
-        <Button variant="soft" onClick={() => setOpenWithdraw(true)}>
-          Withdraw
+      <Flex y p={2}>
+        <Button
+          variant="soft"
+          color="neutral"
+          fullWidth
+          size="lg"
+          sx={{ borderRadius: "5px 5px 0 0", display: "flex", justifyContent: "space-between" }}
+          onClick={() => router.push("/wallet/portfolio")}
+        >
+          <Typography level="title-md">Portfolio value</Typography>
+          <Typography fontWeight={300} level="body-sm">
+            {formatToDisplayString(portfolio, 18)} ETH
+          </Typography>
         </Button>
-        <Button variant="outlined" onClick={() => openMoonpay()}>
-          Deposit
+        <Divider />
+        <Button
+          variant="soft"
+          color="neutral"
+          fullWidth
+          size="lg"
+          sx={{ borderRadius: "0 0 5px 5px", display: "flex", justifyContent: "space-between" }}
+          onClick={() => router.push("/wallet/fees")}
+        >
+          <Typography level="title-md">Fees earned</Typography>
+          <Typography fontWeight={300} level="body-sm">
+            {formatToDisplayString(tradingFees, 18)} ETH
+          </Typography>
         </Button>
       </Flex>
-      <Divider />
-      <Flex y grow px={2}>
-        <Typography level="h4" mb={1}>
-          {allHolding ? `Holding(${allHolding.length})` : "Holding"}
+      <Flex y grow>
+        <Typography level="h4" mb={1} px={2}>
+          Transaction history
         </Typography>
-        {!allHolding || allHolding?.length === 0 ? (
+        {isTransactionHistoryLoading ? (
+          <LoadingPage />
+        ) : !myTransactions || myTransactions?.length === 0 ? (
           <PageMessage
-            icon={<KeyOutlined />}
-            title="You don't have any keys"
-            text="This space is where you'll find all your expert key holdings."
+            icon={<HistoryOutlined />}
+            title="No transaction history"
+            text="This space is where you'll find all your transactions history."
           />
         ) : (
-          allHolding.map(item => (
-            <UserItemFromAddress
-              address={item.owner.owner as `0x${string}`}
-              buyPrice={tryParseBigInt(item.owner.buyPrice)}
-              numberOfHolders={Number(item.owner.numberOfHolders)}
-              key={`home-${item.owner.owner}`}
-            />
-          ))
+          <>
+            {Object.keys(sortedTransactions)
+              .filter(key => sortedTransactions[key as keyof typeof sortedTransactions].length > 0)
+              .map(key => {
+                return (
+                  <Flex y key={key}>
+                    <Typography sx={{ px: 2, py: 1 }}>{key}</Typography>
+                    {sortedTransactions[key as keyof typeof sortedTransactions]?.map(transaction => {
+                      return (
+                        <TransactionEntry key={transaction.id} transaction={transaction} type="your" feeType="price" />
+                      );
+                    })}
+                  </Flex>
+                );
+              })}
+            <LoadMoreButton isLoading={isTransactionHistoryLoading} nextPage={fetchNextPage} hidden={!hasNextPage} />
+          </>
         )}
       </Flex>
-      <Modal open={showBridgeModal} onClose={() => setShowBridgeModal(false)}>
-        <ModalDialog minWidth="400px">
-          <Flex x xsb yc>
-            <DialogTitle>Bridge crypto from another chain to builder.fi wallet</DialogTitle>
-            <IconButton onClick={() => setShowBridgeModal(false)}>
-              <Close />
-            </IconButton>
-          </Flex>
-          <Flex y gap2>
+      {fundModalType === "deposit" && (
+        <Modal open onClose={() => setFundModalType("none")}>
+          <ModalDialog minWidth="400px">
+            <DialogTitle>Deposit</DialogTitle>
+            <ModalClose />
             <Typography level="body-md" textColor="neutral.600">
-              <strong>1.</strong> Copy your builder.fi wallet address <strong>{shortAddress(mainWallet || "")}</strong>{" "}
-              <IconButton
-                onClick={() => {
-                  navigator.clipboard.writeText(mainWallet || "");
-                  toast.success("Copied to clipboard");
-                }}
-              >
-                <CopyAll />
-              </IconButton>
+              Choose your preferred method
             </Typography>
-            <Typography level="body-md" textColor="neutral.600">
-              <strong>2.</strong> Go to{" "}
-              <a href="https://bungee.exchange" target="_blank">
-                bungee.exchange
-              </a>
-              , on desktop or mobile
-            </Typography>
-            <Typography level="body-md" textColor="neutral.600">
-              <strong>3.</strong> Connect a wallet with funds
-            </Typography>
-            <Typography level="body-md" textColor="neutral.600">
-              <strong>4.</strong> Click on “+ Add Address” and paste your builder.fi address
-            </Typography>
-            <Typography level="body-md" textColor="neutral.600">
-              <strong>5.</strong> Pick your preferred source chain and token to bridge
-            </Typography>
-            <Typography level="body-md" textColor="neutral.600">
-              <strong>6.</strong> Confirm the transaction in your wallet
-            </Typography>
-            <Button sx={{ marginTop: 2 }} onClick={() => setShowBridgeModal(false)}>
-              Done
+            <Button size="lg" onClick={() => setFundModalType("transfer")}>
+              Deposit with crypto
             </Button>
-          </Flex>
-        </ModalDialog>
-      </Modal>
+            <Button
+              size="lg"
+              onClick={() => {
+                setFundModalType("none");
+                openMoonpay();
+              }}
+              variant="soft"
+            >
+              Deposit with fiat
+            </Button>
+          </ModalDialog>
+        </Modal>
+      )}
+      {(fundModalType === "transfer" || fundModalType === "bridge") && (
+        <FundWalletModal
+          address={mainWallet}
+          close={() => {
+            setFundModalType("none");
+            refetchBalance();
+          }}
+          type={fundModalType}
+        />
+      )}
     </Flex>
   );
 }
