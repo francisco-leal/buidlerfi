@@ -1,4 +1,4 @@
-import { getQuestionsArgs } from "@/backend/question/question";
+import { getQuestionsArgs, getReactions } from "@/backend/question/question";
 import {
   addReactionSA,
   createQuestionSA,
@@ -8,12 +8,13 @@ import {
   editQuestionSA,
   getHotQuestionsSA,
   getQuestionSA,
-  getQuestionsSA,
-  getReactionsSA
+  getQuestionsSA
 } from "@/backend/question/questionServerActions";
 import { SimpleUseQueryOptions } from "@/models/helpers.model";
 import { ReactionType } from "@prisma/client";
-import { useMutation } from "@tanstack/react-query";
+import { usePrivy } from "@privy-io/react-auth";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import axios from "axios";
 import { useAxios } from "./useAxios";
 import { useInfiniteQuerySA } from "./useInfiniteQuerySA";
 import { useMutationSA } from "./useMutationSA";
@@ -81,5 +82,14 @@ export const useGetHotQuestions = (queryOptions: SimpleUseQueryOptions) => {
 };
 
 export const useGetReactions = (questionId: number, type: "like" | "upvote") => {
-  return useQuerySA(["useGetReactions", questionId, type], options => getReactionsSA(questionId, type, options));
+  const { getAccessToken } = usePrivy();
+  return useQuery(["useGetReactions", questionId, type], async () =>
+    axios
+      .get<ReturnType<typeof getReactions>>("/api/reaction", {
+        params: { questionId, type },
+        headers: { Authorization: await getAccessToken() }
+      })
+      .then(res => res.data)
+      .then(res => res.data)
+  );
 };
