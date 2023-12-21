@@ -4,49 +4,23 @@ import { WelcomeModal } from "@/components/app/welcome-modal";
 import { Flex } from "@/components/shared/flex";
 import { LoadMoreButton } from "@/components/shared/loadMoreButton";
 import { LoadingPage } from "@/components/shared/loadingPage";
+import { PageMessage } from "@/components/shared/page-message";
 import { InjectTopBar } from "@/components/shared/top-bar";
 import { useUserContext } from "@/contexts/userContext";
 import { useBetterRouter } from "@/hooks/useBetterRouter";
-import { useGetKeyRelationships } from "@/hooks/useKeyRelationshipApi";
-import { useGetHotQuestions, useGetQuestions } from "@/hooks/useQuestionsApi";
+import { useGetHotQuestions, useGetKeyQuestions, useGetNewQuestions } from "@/hooks/useQuestionsApi";
+import { Key } from "@mui/icons-material";
 import { Tab, TabList, TabPanel, Tabs } from "@mui/joy";
 import { useState } from "react";
 
 export default function Home() {
-  const { user } = useUserContext();
+  const { holding } = useUserContext();
   const router = useBetterRouter();
   const [selectedTab, setSelectedTab] = useState("new");
 
-  const { data: allHolding } = useGetKeyRelationships({
-    where: { holderId: user?.id, amount: { gt: 0 } }
-  });
-
-  const {
-    data: newQuestions,
-    isLoading: newIsLoading,
-    hasNextPage: newHasNextPage,
-    fetchNextPage: fetchNewNextPage
-  } = useGetQuestions({ orderBy: { createdAt: "desc" } }, { enabled: selectedTab === "new" });
-  const {
-    data: hotQuestions,
-    isLoading: hotIsLoading,
-    hasNextPage: hotHasNextPage,
-    fetchNextPage: fetchHotNextPage
-  } = useGetHotQuestions({ enabled: selectedTab === "hot" });
-
-  const {
-    data: keysQuestions,
-    fetchNextPage: fetchKeysNextPage,
-    isLoading: keysIsLoading,
-    hasNextPage: keysHasNextPage
-  } = useGetQuestions({
-    orderBy: { createdAt: "desc" },
-    where: {
-      replier: {
-        id: { in: allHolding?.map(holding => holding.owner.id) }
-      }
-    }
-  });
+  const newQuestions = useGetNewQuestions();
+  const hotQuestions = useGetHotQuestions();
+  const keysQuestions = useGetKeyQuestions();
 
   return (
     <Flex component={"main"} y grow>
@@ -59,8 +33,8 @@ export default function Home() {
           <Tab value="keys">Keys</Tab>
         </TabList>
         <TabPanel value="new">
-          {newIsLoading && <LoadingPage />}
-          {newQuestions?.map(question => (
+          {newQuestions.isLoading && <LoadingPage />}
+          {newQuestions.data?.map(question => (
             <QuestionEntry
               type="home"
               key={question.id}
@@ -68,11 +42,11 @@ export default function Home() {
               onClick={() => router.push(`/question/${question.id}`)}
             />
           ))}
-          {<LoadMoreButton isLoading={newIsLoading} nextPage={fetchNewNextPage} hidden={!newHasNextPage} />}
+          {<LoadMoreButton query={newQuestions} />}
         </TabPanel>
         <TabPanel value="hot">
-          {hotIsLoading && <LoadingPage />}
-          {hotQuestions?.map(question => (
+          {hotQuestions.isLoading && <LoadingPage />}
+          {hotQuestions.data?.map(question => (
             <QuestionEntry
               type="home"
               key={question.id}
@@ -80,19 +54,31 @@ export default function Home() {
               onClick={() => router.push(`/question/${question.id}`)}
             />
           ))}
-          {<LoadMoreButton isLoading={hotIsLoading} nextPage={fetchHotNextPage} hidden={!hotHasNextPage} />}
+          {<LoadMoreButton query={hotQuestions} />}
         </TabPanel>
         <TabPanel value="keys">
-          {keysIsLoading && <LoadingPage />}
-          {keysQuestions?.map(question => (
-            <QuestionEntry
-              type="home"
-              key={question.id}
-              question={question}
-              onClick={() => router.push(`/question/${question.id}`)}
+          {keysQuestions.isLoading && <LoadingPage />}
+          {keysQuestions.data?.length === 0 ? (
+            <PageMessage
+              icon={<Key />}
+              title="Nothing to show"
+              text={
+                holding?.length === 0
+                  ? "You don't own any keys"
+                  : "Questions asked to builders you follow will appear here"
+              }
             />
-          ))}
-          {<LoadMoreButton isLoading={keysIsLoading} nextPage={fetchKeysNextPage} hidden={!keysHasNextPage} />}
+          ) : (
+            keysQuestions.data?.map(question => (
+              <QuestionEntry
+                type="home"
+                key={question.id}
+                question={question}
+                onClick={() => router.push(`/question/${question.id}`)}
+              />
+            ))
+          )}
+          {<LoadMoreButton query={keysQuestions} />}
         </TabPanel>
       </Tabs>
     </Flex>

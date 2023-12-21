@@ -9,6 +9,8 @@ import _ from "lodash";
 import { decodeEventLog, parseAbiItem } from "viem";
 import { sendNotification } from "../notification/notification";
 
+const LOGS_RANGE_SIZE = process.env.LOGS_RANGE_SIZE ? BigInt(process.env.LOGS_RANGE_SIZE) : 100n;
+
 interface EventLog {
   eventName: "Trade";
   args: {
@@ -42,8 +44,8 @@ const storeTransactionInternal = async (log: EventLog, hash: string, blockNumber
         ownerFee: log.args.builderEthAmount,
         block: blockNumber,
         timestamp: timestamp,
-        holderAddress: log.args.builder.toLowerCase(),
-        ownerAddress: log.args.trader.toLowerCase()
+        holderAddress: log.args.trader.toLowerCase(),
+        ownerAddress: log.args.builder.toLowerCase()
       }
     });
   }
@@ -174,8 +176,8 @@ export const processAnyPendingTransactions = async (privyUserId: string) => {
   console.log("--------------------");
   console.log("START SYNC FROM BLOCK: ", lastProcessedBlock);
 
-  for (let i = lastProcessedBlock; i < latestBlock; i += 100n) {
-    const searchUntil = i + 100n;
+  for (let i = lastProcessedBlock; i < latestBlock; i += LOGS_RANGE_SIZE) {
+    const searchUntil = i + LOGS_RANGE_SIZE;
     const logs = await viemClient.getLogs({
       address: BUILDERFI_CONTRACT.address,
       event: parseAbiItem(BUIILDER_FI_V1_EVENT_SIGNATURE),
@@ -210,7 +212,11 @@ export const processAnyPendingTransactions = async (privyUserId: string) => {
   return { data: "success" };
 };
 
-export const getMyTransactions = async (privyUserId: string, side: "holder" | "owner" | "both", offset: number) => {
+export const getTransactions = async (
+  privyUserId: string,
+  side: "holder" | "owner" | "both" | "all",
+  offset: number
+) => {
   const user = await prisma.user.findUniqueOrThrow({
     where: {
       privyUserId: privyUserId
@@ -219,7 +225,9 @@ export const getMyTransactions = async (privyUserId: string, side: "holder" | "o
 
   const transactions = await prisma.trade.findMany({
     where:
-      side === "both"
+      side === "all"
+        ? {}
+        : side === "both"
         ? {
             OR: [
               {
@@ -238,7 +246,70 @@ export const getMyTransactions = async (privyUserId: string, side: "holder" | "o
             holderAddress: user.wallet.toLowerCase()
           },
     orderBy: {
-      timestamp: "asc"
+      timestamp: "desc"
+    },
+    skip: offset,
+    take: PAGINATION_LIMIT
+  });
+
+  const uniqueWallets = _.uniq([...transactions.map(t => t.holderAddress), ...transactions.map(t => t.ownerAddress)]);
+
+  const users = await prisma.user.findMany({
+    where: {
+      wallet: {
+        in: uniqueWallets
+      }
+    }
+  });
+
+  const userMap = new Map<string, (typeof users)[number]>();
+  for (const user of users) {
+    userMap.set(user.wallet.toLowerCase(), user);
+  }
+
+  const res = transactions
+    .filter(tx => userMap.has(tx.holderAddress.toLowerCase()) && userMap.has(tx.ownerAddress.toLowerCase()))
+    .map(transaction => ({
+      ...transaction,
+      holder: userMap.get(transaction.holderAddress.toLowerCase()),
+      owner: userMap.get(transaction.ownerAddress.toLowerCase())
+    }));
+
+  return { data: res };
+};
+
+export const getFriendsTransactions = async (privyUserId: string, offset: number) => {
+  const currentUser = await prisma.user.findUniqueOrThrow({
+    where: {
+      privyUserId: privyUserId
+    }
+  });
+
+  const friends = await prisma.recommendedUser.findMany({
+    where: {
+      wallet: currentUser.wallet.toLowerCase()
+    }
+  });
+
+  const friendsWallets = friends.map(friend => friend.wallet.toLowerCase());
+
+  const transactions = await prisma.trade.findMany({
+    where: {
+      OR: [
+        {
+          holderAddress: {
+            in: friendsWallets
+          }
+        },
+        {
+          ownerAddress: {
+            in: friendsWallets
+          }
+        }
+      ]
+    },
+    orderBy: {
+      timestamp: "desc"
     },
     skip: offset,
     take: PAGINATION_LIMIT

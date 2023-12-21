@@ -10,7 +10,6 @@ import { InjectTopBar } from "@/components/shared/top-bar";
 import { UnifiedUserItem } from "@/components/shared/unified-user-item";
 import { useUserContext } from "@/contexts/userContext";
 import { useBetterRouter } from "@/hooks/useBetterRouter";
-import { useGetKeyRelationships } from "@/hooks/useKeyRelationshipApi";
 import { useSearch } from "@/hooks/useUserApi";
 import { PersonSearchOutlined } from "@mui/icons-material";
 import { Input, useTheme } from "@mui/joy";
@@ -18,13 +17,10 @@ import { useState } from "react";
 
 export default function QuestionPage() {
   const theme = useTheme();
-  const { user } = useUserContext();
+  const { user, holding, isLoading } = useUserContext();
   const [searchValue, setSearchValue] = useState("");
   const router = useBetterRouter();
-  const { data, isLoading: isSearching, hasNextPage, fetchNextPage } = useSearch(searchValue);
-  const { data: holdings, isLoading } = useGetKeyRelationships({
-    where: { holderId: user?.id, amount: { gt: 0 }, NOT: [{ ownerId: user?.id }] }
-  });
+  const searchUsers = useSearch(searchValue);
   if (router.searchParams.ask) {
     return <AskQuestion />;
   }
@@ -48,30 +44,32 @@ export default function QuestionPage() {
           {isLoading ? (
             <LoadingPage />
           ) : (
-            holdings?.map(holding => (
-              <UnifiedUserItem
-                key={holding.id}
-                user={holding.owner}
-                hideChevron
-                onClick={() => router.push({ searchParams: { ask: true, wallet: holding.owner.wallet } })}
-              />
-            ))
+            holding
+              ?.filter(holding => holding.ownerId !== user?.id)
+              .map(holding => (
+                <UnifiedUserItem
+                  key={holding.id}
+                  user={holding.owner}
+                  hideChevron
+                  onClick={() => router.push({ searchParams: { ask: true, wallet: holding.owner.wallet } })}
+                />
+              ))
           )}
         </Flex>
       )}
 
       {searchValue && (
         <Flex y grow>
-          {isSearching ? (
+          {searchUsers.isLoading ? (
             <LoadingPage />
-          ) : data?.length === 0 ? (
+          ) : searchUsers.data?.length === 0 ? (
             <PageMessage
               icon={<PersonSearchOutlined />}
               title={`No results for "${searchValue}"`}
               text="Try searching for users by their username or explore the home screen."
             />
           ) : (
-            data?.map(user => (
+            searchUsers.data?.map(user => (
               <UnifiedUserItem
                 key={user.id}
                 user={user}
@@ -85,7 +83,7 @@ export default function QuestionPage() {
               />
             ))
           )}
-          <LoadMoreButton nextPage={fetchNextPage} isLoading={isSearching} hidden={!hasNextPage} />
+          <LoadMoreButton query={searchUsers} />
         </Flex>
       )}
     </Flex>
