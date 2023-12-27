@@ -52,8 +52,8 @@ const storeTransactionInternal = async (log: EventLog, hash: string, blockNumber
         ownerFee: log.args.builderEthAmount,
         block: blockNumber,
         timestamp: timestamp,
-        holderAddress: log.args.builder.toLowerCase(),
-        ownerAddress: log.args.trader.toLowerCase(),
+        holderAddress: log.args.trader.toLowerCase(),
+        ownerAddress: log.args.builder.toLowerCase(),
         //Transaction has been found, but not processed yet
         processed: false
       }
