@@ -9,7 +9,7 @@ import _ from "lodash";
 import { decodeEventLog, parseAbiItem } from "viem";
 import { sendNotification } from "../notification/notification";
 
-const LOGS_RANGE_SIZE = process.env.LOGS_RANGE_SIZE ? BigInt(process.env.LOGS_RANGE_SIZE) : 100n;
+const logsRange = process.env.LOGS_RANGE_SIZE ? BigInt(process.env.LOGS_RANGE_SIZE) : 100n;
 
 interface EventLog {
   eventName: "Trade";
@@ -27,12 +27,20 @@ interface EventLog {
 }
 
 const storeTransactionInternal = async (log: EventLog, hash: string, blockNumber: bigint, timestamp: bigint) => {
+  //Check if transaction already exists in DB
   let transaction = await prisma.trade.findFirst({
     where: {
       hash: hash
     }
   });
 
+  //If transaction has been processed, we don't need to update keyRelationship
+  if (transaction && transaction.processed) {
+    console.log("Transaction already processed");
+    return null;
+  }
+
+  //If transaction doesn't exist, we create it
   if (!transaction) {
     transaction = await prisma.trade.create({
       data: {
@@ -44,28 +52,34 @@ const storeTransactionInternal = async (log: EventLog, hash: string, blockNumber
         ownerFee: log.args.builderEthAmount,
         block: blockNumber,
         timestamp: timestamp,
-        holderAddress: log.args.trader.toLowerCase(),
-        ownerAddress: log.args.builder.toLowerCase()
+        holderAddress: log.args.builder.toLowerCase(),
+        ownerAddress: log.args.trader.toLowerCase(),
+        //Transaction has been found, but not processed yet
+        processed: false
       }
     });
   }
 
-  console.log("Searching owner: " + log.args.builder.toLowerCase());
-  const owner = await prisma.user.findUniqueOrThrow({
+  const owner = await prisma.user.findUnique({
     where: {
       wallet: log.args.builder.toLowerCase()
     }
   });
 
-  console.log("Searching holder: " + log.args.trader.toLowerCase());
-  const holder = await prisma.user.findUniqueOrThrow({
+  const holder = await prisma.user.findUnique({
     where: {
       wallet: log.args.trader.toLowerCase()
     }
   });
 
+  //If one of the users doesn't exist, we leave the transaction as unprocessed
+  if (!owner || !holder) {
+    console.log("Owner or holder not found");
+    return null;
+  }
+
   const res = await prisma.$transaction(async tx => {
-    const key = await tx.keyRelationship.findFirst({
+    let key = await tx.keyRelationship.findFirst({
       where: {
         holderId: holder.id,
         ownerId: owner.id
@@ -73,23 +87,35 @@ const storeTransactionInternal = async (log: EventLog, hash: string, blockNumber
     });
 
     if (!key) {
-      return await tx.keyRelationship.create({
+      key = await tx.keyRelationship.create({
         data: {
           holderId: holder.id,
           ownerId: owner.id,
           amount: log.args.isBuy ? log.args.shareAmount : -log.args.shareAmount
         }
       });
+    } else {
+      key = await tx.keyRelationship.update({
+        where: {
+          id: key.id
+        },
+        data: {
+          amount: key.amount + (log.args.isBuy ? log.args.shareAmount : -log.args.shareAmount)
+        }
+      });
     }
 
-    return await tx.keyRelationship.update({
+    await tx.trade.update({
       where: {
-        id: key.id
+        hash: hash
       },
       data: {
-        amount: key.amount + (log.args.isBuy ? log.args.shareAmount : -log.args.shareAmount)
+        processed: true
       }
     });
+
+    console.log("Key relationship updated");
+    return key;
   });
 
   return res;
@@ -138,11 +164,13 @@ export const storeTransaction = async (hash: `0x${string}`) => {
     block.timestamp
   );
 
-  await sendNotification(
-    keyRelationship.ownerId,
-    keyRelationship.holderId,
-    eventLog.args.isBuy ? NotificationType.KEYBUY : NotificationType.KEYSELL
-  );
+  if (keyRelationship) {
+    await sendNotification(
+      keyRelationship.ownerId,
+      keyRelationship.holderId,
+      eventLog.args.isBuy ? NotificationType.KEYBUY : NotificationType.KEYSELL
+    );
+  }
 
   return { data: hash };
 };
@@ -176,8 +204,8 @@ export const processAnyPendingTransactions = async (privyUserId: string) => {
   console.log("--------------------");
   console.log("START SYNC FROM BLOCK: ", lastProcessedBlock);
 
-  for (let i = lastProcessedBlock; i < latestBlock; i += LOGS_RANGE_SIZE) {
-    const searchUntil = i + LOGS_RANGE_SIZE;
+  for (let i = lastProcessedBlock; i < latestBlock; i += logsRange) {
+    const searchUntil = i + logsRange;
     const logs = await viemClient.getLogs({
       address: BUILDERFI_CONTRACT.address,
       event: parseAbiItem(BUIILDER_FI_V1_EVENT_SIGNATURE),

@@ -15,6 +15,7 @@ import { CastWithInteractions as CastWithInteractionsV2 } from "@neynar/nodejs-s
 import { SocialProfileType } from "@prisma/client";
 import { OpenAI } from "openai";
 
+export const revalidate = 0;
 export const GET = async () => {
   try {
     const client = new NeynarAPIClient(process.env.NEYNAR_API_KEY as string);
