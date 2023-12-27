@@ -25,16 +25,19 @@ model User {
   hasFinishedOnboarding       Boolean   @default(false)
   lastRecommendationsSyncedAt DateTime?
 
-  questions      Question[]      @relation("questioner")
-  replies        Question[]      @relation("replier")
-  inviteCodes    InviteCode[]
-  comments       Comment[]
-  invitedBy      InviteCode?     @relation("invitation", fields: [invitedById], references: [id])
-  invitedById    Int?
-  points         Point[]
-  reactions      Reaction[]
-  socialProfiles SocialProfile[]
-  tags           Tag[]
+  questions            Question[]                @relation("questioner")
+  replies              Question[]                @relation("replier")
+  inviteCodes          InviteCode[]
+  comments             Comment[]
+  invitedBy            InviteCode?               @relation("invitation", fields: [invitedById], references: [id])
+  invitedById          Int?
+  points               Point[]
+  reactions            Reaction[]
+  socialProfiles       SocialProfile[]
+  tags                 Tag[]
+  notifications        Notification[]            @relation("targetUser")
+  sourceNotifications  Notification[]
+  notificationSettings UserNotificationSetting[]
 
   id               Int                @id @default(autoincrement())
   createdAt        DateTime           @default(now())
@@ -190,9 +193,54 @@ model Tag {
   updatedAt DateTime @updatedAt
 }
 
-model Trade {
-  id Int @id @default(autoincrement())
+enum NotificationType {
+  ASKED_QUESTION
+  REPLIED_YOUR_QUESTION
+  REPLIED_OTHER_QUESTION
+  QUESTION_UPVOTED
+  QUESTION_DOWNVOTED
+  REPLY_REACTION
+  KEYBUY
+  KEYSELL
+  USER_INVITED
+  FRIEND_JOINED
+  POINTS_DROP
+  NEW_INVITE_CODE
+  SYSTEM
+}
 
+model Notification {
+  targetUser   User    @relation(fields: [targetUserId], references: [id], name: "targetUser")
+  targetUserId Int
+  sourceUser   User?   @relation(fields: [sourceUserId], references: [id])
+  sourceUserId Int?
+  description  String?
+
+  isRead Boolean          @default(false)
+  readAt DateTime?
+  type   NotificationType
+
+  referenceId Int?
+
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model UserNotificationSetting {
+  user             User             @relation(fields: [userId], references: [id])
+  userId           Int
+  notificationType NotificationType
+  isDisabled       Boolean          @default(false)
+
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, notificationType])
+}
+
+model Trade {
   holderAddress String
   ownerAddress  String
   amount        BigInt
@@ -209,19 +257,19 @@ model Trade {
   //This it to allow for the trade to be processed later if a user registers
   processed Boolean @default(false)
 
+  id        Int      @id @default(autoincrement())
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
 model KeyRelationship {
-  id Int @id @default(autoincrement())
-
   holder   User   @relation(fields: [holderId], references: [id], name: "holder")
   holderId Int
   owner    User   @relation(fields: [ownerId], references: [id], name: "owner")
   ownerId  Int
   amount   BigInt
 
+  id        Int      @id @default(autoincrement())
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -229,11 +277,10 @@ model KeyRelationship {
 }
 
 model SystemSetting {
-  id Int @id @default(autoincrement())
-
   key   String @unique
   value String
 
+  id        Int      @id @default(autoincrement())
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }

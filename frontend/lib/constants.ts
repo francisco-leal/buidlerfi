@@ -37,6 +37,7 @@ export const WAITLIST_LINK = "https://builder.fi";
 export const INTRO_BLOG_POST_LINK = "https://paragraph.xyz/@builderfi/intro-builderfi";
 export const ONBOARDING_WALLET_CREATED_KEY = "onboarding-wallet-created";
 export const MIN_BALANCE_ONBOARDING = parseEther("0.001");
+export const PAGINATION_LIMIT = 20;
 
 // FARCASTER
 export const NEW_BUILDERFI_QUESTION_CAST =
@@ -49,6 +50,7 @@ export const NEW_BUILDERFI_ANSWER_PARENT_CAST_HASH = "0x311091ebeef4e0ba4cbbeb5c
 
 export const NEW_BUILDERFI_USER_CAST = "{user} just launched their keys on builder.fi!\n\n{link}";
 export const NEW_BUILDERFI_USER_PARENT_CAST_HASH = "0x203126fea3987996b1032f72ed70d28c9f5663c5";
+export const UNISWAP_ROUTER_ADDRESS = "0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D";
 
 export const NEW_BUILDERFI_QUESTION_REPLY_CAST_NO_AUTHOR_ERROR =
   "We couldn't post your question because {username} is not on builderfi yet.";

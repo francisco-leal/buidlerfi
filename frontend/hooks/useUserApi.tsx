@@ -1,18 +1,28 @@
-import { UpdateUserArgs } from "@/backend/user/user";
+import {
+  UpdateUserArgs,
+  getNewUsers,
+  getTopUsers,
+  getTopUsersByAnswersGiven,
+  getTopUsersByKeysOwned,
+  getTopUsersByQuestionsAsked,
+  search
+} from "@/backend/user/user";
 import {
   checkUsersExistSA,
   createUserSA,
   generateChallengeSA,
-  getCurrentUserSA,
   getRecommendedUserSA,
   getRecommendedUsersSA,
   getUserSA,
+  getUserStatsSA,
   linkNewWalletSA,
   refreshCurrentUserProfileSA,
   updateUserSA
 } from "@/backend/user/userServerActions";
+import { SimpleUseQueryOptions } from "@/models/helpers.model";
 import { Prisma } from "@prisma/client";
-import { usePrivy } from "@privy-io/react-auth";
+import { useDebounce } from "./useDebounce";
+import { useInfiniteQueryAxios } from "./useInfiniteQueryAxios";
 import { useMutationSA } from "./useMutationSA";
 import { useQuerySA } from "./useQuerySA";
 
@@ -35,9 +45,33 @@ export const useGetUser = (address?: string, reactQueryOptions?: { enabled?: boo
   });
 };
 
-export const useGetCurrentUser = () => {
-  const { user } = usePrivy();
-  return useQuerySA(["useGetCurrentUser", user?.id], getCurrentUserSA);
+export const useGetNewUsers = () => {
+  return useInfiniteQueryAxios<Awaited<ReturnType<typeof getNewUsers>>>(["useGetNewUsers"], "/api/user/new");
+};
+
+export const useGetTopUsersByAnswersGiven = () => {
+  return useInfiniteQueryAxios<Awaited<ReturnType<typeof getTopUsersByAnswersGiven>>>(
+    ["useGetTopUsersByAnswersGiven"],
+    "/api/user/answers"
+  );
+};
+
+export const useGetTopUsersByQuestionsAsked = () => {
+  return useInfiniteQueryAxios<Awaited<ReturnType<typeof getTopUsersByQuestionsAsked>>>(
+    ["useGetTopUsersByQuestionsAsked"],
+    "/api/user/questions"
+  );
+};
+
+export const useGetTopUsersByKeysOwned = () => {
+  return useInfiniteQueryAxios<Awaited<ReturnType<typeof getTopUsersByKeysOwned>>>(
+    ["useGetTopUsersByKeysOwned"],
+    "/api/user/keys"
+  );
+};
+
+export const useGetTopUsers = () => {
+  return useInfiniteQueryAxios<Awaited<ReturnType<typeof getTopUsers>>>(["useGetTopUsers"], "/api/user/holders");
 };
 
 export const useRefreshCurrentUser = () => {
@@ -70,4 +104,23 @@ export const useGetRecommendedUser = (address?: string) => {
 
 export const useRecommendedUsers = (wallet: string) => {
   return useQuerySA(["useRecommendedUsers", wallet], async options => getRecommendedUsersSA(wallet, options));
+};
+
+export const useSearch = (searchValue: string, includeOwnedKeysOnly = false, queryOptions?: SimpleUseQueryOptions) => {
+  const debouncedValue = useDebounce(searchValue, 500);
+  return useInfiniteQueryAxios<Awaited<ReturnType<typeof search>>>(
+    ["useSearch", debouncedValue],
+    "/api/user/search",
+    {
+      enabled: !!debouncedValue,
+      ...queryOptions
+    },
+    { includeOwnedKeysOnly: includeOwnedKeysOnly, search: debouncedValue }
+  );
+};
+
+export const useGetUserStats = (userId?: number) => {
+  return useQuerySA(["useGetUserStats", userId], async options => getUserStatsSA(userId!, options), {
+    enabled: !!userId
+  });
 };

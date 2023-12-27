@@ -1,10 +1,11 @@
 import { convertParamsToString } from "@/lib/utils";
+import { isBoolean, isNumber } from "lodash";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useCallback } from "react";
+import { useCallback, useMemo } from "react";
 
 interface CustomUrl {
   pathname?: string;
-  searchParams?: Record<string, string | undefined>;
+  searchParams?: Record<string, string | number | boolean | undefined>;
 }
 
 interface BetterRouterOptions {
@@ -17,7 +18,22 @@ export const useBetterRouter = () => {
   const pathname = usePathname();
   const nextRouter = useRouter();
 
-  const searchParamsDict = Object.fromEntries(searchParams.entries());
+  const searchParamsDict = useMemo(() => {
+    const entries: Record<string, string> = Object.fromEntries(searchParams.entries());
+    const resEntries: Record<string, string | number | boolean> = {};
+    Object.keys(entries).forEach(key => {
+      if (entries[key] === undefined) {
+        return;
+      }
+
+      //Try to parse int and booleans
+      const val = entries[key];
+      if (isNumber(val)) resEntries[key] = Number(val);
+      else if (isBoolean(val)) resEntries[key] = val === "true";
+      else resEntries[key] = val;
+    });
+    return resEntries;
+  }, [searchParams]);
 
   const formatUrl = useCallback(
     (url: CustomUrl | string, options?: BetterRouterOptions) => {

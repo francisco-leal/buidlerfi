@@ -1,10 +1,12 @@
 "use client";
 import { Flex } from "@/components/shared/flex";
+import { LoadMoreButton } from "@/components/shared/loadMoreButton";
+import { LoadingPage } from "@/components/shared/loadingPage";
 import { PageMessage } from "@/components/shared/page-message";
 import { useProfileContext } from "@/contexts/profileContext";
 import { useBetterRouter } from "@/hooks/useBetterRouter";
 import { Chat, KeyOutlined, LockOpen, LockOutlined } from "@mui/icons-material";
-import { Button, CircularProgress } from "@mui/joy";
+import { Button } from "@mui/joy";
 import { FC } from "react";
 import { QuestionEntry } from "./question-entry";
 import QuestionModal from "./question-modal";
@@ -14,15 +16,20 @@ interface Props {
 }
 
 export const ChatTab: FC<Props> = ({ onBuyKeyClick }) => {
-  const { isOwnProfile, socialData, hasKeys, questions, isLoading, refetch } = useProfileContext();
+  const { isOwnProfile, socialData, hasKeys, questions, isLoading, refetch, getQuestionsFromReplierQuery } =
+    useProfileContext();
   const router = useBetterRouter();
+
+  if (isLoading) {
+    return <LoadingPage />;
+  }
 
   if (!hasKeys && !isOwnProfile && !questions?.length) {
     return (
       <PageMessage
         title="Unlock Q&A"
         icon={<LockOutlined />}
-        text={`Hold at least one key to ask ${socialData.displayName} a question and access the answers`}
+        text={`Hold at least one key to ask ${socialData?.displayName} a question and access the answers`}
       />
     );
   }
@@ -51,14 +58,6 @@ export const ChatTab: FC<Props> = ({ onBuyKeyClick }) => {
     );
   }
 
-  if (isLoading) {
-    return (
-      <Flex y xc yc grow>
-        <CircularProgress />
-      </Flex>
-    );
-  }
-
   return (
     <>
       {router.searchParams.question && (
@@ -74,23 +73,23 @@ export const ChatTab: FC<Props> = ({ onBuyKeyClick }) => {
         <Flex y grow sx={{ "& > div:last-child": { border: "none" } }}>
           {hasKeys && !questions?.length ? (
             <PageMessage
-              text={`Congratulations. You can now ask ${socialData.displayName} a question.`}
+              text={`Congratulations. You can now ask ${socialData?.displayName} a question.`}
               icon={<LockOpen />}
             />
           ) : (
-            questions?.map(question => {
-              return (
-                <QuestionEntry
-                  key={question.id}
-                  socialData={socialData}
-                  question={question}
-                  isOwnChat={isOwnProfile}
-                  ownsKeys={hasKeys}
-                  refetch={refetch}
-                  onClick={() => router.replace({ searchParams: { question: question.id.toString() } })}
-                />
-              );
-            })
+            <>
+              {questions?.map(question => {
+                return (
+                  <QuestionEntry
+                    key={question.id}
+                    question={question}
+                    type={"profile"}
+                    onClick={() => router.replace({ searchParams: { question: question.id.toString() } })}
+                  />
+                );
+              })}
+              <LoadMoreButton query={getQuestionsFromReplierQuery} />
+            </>
           )}
         </Flex>
       </Flex>

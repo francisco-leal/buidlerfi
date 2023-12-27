@@ -2,12 +2,14 @@
 
 import { publishNewQuestionCast } from "@/lib/api/backend/farcaster";
 import { fetchHolders } from "@/lib/api/common/builderfi";
-import { MIN_QUESTION_LENGTH } from "@/lib/constants";
+import { MIN_QUESTION_LENGTH, PAGINATION_LIMIT } from "@/lib/constants";
 import { ERRORS } from "@/lib/errors";
 import { exclude } from "@/lib/exclude";
 import prisma from "@/lib/prisma";
 import { shortAddress } from "@/lib/utils";
-import { ReactionType, SocialProfileType } from "@prisma/client";
+import { Prisma, ReactionType, SocialProfileType } from "@prisma/client";
+import { getKeyRelationships } from "../keyRelationship/keyRelationship";
+import { sendNotification } from "../notification/notification";
 
 export const createQuestion = async (privyUserId: string, questionContent: string, replierId: number) => {
   if (questionContent.length > 280 || questionContent.length < MIN_QUESTION_LENGTH) {
@@ -23,8 +25,13 @@ export const createQuestion = async (privyUserId: string, questionContent: strin
     return { error: ERRORS.MUST_HOLD_KEY };
   }
 
-  const question = await prisma.question.create({
-    data: { questionerId: questioner.id, replierId: replier.id, questionContent: questionContent }
+  const question = await prisma.$transaction(async tx => {
+    const question = await tx.question.create({
+      data: { questionerId: questioner.id, replierId: replier.id, questionContent: questionContent }
+    });
+    await sendNotification(replier.id, questioner.id, "ASKED_QUESTION", question.id, tx);
+
+    return question;
   });
   // if in production, push the question to farcaster
   console.log("Farcaster enabled -> ", process.env.ENABLE_FARCASTER);
@@ -54,24 +61,147 @@ export const createQuestion = async (privyUserId: string, questionContent: strin
   return { data: question };
 };
 
-export const getQuestions = async (userId: number) => {
-  const questions = await prisma.question.findMany({
+type getHotQuestionResponse = Prisma.QuestionGetPayload<{
+  select: {
+    id: true;
+    questionContent: true;
+    repliedOn: true;
+    createdAt: true;
+    questioner: {
+      select: {
+        displayName: true;
+        avatarUrl: true;
+        id: true;
+        wallet: true;
+      };
+    };
+    replier: {
+      select: {
+        displayName: true;
+        avatarUrl: true;
+        id: true;
+        wallet: true;
+      };
+    };
+  };
+}>;
+
+export async function getHotQuestions(offset: number) {
+  const rawResult: any[] = await prisma.$queryRaw`
+    SELECT
+      q.id,
+      q."questionContent",
+      q."repliedOn",
+      q."createdAt",
+      "questioner".id AS "questionerId",
+      "questioner"."displayName" AS "questionerDisplayName",
+      "questioner"."avatarUrl" AS "questionerAvatarUrl",
+      "questioner"."wallet" AS "questionerWallet",
+      replier.id AS "replierId",
+      replier."displayName" AS "replierDisplayName",
+      replier."avatarUrl" AS "replierAvatarUrl",
+      replier."wallet" AS "replierWallet",
+      COALESCE(SUM(CASE WHEN r."reactionType" = 'UPVOTE' THEN 1 ELSE 0 END), 0) 
+      - COALESCE(SUM(CASE WHEN r."reactionType" = 'DOWNVOTE' THEN 1 ELSE 0 END), 0) 
+      AS net_upvotes
+    FROM
+      "Question" AS q
+  	LEFT JOIN
+      "User" AS "replier" ON q."replierId" = replier.id
+    LEFT JOIN
+      "User" AS "questioner" ON q."questionerId" = questioner.id
+    LEFT JOIN
+      "Reaction" AS r ON q.id = r."questionId"
+    GROUP BY
+		q.id,
+		"questioner".id,
+		"questioner"."displayName",
+		"questioner"."avatarUrl",
+		replier.id,
+		replier."displayName",
+		replier."avatarUrl"
+    ORDER BY
+        net_upvotes DESC
+    LIMIT ${PAGINATION_LIMIT}
+    OFFSET ${offset}
+`;
+
+  const transformedResults = rawResult.map(row => {
+    const question: getHotQuestionResponse = {
+      id: row.id,
+      questionContent: row.questionContent,
+      repliedOn: row.repliedOn,
+      createdAt: row.createdAt,
+      questioner: {
+        id: row.questionerId,
+        displayName: row.questionerDisplayName,
+        avatarUrl: row.questionerAvatarUrl,
+        wallet: row.questionerWallet
+      },
+      replier: {
+        id: row.replierId,
+        displayName: row.replierDisplayName,
+        avatarUrl: row.replierAvatarUrl,
+        wallet: row.questionerWallet
+      }
+    };
+    return question;
+  });
+
+  return { data: transformedResults };
+}
+
+export async function getKeysQuestions(privyUserId: string, offset: number) {
+  const currentUser = await prisma.user.findFirstOrThrow({
     where: {
-      replierId: userId
+      privyUserId: privyUserId
+    }
+  });
+  const keys = await getKeyRelationships(currentUser.wallet, "holder");
+  const res = await getQuestions(
+    {
+      orderBy: { createdAt: "desc" },
+      where: {
+        replier: {
+          id: { in: keys.data?.map(holding => holding.owner.id) }
+        }
+      }
     },
-    include: {
-      questioner: true,
-      replier: true,
-      reactions: true,
-      replyReactions: true
-    },
-    orderBy: {
-      id: "desc"
+    offset
+  );
+
+  return { data: res.data };
+}
+
+export async function getReactions(questionId: number, type: "like" | "upvote") {
+  const reactions = await prisma.reaction.findMany({
+    where: {
+      questionId: type === "upvote" ? questionId : undefined,
+      replyId: type === "like" ? questionId : undefined
     }
   });
 
+  return { data: reactions };
+}
+
+export type getQuestionsArgs = Omit<Prisma.QuestionFindManyArgs, "include" | "take" | "skip">;
+
+export async function getQuestions(args: getQuestionsArgs, offset: number) {
+  const questions = await prisma.question.findMany({
+    where: {
+      ...args.where
+    },
+    include: {
+      questioner: true,
+      replier: true
+    },
+    take: PAGINATION_LIMIT,
+    orderBy: args.orderBy,
+    skip: offset
+  });
+
   return { data: exclude(questions, ["reply"]) };
-};
+}
 
 export const getQuestion = async (privyUserId: string, questionId: number) => {
   const currentUser = await prisma.user.findUniqueOrThrow({ where: { privyUserId } });
@@ -176,33 +306,49 @@ export const addReaction = async (privyUserId: string, questionId: number, react
 
   const isLike = reactionType === "LIKE";
 
-  //If the reacion is a Like, it means it's for the reply. Otherwise, it's for the question.
-  //Logic can be improved later if needed
-  const res = await prisma.reaction.upsert({
-    where: isLike
-      ? {
-          userId_replyId: {
-            userId: user.id,
-            replyId: question.id
+  const res = prisma.$transaction(async tx => {
+    //If the reacion is a Like, it means it's for the reply. Otherwise, it's for the question.
+    //Logic can be improved later if needed
+    const res = await tx.reaction.upsert({
+      where: isLike
+        ? {
+            userId_replyId: {
+              userId: user.id,
+              replyId: question.id
+            }
           }
-        }
-      : {
-          userId_questionId: {
-            userId: user.id,
-            questionId: question.id
-          }
-        },
-    update: {
-      reactionType: reactionType,
-      replyId: isLike ? question.id : undefined,
-      questionId: isLike ? undefined : question.id
-    },
-    create: {
-      reactionType: reactionType,
-      replyId: isLike ? question.id : undefined,
-      questionId: isLike ? undefined : question.id,
-      userId: user.id
+        : {
+            userId_questionId: {
+              userId: user.id,
+              questionId: question.id
+            }
+          },
+      update: {
+        reactionType: reactionType,
+        replyId: isLike ? question.id : undefined,
+        questionId: isLike ? undefined : question.id
+      },
+      create: {
+        reactionType: reactionType,
+        replyId: isLike ? question.id : undefined,
+        questionId: isLike ? undefined : question.id,
+        userId: user.id
+      }
+    });
+
+    //Only send notification when not reacting to own question/
+    const target = isLike ? question.replierId : question.questionerId;
+    if (target !== user.id) {
+      await sendNotification(
+        target,
+        user.id,
+        isLike ? "REPLY_REACTION" : reactionType === "DOWNVOTE" ? "QUESTION_DOWNVOTED" : "QUESTION_UPVOTED",
+        question.id,
+        tx
+      );
     }
+
+    return res;
   });
 
   return { data: res };

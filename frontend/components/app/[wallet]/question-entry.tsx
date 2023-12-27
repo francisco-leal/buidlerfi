@@ -1,31 +1,28 @@
 import { Flex } from "@/components/shared/flex";
 import { Reactions } from "@/components/shared/reactions";
-import { useGetQuestions } from "@/hooks/useQuestionsApi";
-import { SocialData } from "@/hooks/useSocialData";
-import { DEFAULT_PROFILE_PICTURE } from "@/lib/assets";
+import { useProfileContext } from "@/contexts/profileContext";
+import { useBetterRouter } from "@/hooks/useBetterRouter";
+import { useGetHotQuestions, useGetKeyQuestions, useGetQuestionsFromReplier } from "@/hooks/useQuestionsApi";
 import { getDifference, shortAddress } from "@/lib/utils";
 import theme from "@/theme";
-import { FileUploadOutlined } from "@mui/icons-material";
-import { Avatar, Chip, IconButton, Typography } from "@mui/joy";
+import { Avatar, AvatarGroup, Chip, Typography } from "@mui/joy";
 import anchorme from "anchorme";
-import { usePathname } from "next/navigation";
 import { FC, useMemo } from "react";
-import { toast } from "react-toastify";
 import sanitize from "sanitize-html";
 import { QuestionContextMenu } from "./question-context-menu";
 
 interface Props {
-  question?: NonNullable<ReturnType<typeof useGetQuestions>["data"]>[number];
-  isOwnChat: boolean;
-  socialData: SocialData;
-  refetch: () => void;
-  ownsKeys: boolean;
+  question?:
+    | NonNullable<ReturnType<typeof useGetQuestionsFromReplier>["data"]>[number]
+    | NonNullable<ReturnType<typeof useGetHotQuestions>["data"]>[number]
+    | NonNullable<ReturnType<typeof useGetKeyQuestions>["data"]>[number];
   onClick: () => void;
+  type: "profile" | "home";
 }
-export const QuestionEntry: FC<Props> = ({ question, refetch, onClick }) => {
+export const QuestionEntry: FC<Props> = ({ question, onClick, type }) => {
   const askedOn = useMemo(() => getDifference(question?.createdAt), [question?.createdAt]);
-
-  const pathname = usePathname();
+  const { refetch } = useProfileContext();
+  const router = useBetterRouter();
 
   const sanitizedContent = useMemo(
     () =>
@@ -38,31 +35,64 @@ export const QuestionEntry: FC<Props> = ({ question, refetch, onClick }) => {
   if (!question) return <></>;
 
   return (
-    <Flex y gap2 p={2} borderBottom={"1px solid " + theme.palette.divider}>
+    <Flex y gap1 p={2} borderBottom={"1px solid " + theme.palette.divider}>
       <Flex x ys gap1>
-        <Avatar size="sm" sx={{ cursor: "pointer" }} src={question.questioner?.avatarUrl || DEFAULT_PROFILE_PICTURE} />
+        <AvatarGroup>
+          <Avatar
+            sx={{ width: "24px", height: "24px", cursor: "pointer" }}
+            src={question.questioner?.avatarUrl || ""}
+            onClick={() => router.push(`/profile/${question.questioner.wallet}`)}
+          />
+          {type === "home" && (
+            <Avatar
+              sx={{ width: "24px", height: "24px", cursor: "pointer" }}
+              src={question.replier?.avatarUrl || ""}
+              onClick={() => router.push(`/profile/${question.replier?.wallet}`)}
+            />
+          )}
+        </AvatarGroup>
         <Flex y basis="100%">
-          <Flex x xsb yc>
-            <Flex x yc gap={0.5}>
-              <Typography level="title-sm" whiteSpace="pre-line" sx={{ cursor: "pointer" }}>
-                {question.questioner.displayName || shortAddress(question.questioner.wallet as `0x${string}`)}
-              </Typography>
+          <Flex x xsb ys>
+            <Flex x ys gap={0.5}>
+              {type === "profile" ? (
+                <Typography
+                  level="title-sm"
+                  whiteSpace="pre-line"
+                  sx={{ cursor: "pointer" }}
+                  onClick={() => router.push(`/profile/${question.questioner?.wallet}`)}
+                >
+                  {question.questioner?.displayName}
+                </Typography>
+              ) : (
+                <>
+                  <Typography
+                    level="title-sm"
+                    whiteSpace="pre-line"
+                    sx={{ cursor: "pointer" }}
+                    onClick={() => router.push(`/profile/${question.questioner?.wallet}`)}
+                  >
+                    {question.questioner?.displayName || shortAddress(question.questioner?.wallet)}
+                  </Typography>
+                  <Typography level="body-sm"> asked </Typography>
+                  <Typography
+                    level="title-sm"
+                    whiteSpace="pre-line"
+                    sx={{ cursor: "pointer" }}
+                    onClick={() => router.push(`/profile/${question.replier?.wallet}`)}
+                  >
+                    {question.replier?.displayName}
+                  </Typography>
+                </>
+              )}
+
               <Typography level="helper">•</Typography>
               <Typography level="body-sm">{askedOn}</Typography>
             </Flex>
-            <Flex x yc>
-              {!question.repliedOn ? (
-                <Chip size="sm" color="neutral" variant="outlined">
-                  Awaiting answer
-                </Chip>
-              ) : (
-                <Chip size="sm" color="primary" variant="outlined">
-                  Answered
-                </Chip>
-              )}
+            <QuestionContextMenu question={question} refetch={() => refetch()} />
+            {/* <Flex x yc gap2>
+              
 
-              <QuestionContextMenu question={question} />
-            </Flex>
+            </Flex> */}
           </Flex>
           <Typography
             onClick={e => {
@@ -79,9 +109,29 @@ export const QuestionEntry: FC<Props> = ({ question, refetch, onClick }) => {
           </Typography>
         </Flex>
       </Flex>
-      <Flex x yc xsb grow>
-        <Reactions sx={{ ml: 4 }} question={question} refetch={refetch} /> <Flex />
-        <IconButton
+      <Flex
+        x
+        yc
+        xsb
+        grow
+        pointer
+        onClick={e => {
+          e.preventDefault();
+          e.stopPropagation();
+          onClick();
+        }}
+      >
+        <Reactions sx={{ ml: 4 }} questionId={question.id} /> <Flex />
+        {!question.repliedOn ? (
+          <Chip size="sm" color="neutral" variant="outlined">
+            Awaiting answer
+          </Chip>
+        ) : (
+          <Chip size="sm" color="primary" variant="outlined">
+            Answered
+          </Chip>
+        )}
+        {/* <IconButton
           onClick={e => {
             e.preventDefault();
             e.stopPropagation();
@@ -90,7 +140,7 @@ export const QuestionEntry: FC<Props> = ({ question, refetch, onClick }) => {
           }}
         >
           <FileUploadOutlined fontSize="small" />
-        </IconButton>
+        </IconButton> */}
       </Flex>
     </Flex>
   );

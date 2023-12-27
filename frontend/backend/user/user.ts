@@ -1,12 +1,16 @@
 "use server";
 
+import { PAGINATION_LIMIT } from "@/lib/constants";
 import { ERRORS } from "@/lib/errors";
+import { exclude } from "@/lib/exclude";
 import prisma from "@/lib/prisma";
 import privyClient from "@/lib/privyClient";
 import { ipfsToURL } from "@/lib/utils";
 import viemClient from "@/lib/viemClient";
+import { Prisma } from "@prisma/client";
 import { Wallet } from "@privy-io/server-auth";
 import { differenceInMinutes } from "date-fns";
+import { sendNotification } from "../notification/notification";
 import { updateRecommendations } from "../socialProfile/recommendation";
 import { updateUserSocialProfiles } from "../socialProfile/socialProfile";
 
@@ -39,7 +43,7 @@ export const refreshCurrentUserProfile = async (privyUserId: string) => {
 };
 
 export const getCurrentUser = async (privyUserId: string) => {
-  const res = await prisma.user.findUnique({
+  const res = await prisma.user.findUniqueOrThrow({
     where: {
       privyUserId: privyUserId
     },
@@ -137,6 +141,8 @@ export const createUser = async (privyUserId: string, inviteCode: string) => {
 
     return newUser;
   });
+
+  await sendNotification(existingCode.userId, newUser.id, "USER_INVITED", newUser.id);
 
   return { data: newUser };
 };
@@ -252,6 +258,154 @@ Wallet: ${publicKey}
   return { data: res };
 };
 
+export type GetUsersArgs = Omit<Prisma.UserFindManyArgs, "include" | "take" | "skip">;
+
+export const getNewUsers = async (offset: number) => {
+  const users = await prisma.user.findMany({
+    orderBy: {
+      createdAt: "desc"
+    },
+    include: {
+      replies: true
+    },
+    where: {
+      isActive: true,
+      hasFinishedOnboarding: true,
+      displayName: { not: null }
+    },
+    take: PAGINATION_LIMIT,
+    skip: offset
+  });
+
+  const res = users.map(user => {
+    const numberOfReplies = user.replies.length;
+    const numberOfQuestions = user.replies.filter(reply => !!reply.repliedOn).length;
+    const strippedUser = exclude(user, "replies");
+    return { ...strippedUser, numberOfReplies, numberOfQuestions };
+  });
+
+  return { data: res };
+};
+
+export const getTopUsersByQuestionsAsked = async (offset: number) => {
+  const users = await prisma.user.findMany({
+    orderBy: {
+      questions: {
+        _count: "desc"
+      }
+    },
+    include: {
+      questions: true,
+      keysOfSelf: {
+        where: {
+          amount: {
+            gt: 0
+          }
+        }
+      }
+    },
+    where: {
+      isActive: true,
+      hasFinishedOnboarding: true,
+      displayName: { not: null }
+    },
+    take: PAGINATION_LIMIT,
+    skip: offset
+  });
+
+  const res = users.map(user => {
+    const questionsAsked = user.questions.length;
+    const questionsAnswered = user.questions.filter(question => !!question.repliedOn).length;
+    const numberOfHolders = user.keysOfSelf.length;
+    const strippedUser = exclude(user, ["keysOfSelf", "questions"]);
+    return { ...strippedUser, questionsAsked, questionsAnswered, numberOfHolders };
+  });
+
+  return { data: res };
+};
+
+export const getTopUsersByAnswersGiven = async (offset: number) => {
+  const users = await prisma.user.findMany({
+    orderBy: {
+      replies: {
+        _count: "desc"
+      }
+    },
+    include: {
+      replies: true,
+      keysOfSelf: {
+        where: {
+          amount: {
+            gt: 0
+          }
+        }
+      }
+    },
+    where: {
+      isActive: true,
+      hasFinishedOnboarding: true,
+      displayName: { not: null }
+    },
+    take: PAGINATION_LIMIT,
+    skip: offset
+  });
+
+  const res = users.map(user => {
+    const questionsReceived = user.replies.length;
+    const questionsAnswered = user.replies.filter(reply => !!reply.repliedOn).length;
+    const numberOfHolders = user.keysOfSelf.length;
+    const strippedUser = exclude(user, ["keysOfSelf", "replies"]);
+    return { ...strippedUser, questionsReceived, questionsAnswered, numberOfHolders };
+  });
+
+  return { data: res };
+};
+
+type TopUserByKeysOwned = Prisma.$UserPayload["scalars"] & {
+  ownedKeys: number;
+  numberOfHolders: number;
+};
+
+export const getTopUsersByKeysOwned = async (offset: number) => {
+  const users = (await prisma.$queryRaw`
+    SELECT "User".*, CAST(COALESCE(SUM(DISTINCT "KeyRelationship".amount), 0) AS INTEGER) as "ownedKeys",
+    CAST(COUNT(DISTINCT "KeyRelationship"."holderId") AS INTEGER) as "numberOfHolders"
+    FROM "User"
+    LEFT JOIN "KeyRelationship" ON "User".id = "KeyRelationship"."holderId"
+    WHERE "User"."isActive" = true AND "User"."hasFinishedOnboarding" = true AND "User"."displayName" IS NOT NULL
+    GROUP BY "User".id
+    ORDER BY "ownedKeys" DESC
+    LIMIT ${PAGINATION_LIMIT} OFFSET ${offset};
+  `) as TopUserByKeysOwned[];
+
+  return { data: users };
+};
+
+type TopUser = Prisma.$UserPayload["scalars"] & {
+  soldKeys: number;
+  numberOfHolders: number;
+  numberOfQuestions: number;
+  numberOfReplies: number;
+};
+
+export const getTopUsers = async (offset: number) => {
+  const users = (await prisma.$queryRaw`
+    SELECT "User".*, CAST(COALESCE(SUM(DISTINCT "KeyRelationship".amount), 0) AS INTEGER) as "soldKeys",
+    CAST(COUNT(DISTINCT "KeyRelationship"."holderId") AS INTEGER) as "numberOfHolders",
+    CAST(COUNT(DISTINCT "Question".id) AS INTEGER) as "numberOfQuestions",
+    CAST(COUNT(DISTINCT CASE WHEN "Question".reply IS NOT NULL THEN "Question".id END) AS INTEGER) as "numberOfReplies"
+    FROM "User"
+    LEFT JOIN "KeyRelationship" ON "User".id = "KeyRelationship"."ownerId"
+    LEFT JOIN "Question" ON "User".id = "Question"."replierId"
+    WHERE "User"."isActive" = true AND "User"."hasFinishedOnboarding" = true AND "User"."displayName" IS NOT NULL
+    GROUP BY "User".id
+    ORDER BY "soldKeys" DESC
+    LIMIT ${PAGINATION_LIMIT} OFFSET ${offset};
+  `) as TopUser[];
+
+  return { data: users };
+};
+
 export const getBulkUsers = async (addresses: string[]) => {
   // get all users
   const usersWithReplies = await prisma.user.findMany({
@@ -334,4 +488,89 @@ export const getRecommendedUser = async (wallet: string) => {
   if (!res) return { error: ERRORS.USER_NOT_FOUND };
 
   return { data: { ...res, avatarUrl: sanitizeAvatarUrl(res.avatarUrl || "") } };
+};
+
+type SearchUser = Prisma.$UserPayload["scalars"] & {
+  soldKeys: number;
+  numberOfHolders: number;
+  numberOfQuestions: number;
+  numberOfReplies: number;
+};
+
+export const search = async (
+  privyUserId: string,
+  searchValue: string,
+  includeOwnedKeysOnly: boolean,
+  offset: number
+) => {
+  const currentUser = await prisma.user.findUniqueOrThrow({
+    where: {
+      privyUserId: privyUserId
+    }
+  });
+  //We use raw query to order by soldKeys
+  const users = (await prisma.$queryRaw`
+    SELECT "User".*, CAST(COALESCE(SUM(DISTINCT "KeyRelationship".amount), 0) AS INTEGER) as "soldKeys",
+    CAST(COUNT(DISTINCT "KeyRelationship"."holderId") AS INTEGER) as "numberOfHolders",
+    CAST(COUNT(DISTINCT "Question".id) AS INTEGER) as "numberOfQuestions",
+    CAST(COUNT(DISTINCT CASE WHEN "Question".reply IS NOT NULL THEN "Question".id END) AS INTEGER) as "numberOfReplies"
+    FROM "User"
+    LEFT JOIN "KeyRelationship" ON "User".id = "KeyRelationship"."ownerId"
+    LEFT JOIN "SocialProfile" ON "User".id = "SocialProfile"."userId"
+    LEFT JOIN "Question" ON "User".id = "Question"."replierId"
+    WHERE "User"."isActive" = true
+      AND "User"."hasFinishedOnboarding" = true 
+      AND (
+        "User"."wallet" ILIKE '%' || ${searchValue} || '%'
+        OR "User"."socialWallet" ILIKE '%' || ${searchValue} || '%'
+        OR EXISTS (
+          SELECT 1
+          FROM "SocialProfile"
+          WHERE "SocialProfile"."userId" = "User".id
+            AND "SocialProfile"."profileName" ILIKE '%' || ${searchValue} || '%'
+        )
+      )
+      AND (
+        NOT ${includeOwnedKeysOnly} 
+        OR EXISTS (
+          SELECT 1
+          FROM "KeyRelationship"
+          WHERE "KeyRelationship"."ownerId" = ${currentUser.id}
+            AND "KeyRelationship"."holderId" = "User".id
+        )
+  )
+    GROUP BY "User".id
+    ORDER BY "soldKeys" DESC
+    LIMIT ${PAGINATION_LIMIT} OFFSET ${offset};
+  `) as SearchUser[];
+
+  return {
+    data: users
+  };
+};
+
+export const getUserStats = async (id: number) => {
+  const user = await prisma.user.findUniqueOrThrow({
+    where: {
+      id: id
+    },
+    include: {
+      replies: true,
+      keysOfSelf: {
+        where: {
+          amount: {
+            gt: 0
+          }
+        }
+      }
+    }
+  });
+
+  return {
+    data: {
+      numberOfHolders: user.keysOfSelf.length,
+      numberOfQuestions: user.replies.length,
+      numberOfReplies: user.replies.filter(reply => !!reply.repliedOn).length
+    }
+  };
 };

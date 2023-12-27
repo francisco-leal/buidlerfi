@@ -1,10 +1,13 @@
 "use server";
 import { builderFIV1Abi } from "@/lib/abi/BuidlerFiV1";
-import { BUIILDER_FI_V1_EVENT_SIGNATURE, BUILDERFI_CONTRACT, IN_USE_CHAIN_ID } from "@/lib/constants";
+import { BUIILDER_FI_V1_EVENT_SIGNATURE, BUILDERFI_CONTRACT, IN_USE_CHAIN_ID, PAGINATION_LIMIT } from "@/lib/constants";
 import { ERRORS } from "@/lib/errors";
 import { prisma } from "@/lib/prisma";
 import viemClient from "@/lib/viemClient";
+import { NotificationType } from "@prisma/client";
+import _ from "lodash";
 import { decodeEventLog, parseAbiItem } from "viem";
+import { sendNotification } from "../notification/notification";
 
 const logsRange = process.env.LOGS_RANGE_SIZE ? BigInt(process.env.LOGS_RANGE_SIZE) : 100n;
 
@@ -33,7 +36,8 @@ const storeTransactionInternal = async (log: EventLog, hash: string, blockNumber
 
   //If transaction has been processed, we don't need to update keyRelationship
   if (transaction && transaction.processed) {
-    return false;
+    console.log("Transaction already processed");
+    return null;
   }
 
   //If transaction doesn't exist, we create it
@@ -48,8 +52,8 @@ const storeTransactionInternal = async (log: EventLog, hash: string, blockNumber
         ownerFee: log.args.builderEthAmount,
         block: blockNumber,
         timestamp: timestamp,
-        holderAddress: log.args.builder.toLowerCase(),
-        ownerAddress: log.args.trader.toLowerCase(),
+        holderAddress: log.args.trader.toLowerCase(),
+        ownerAddress: log.args.builder.toLowerCase(),
         //Transaction has been found, but not processed yet
         processed: false
       }
@@ -70,11 +74,12 @@ const storeTransactionInternal = async (log: EventLog, hash: string, blockNumber
 
   //If one of the users doesn't exist, we leave the transaction as unprocessed
   if (!owner || !holder) {
-    return false;
+    console.log("Owner or holder not found");
+    return null;
   }
 
-  await prisma.$transaction(async tx => {
-    const key = await tx.keyRelationship.findFirst({
+  const res = await prisma.$transaction(async tx => {
+    let key = await tx.keyRelationship.findFirst({
       where: {
         holderId: holder.id,
         ownerId: owner.id
@@ -82,7 +87,7 @@ const storeTransactionInternal = async (log: EventLog, hash: string, blockNumber
     });
 
     if (!key) {
-      await tx.keyRelationship.create({
+      key = await tx.keyRelationship.create({
         data: {
           holderId: holder.id,
           ownerId: owner.id,
@@ -90,7 +95,7 @@ const storeTransactionInternal = async (log: EventLog, hash: string, blockNumber
         }
       });
     } else {
-      await tx.keyRelationship.update({
+      key = await tx.keyRelationship.update({
         where: {
           id: key.id
         },
@@ -108,9 +113,12 @@ const storeTransactionInternal = async (log: EventLog, hash: string, blockNumber
         processed: true
       }
     });
+
+    console.log("Key relationship updated");
+    return key;
   });
 
-  return true;
+  return res;
 };
 
 export const storeTransaction = async (hash: `0x${string}`) => {
@@ -149,7 +157,20 @@ export const storeTransaction = async (hash: `0x${string}`) => {
     blockHash: onchainTransaction.blockHash
   });
 
-  await storeTransactionInternal(eventLog, hash, onchainTransaction.blockNumber, block.timestamp);
+  const keyRelationship = await storeTransactionInternal(
+    eventLog,
+    hash,
+    onchainTransaction.blockNumber,
+    block.timestamp
+  );
+
+  if (keyRelationship) {
+    await sendNotification(
+      keyRelationship.ownerId,
+      keyRelationship.holderId,
+      eventLog.args.isBuy ? NotificationType.KEYBUY : NotificationType.KEYSELL
+    );
+  }
 
   return { data: hash };
 };
@@ -217,4 +238,133 @@ export const processAnyPendingTransactions = async (privyUserId: string) => {
   }
 
   return { data: "success" };
+};
+
+export const getTransactions = async (
+  privyUserId: string,
+  side: "holder" | "owner" | "both" | "all",
+  offset: number
+) => {
+  const user = await prisma.user.findUniqueOrThrow({
+    where: {
+      privyUserId: privyUserId
+    }
+  });
+
+  const transactions = await prisma.trade.findMany({
+    where:
+      side === "all"
+        ? {}
+        : side === "both"
+        ? {
+            OR: [
+              {
+                holderAddress: user.wallet.toLowerCase()
+              },
+              {
+                ownerAddress: user.wallet.toLowerCase()
+              }
+            ]
+          }
+        : side === "owner"
+        ? {
+            ownerAddress: user.wallet.toLowerCase()
+          }
+        : {
+            holderAddress: user.wallet.toLowerCase()
+          },
+    orderBy: {
+      timestamp: "desc"
+    },
+    skip: offset,
+    take: PAGINATION_LIMIT
+  });
+
+  const uniqueWallets = _.uniq([...transactions.map(t => t.holderAddress), ...transactions.map(t => t.ownerAddress)]);
+
+  const users = await prisma.user.findMany({
+    where: {
+      wallet: {
+        in: uniqueWallets
+      }
+    }
+  });
+
+  const userMap = new Map<string, (typeof users)[number]>();
+  for (const user of users) {
+    userMap.set(user.wallet.toLowerCase(), user);
+  }
+
+  const res = transactions
+    .filter(tx => userMap.has(tx.holderAddress.toLowerCase()) && userMap.has(tx.ownerAddress.toLowerCase()))
+    .map(transaction => ({
+      ...transaction,
+      holder: userMap.get(transaction.holderAddress.toLowerCase()),
+      owner: userMap.get(transaction.ownerAddress.toLowerCase())
+    }));
+
+  return { data: res };
+};
+
+export const getFriendsTransactions = async (privyUserId: string, offset: number) => {
+  const currentUser = await prisma.user.findUniqueOrThrow({
+    where: {
+      privyUserId: privyUserId
+    }
+  });
+
+  const friends = await prisma.recommendedUser.findMany({
+    where: {
+      wallet: currentUser.wallet.toLowerCase()
+    }
+  });
+
+  const friendsWallets = friends.map(friend => friend.wallet.toLowerCase());
+
+  const transactions = await prisma.trade.findMany({
+    where: {
+      OR: [
+        {
+          holderAddress: {
+            in: friendsWallets
+          }
+        },
+        {
+          ownerAddress: {
+            in: friendsWallets
+          }
+        }
+      ]
+    },
+    orderBy: {
+      timestamp: "desc"
+    },
+    skip: offset,
+    take: PAGINATION_LIMIT
+  });
+
+  const uniqueWallets = _.uniq([...transactions.map(t => t.holderAddress), ...transactions.map(t => t.ownerAddress)]);
+
+  const users = await prisma.user.findMany({
+    where: {
+      wallet: {
+        in: uniqueWallets
+      }
+    }
+  });
+
+  const userMap = new Map<string, (typeof users)[number]>();
+  for (const user of users) {
+    userMap.set(user.wallet.toLowerCase(), user);
+  }
+
+  const res = transactions
+    .filter(tx => userMap.has(tx.holderAddress.toLowerCase()) && userMap.has(tx.ownerAddress.toLowerCase()))
+    .map(transaction => ({
+      ...transaction,
+      holder: userMap.get(transaction.holderAddress.toLowerCase()),
+      owner: userMap.get(transaction.ownerAddress.toLowerCase())
+    }));
+
+  return { data: res };
 };

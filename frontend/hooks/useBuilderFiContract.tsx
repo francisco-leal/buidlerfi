@@ -1,11 +1,11 @@
-import { storeTransactionAction } from "@/hooks/useTransaction";
+import { useStoreTransactionAction } from "@/hooks/useTransaction";
 import { BUILDERFI_CONTRACT } from "@/lib/constants";
 import { formatError } from "@/lib/utils";
 import { useRef } from "react";
 import { toast } from "react-toastify";
-import { useContractRead, useContractWrite, useWaitForTransaction } from "wagmi";
+import { useContractRead, useContractWrite } from "wagmi";
 
-export const useGetBuilderInfo = (address: string) => {
+export const useGetBuilderInfo = (address?: string) => {
   const { data: buyPriceAfterFee, refetch: refetchBuyPriceAfterFee } = useContractRead({
     ...BUILDERFI_CONTRACT,
     functionName: "getBuyPriceAfterFee",
@@ -103,18 +103,33 @@ const TRADE_DATA = {
 
 export const useTradeKey = (side: "buy" | "sell", successFn?: () => void, errorFn?: () => void) => {
   const toastId = useRef<string | number | undefined>(undefined);
-  const storeTransaction = storeTransactionAction();
 
-  const {
-    data: tx,
-    writeAsync,
-    isLoading
-  } = useContractWrite({
+  const processTransaction = useStoreTransactionAction();
+
+  const { writeAsync, isLoading } = useContractWrite({
     ...BUILDERFI_CONTRACT,
     functionName: TRADE_DATA[side].functionName,
     onSuccess: async data => {
-      await storeTransaction.mutateAsync(data.hash);
       toastId.current = toast("Transaction submitted!", { isLoading: true });
+      await processTransaction
+        .mutateAsync(data.hash)
+        .then(() => {
+          toast.update(toastId.current!, {
+            render: TRADE_DATA[side].successMsg,
+            isLoading: false,
+            type: "success",
+            autoClose: 3000
+          });
+          if (successFn) successFn();
+        })
+        .catch(err => {
+          toast.update(toastId.current!, {
+            render: "There was an error processing your transaction: " + formatError(err),
+            isLoading: false,
+            type: "error",
+            autoClose: 3000
+          });
+        });
     },
     onError: (err: any) => {
       if (err?.shortMessage !== "User rejected the request.") {
@@ -124,18 +139,5 @@ export const useTradeKey = (side: "buy" | "sell", successFn?: () => void, errorF
     }
   });
 
-  const { isLoading: txProcessing } = useWaitForTransaction({
-    hash: tx?.hash,
-    onSuccess: () => {
-      toast.update(toastId.current!, {
-        render: TRADE_DATA[side].successMsg,
-        isLoading: false,
-        type: "success",
-        autoClose: 3000
-      });
-      successFn && successFn();
-    }
-  });
-
-  return { isLoading: isLoading || txProcessing, executeTx: writeAsync };
+  return { isLoading: isLoading || processTransaction.isLoading, executeTx: writeAsync };
 };

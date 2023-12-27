@@ -13,10 +13,16 @@ const verificationKey = jose.importSPKI(SPKI, "ES256");
 export interface ServerActionResponse<T> {
   data?: T;
   error?: (typeof ERRORS)[keyof typeof ERRORS];
+  status?: number;
 }
+
+export type SortingParams<T> = Record<keyof T, "asc" | "desc">;
 
 export interface ServerActionOptions {
   authorization?: string | null;
+  pagination?: {
+    offset: number;
+  };
 }
 
 export interface ServerActionData {
@@ -24,12 +30,12 @@ export interface ServerActionData {
 }
 
 //This wrapper is used to check authorization
-export async function serverActionWrapper<T>(
-  fn: (data: ServerActionData) => Promise<ServerActionResponse<T>>,
+export async function serverActionWrapper<TResponse>(
+  fn: (data: ServerActionData) => Promise<ServerActionResponse<TResponse>>,
   options: ServerActionOptions,
   isAdminRoute?: boolean
 ) {
-  if (!options?.authorization) return { error: ERRORS.UNAUTHORIZED } as ServerActionResponse<T>;
+  if (!options?.authorization) return { error: ERRORS.UNAUTHORIZED } as ServerActionResponse<TResponse>;
   const verifKey = await verificationKey;
   const authToken = options.authorization.replace("Bearer ", "");
   const payload = authToken
@@ -38,18 +44,18 @@ export async function serverActionWrapper<T>(
         audience: process.env.PRIVY_APP_ID
       })
     : undefined;
-  if (!payload?.payload.sub) return { error: ERRORS.UNAUTHORIZED } as ServerActionResponse<T>;
+  if (!payload?.payload.sub) return { error: ERRORS.UNAUTHORIZED } as ServerActionResponse<TResponse>;
   if (isAdminRoute) {
     const user = await prisma.user.findUnique({ where: { privyUserId: payload.payload.sub } });
-    if (!user?.isAdmin) return { error: ERRORS.UNAUTHORIZED } as ServerActionResponse<T>;
+    if (!user?.isAdmin) return { error: ERRORS.UNAUTHORIZED } as ServerActionResponse<TResponse>;
   }
   const res = await fn({ privyUserId: payload.payload.sub })
     .catch(err => {
       console.error(err);
-      return { error: ERRORS.SOMETHING_WENT_WRONG } as ServerActionResponse<T>;
+      return { error: ERRORS.SOMETHING_WENT_WRONG } as ServerActionResponse<TResponse>;
     })
     .then(res => {
-      return res as ServerActionResponse<T>;
+      return res as ServerActionResponse<TResponse>;
     });
 
   return res;

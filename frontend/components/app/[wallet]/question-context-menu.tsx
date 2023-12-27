@@ -1,26 +1,29 @@
 import { OpenDialog } from "@/contexts/DialogContainer";
-import { useProfileContext } from "@/contexts/profileContext";
 import { useUserContext } from "@/contexts/userContext";
-import { useDeleteQuestion, useGetQuestion, useGetQuestions } from "@/hooks/useQuestionsApi";
+import {
+  useDeleteQuestion,
+  useGetHotQuestions,
+  useGetQuestion,
+  useGetQuestionsFromReplier
+} from "@/hooks/useQuestionsApi";
 import { DeleteOutline, EditOutlined, FileUploadOutlined, MoreHoriz } from "@mui/icons-material";
 import { CircularProgress, Dropdown, ListItemDecorator, Menu, MenuButton, MenuItem } from "@mui/joy";
-import { usePathname } from "next/navigation";
 import { FC, useState } from "react";
 import { toast } from "react-toastify";
 import { AskQuestionModal } from "./ask-question-modal";
 
 interface Props {
   question:
-    | NonNullable<ReturnType<typeof useGetQuestions>["data"]>[number]
-    | NonNullable<ReturnType<typeof useGetQuestion>["data"]>;
+    | NonNullable<ReturnType<typeof useGetQuestionsFromReplier>["data"]>[number]
+    | NonNullable<ReturnType<typeof useGetQuestion>["data"]>
+    | NonNullable<ReturnType<typeof useGetHotQuestions>["data"]>[number];
+  refetch: () => Promise<unknown>;
 }
 
-export const QuestionContextMenu: FC<Props> = ({ question }) => {
-  const { refetch } = useProfileContext();
+export const QuestionContextMenu: FC<Props> = ({ question, refetch }) => {
   const { user } = useUserContext();
   const deleteQuestion = useDeleteQuestion();
-  const isEditable = question.questionerId === user?.id && !question.repliedOn;
-  const pathname = usePathname();
+  const isEditable = question.questioner.id === user?.id && !question.repliedOn;
   const [isEditQuestion, setIsEditQuestion] = useState(false);
 
   const handleDelete = async () => {
@@ -33,7 +36,7 @@ export const QuestionContextMenu: FC<Props> = ({ question }) => {
   };
 
   const handleShare = async () => {
-    navigator.clipboard.writeText(location.origin + pathname + `?question=${question.id}`);
+    navigator.clipboard.writeText(location.origin + `/question/${question.id}`);
     toast.success("question url copied to clipboard");
   };
 
