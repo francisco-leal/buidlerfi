@@ -1,30 +1,33 @@
 "use client";
 
 import { NotificationEntry } from "@/components/app/notification/notificationEntry";
-import { NotificationSettingsModal } from "@/components/app/notification/notificationSettingsModal";
 import { Flex } from "@/components/shared/flex";
 import { PageMessage } from "@/components/shared/page-message";
 import { BackButton, InjectTopBar } from "@/components/shared/top-bar";
 import { useUserContext } from "@/contexts/userContext";
 import { useMarkNotificationsAsRead } from "@/hooks/useNotificationApi";
 import { sortIntoPeriods } from "@/lib/utils";
-import { Notifications, SettingsOutlined } from "@mui/icons-material";
-import { IconButton, Typography } from "@mui/joy";
-import { useEffect, useMemo, useState } from "react";
+import { Notifications } from "@mui/icons-material";
+import { Typography } from "@mui/joy";
+import { useEffect, useMemo } from "react";
 
 const periods = ["today", "last 7 days", "last 30 days", "last year", "all time"] as const;
 export type period = (typeof periods)[number];
 
 export default function NotificationPage() {
   const { notifications, refetchNotifications } = useUserContext();
-  const [isNotifSettingsOpen, setIsNotifSettingsOpen] = useState(false);
+  // const [isNotifSettingsOpen, setIsNotifSettingsOpen] = useState(false);
 
   const sorted = useMemo(() => sortIntoPeriods(notifications || []), [notifications]);
 
   const markAsRead = useMarkNotificationsAsRead();
 
+  //Refetch when opening page
   useEffect(() => {
     refetchNotifications();
+  }, [refetchNotifications]);
+
+  useEffect(() => {
     //Mark as read when leaving page
     return () => {
       const unreadNotifs = notifications?.filter(notif => !notif.isRead) || [];
@@ -36,15 +39,15 @@ export default function NotificationPage() {
 
   return (
     <Flex component={"main"} y grow>
-      {isNotifSettingsOpen && <NotificationSettingsModal close={() => setIsNotifSettingsOpen(false)} />}
+      {/* {isNotifSettingsOpen && <NotificationSettingsModal close={() => setIsNotifSettingsOpen(false)} />} */}
       <InjectTopBar
         title="notifications"
         startItem={<BackButton />}
-        endItem={
-          <IconButton onClick={() => setIsNotifSettingsOpen(true)}>
-            <SettingsOutlined />
-          </IconButton>
-        }
+        // endItem={
+        //   <IconButton onClick={() => setIsNotifSettingsOpen(true)}>
+        //     <SettingsOutlined />
+        //   </IconButton>
+        // }
       />
       {notifications?.length === 0 ? (
         <PageMessage icon={<Notifications />} title="No notifications" text="Your notifications will appear here" />
