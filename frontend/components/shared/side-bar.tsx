@@ -87,9 +87,8 @@ export const Sidebar: FC<Props> = ({ isOpen, setOpen }) => {
       {
         text: "Settings",
         icon: <SettingsOutlined />,
-        path: "/settings",
+        path: "/settings"
         //Hidden for now as we don't have a settings page
-        hidden: true
       },
       {
         text: "Admin",

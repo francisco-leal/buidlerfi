@@ -28,7 +28,6 @@
     "@privy-io/wagmi-connector": "^0.1.7",
     "@sentry/nextjs": "^7.78.0",
     "@standard-crypto/farcaster-js-neynar": "2.0.0",
-    "@standard-crypto/farcaster-js-neynar": "2.0.0",
     "@tanstack/react-query": "^4.35.3",
     "anchorme": "^3.0.5",
     "@supabase/supabase-js": "^2.39.0",
