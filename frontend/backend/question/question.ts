@@ -204,9 +204,8 @@ export async function getQuestions(args: getQuestionsArgs, offset: number) {
   return { data: exclude(questions, ["reply"]) };
 }
 
-export const getQuestion = async (privyUserId: string, questionId: number) => {
-  const currentUser = await prisma.user.findUniqueOrThrow({ where: { privyUserId }, include: { keysOwned: true } });
-
+//We allow privyUserId to be undefiend for public endpoint
+export const getQuestion = async (questionId: number, privyUserId?: string) => {
   const question = await prisma.question.findUniqueOrThrow({
     where: {
       id: questionId
@@ -219,6 +218,15 @@ export const getQuestion = async (privyUserId: string, questionId: number) => {
     }
   });
 
+  //We need to check privyUserId also because if it's undefined, it's going to return the system user
+  if (!privyUserId) return { data: exclude(question, ["reply"]) };
+
+  const currentUser = await prisma.user.findUnique({
+    where: { privyUserId: privyUserId },
+    include: { keysOwned: true }
+  });
+
+  if (!currentUser) return { data: exclude(question, ["reply"]) };
   const key = currentUser.keysOwned.find(key => key.ownerId === question.replierId);
 
   if (key && key.amount > BigInt(0)) return { data: question };

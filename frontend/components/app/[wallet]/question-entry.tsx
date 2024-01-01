@@ -117,16 +117,6 @@ export const QuestionEntry: FC<Props> = ({ question, onClick, type }) => {
             Answered
           </Chip>
         )}
-        {/* <IconButton
-          onClick={e => {
-            e.preventDefault();
-            e.stopPropagation();
-            navigator.clipboard.writeText(location.origin + pathname + `?question=${question.id}`);
-            toast.success("question url copied to clipboard");
-          }}
-        >
-          <FileUploadOutlined fontSize="small" />
-        </IconButton> */}
       </Flex>
     </Flex>
   );

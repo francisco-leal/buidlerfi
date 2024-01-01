@@ -36,8 +36,16 @@ export const QuestionContextMenu: FC<Props> = ({ question, refetch }) => {
   };
 
   const handleShare = async () => {
-    navigator.clipboard.writeText(location.origin + `/question/${question.id}`);
-    toast.success("question url copied to clipboard");
+    if (navigator.share) {
+      navigator.share({
+        title: `${question.questioner.displayName} asked a question to ${question.replier.displayName}`,
+        text: `Get ${question.replier.displayName}’s keys on builder.fi to unlock their answer to this question !`,
+        url: `${location.origin}/question/${question.id}`
+      });
+    } else {
+      navigator.clipboard.writeText(location.origin + `/question/${question.id}`);
+      toast.success("question url copied to clipboard");
+    }
   };
 
   return (

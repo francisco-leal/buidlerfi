@@ -5,6 +5,8 @@ const SPKI = `-----BEGIN PUBLIC KEY-----
 MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAE0yFanm3yTbCe4Z4KM9yi/IGZf+ugrj+rn82e/guPcFlyLiudyubOWqFFmL/bVdxDY5LFhJdvBwfDYKR8LwcmPg==
 -----END PUBLIC KEY-----`;
 
+const allowAnonymous = ["/api/question/public"];
+
 export default async function middleware(req: NextRequest) {
   if (!req.nextUrl.pathname.includes("/api/")) return NextResponse.next();
 
@@ -30,7 +32,7 @@ export default async function middleware(req: NextRequest) {
         })
       : undefined;
 
-    if (req.nextUrl.pathname.includes("/api/")) {
+    if (req.nextUrl.pathname.includes("/api/") && !allowAnonymous.find(path => req.nextUrl.pathname.startsWith(path))) {
       if (!payload?.payload.sub) throw new Error("No sub in payload");
 
       const response = NextResponse.next();

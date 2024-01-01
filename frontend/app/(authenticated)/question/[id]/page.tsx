@@ -8,6 +8,7 @@ import { PageMessage } from "@/components/shared/page-message";
 import { Reactions } from "@/components/shared/reactions";
 import { InjectTopBar } from "@/components/shared/top-bar";
 import { UnifiedUserItem } from "@/components/shared/unified-user-item";
+import { useBetterRouter } from "@/hooks/useBetterRouter";
 import { useGetQuestion, usePutQuestion } from "@/hooks/useQuestionsApi";
 import { useGetUserStats } from "@/hooks/useUserApi";
 import { useUserProfile } from "@/hooks/useUserProfile";
@@ -30,7 +31,7 @@ export default function QuestionPage() {
   const [reply, setReply] = useState("");
   const putQuestion = usePutQuestion();
   const { data: questionerStats } = useGetUserStats(question?.questioner?.id);
-
+  const router = useBetterRouter();
   const replyQuestion = async () => {
     if (!question) return;
     await putQuestion.mutateAsync({
@@ -43,17 +44,6 @@ export default function QuestionPage() {
   };
 
   const repliedOn = useMemo(() => getDifference(question?.repliedOn || undefined), [question?.repliedOn]);
-
-  // const handleClose = () => {
-  //   if (reply.length > 10) {
-  //     OpenDialog({
-  //       type: "discard",
-  //       submit: () => close()
-  //     });
-  //   } else {
-  //     close();
-  //   }
-  // };
 
   const sanitizedContent = useMemo(
     () =>
@@ -107,8 +97,16 @@ export default function QuestionPage() {
             onClick={e => {
               e.preventDefault();
               e.stopPropagation();
-              navigator.clipboard.writeText(location.origin + `/question/${question.id}`);
-              toast.success("question url copied to clipboard");
+              if (navigator.share) {
+                navigator.share({
+                  title: `${question.questioner.displayName} asked a question to ${question.replier.displayName}`,
+                  text: `Get ${question.replier.displayName}’s keys on builder.fi to unlock their answer to this question !`,
+                  url: `${location.origin}/question/${question.id}`
+                });
+              } else {
+                navigator.clipboard.writeText(location.origin + `/question/${question.id}`);
+                toast.success("question url copied to clipboard");
+              }
             }}
           >
             <FileUploadOutlined fontSize="small" />
@@ -127,11 +125,22 @@ export default function QuestionPage() {
         )}
         {question.repliedOn && hasKeys && !isEditingReply && (
           <Flex x ys gap={1} grow fullwidth>
-            <Avatar size="sm" src={question.replier.avatarUrl || DEFAULT_PROFILE_PICTURE} />
+            <Avatar
+              size="sm"
+              sx={{ cursor: "pointer" }}
+              src={question.replier.avatarUrl || DEFAULT_PROFILE_PICTURE}
+              onClick={() => router.push(`/profile/${question.replier?.wallet}`)}
+            />
             <Flex y gap={0.5} fullwidth>
               <Flex x yc xsb fullwidth>
                 <Flex x yc gap={0.5}>
-                  <Typography level="title-sm">{question.replier.displayName} </Typography>
+                  <Typography
+                    level="title-sm"
+                    sx={{ cursor: "pointer" }}
+                    onClick={() => router.push(`/profile/${question.replier?.wallet}`)}
+                  >
+                    {question.replier.displayName}{" "}
+                  </Typography>
                   <Typography level="body-sm">•</Typography>
                   <Typography level="body-sm">{repliedOn}</Typography>
                 </Flex>

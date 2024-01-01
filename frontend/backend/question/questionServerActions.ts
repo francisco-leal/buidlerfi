@@ -16,7 +16,7 @@ import {
 } from "./question";
 
 export const getQuestionSA = async (questionId: number, options: ServerActionOptions) => {
-  return serverActionWrapper(data => getQuestion(data.privyUserId, questionId), options);
+  return serverActionWrapper(data => getQuestion(questionId, data.privyUserId), options);
 };
 
 export const addReactionSA = async (questionId: number, reactionType: ReactionType, options: ServerActionOptions) => {
