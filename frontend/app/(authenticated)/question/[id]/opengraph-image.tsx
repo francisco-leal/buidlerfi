@@ -1,5 +1,5 @@
 import { getQuestion } from "@/backend/question/question";
-import { OG_BACKGROUND_IMAGE } from "@/lib/assets";
+import { OG_BACKGROUND_IMAGE, OG_BACKGROUND_IMAGE_FALLBACK } from "@/lib/assets";
 import { format } from "date-fns";
 import { ImageResponse } from "next/og";
 // Route segment config
@@ -22,11 +22,30 @@ const baseUrl =
 export const contentType = "image/png";
 // Image generation
 export default async function Image({ params }: { params: { id: string } }) {
-  const question = (await fetch(`${baseUrl}/api/question/public/${params.id}`).then(res => res.json())) as Awaited<
-    ReturnType<typeof getQuestion>
-  >;
+  const question = (await fetch(`${baseUrl}/ap/question/public/${params.id}`)
+    .then(res => res.json())
+    .catch(err => {
+      console.error(err);
+      return undefined;
+    })) as Awaited<ReturnType<typeof getQuestion>>;
   const interLight = await fetch(new URL(`${baseUrl}/assets/Inter-Light.ttf`)).then(res => res.arrayBuffer());
   const interRegular = await fetch(new URL(`${baseUrl}/assets/Inter-Regular.ttf`)).then(res => res.arrayBuffer());
+
+  //Fallback if error when fetching question
+  if (!question) {
+    return new ImageResponse(
+      (
+        <div
+          style={{
+            width: "100vw",
+            height: "100vh",
+            backgroundImage: `url("${baseUrl}/${OG_BACKGROUND_IMAGE_FALLBACK}")`,
+            backgroundSize: "100% 100%"
+          }}
+        ></div>
+      )
+    );
+  }
 
   return new ImageResponse(
     (

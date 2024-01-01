@@ -65,11 +65,17 @@ export const QuestionEntry: FC<Props> = ({ question, onClick, type }) => {
                 </Typography>
               ) : (
                 <Typography level="body-sm">
-                  <strong onClick={() => router.push(`/profile/${question.questioner?.wallet}`)}>
+                  <strong
+                    style={{ cursor: "pointer" }}
+                    onClick={() => router.push(`/profile/${question.questioner?.wallet}`)}
+                  >
                     {question.questioner?.displayName || shortAddress(question.questioner?.wallet)}
                   </strong>{" "}
                   asked{" "}
-                  <strong onClick={() => router.push(`/profile/${question.replier?.wallet}`)}>
+                  <strong
+                    style={{ cursor: "pointer" }}
+                    onClick={() => router.push(`/profile/${question.replier?.wallet}`)}
+                  >
                     {question.replier?.displayName || shortAddress(question.questioner?.wallet)}
                   </strong>
                 </Typography>
