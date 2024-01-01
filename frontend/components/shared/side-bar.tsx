@@ -13,7 +13,6 @@ import {
   Logout,
   PersonOutlineOutlined,
   Refresh,
-  SearchOutlined,
   SettingsOutlined
 } from "@mui/icons-material";
 import {
@@ -68,11 +67,6 @@ export const Sidebar: FC<Props> = ({ isOpen, setOpen }) => {
 
   const navItems = useMemo(
     () => [
-      {
-        text: "Explore",
-        icon: <SearchOutlined />,
-        path: "/home"
-      },
       { text: "Profile", icon: <PersonOutlineOutlined />, path: "/profile/" + address },
       {
         text: "Wallet",
