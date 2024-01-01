@@ -13,16 +13,16 @@ export const size = {
 };
 
 const baseUrl =
-  process.env.ISLOCALHOST === "true"
+  process.env.ENVIRONMENT === "localhost"
     ? "http://localhost:3000"
-    : process.env.NODE_ENV === "development"
+    : process.env.ENVIRONMENT === "development"
     ? "https://dev.builder.fi"
     : "https://app.builder.fi";
 
 export const contentType = "image/png";
 // Image generation
 export default async function Image({ params }: { params: { id: string } }) {
-  const question = (await fetch(`${baseUrl}/ap/question/public/${params.id}`)
+  const question = (await fetch(`${baseUrl}/api/question/public/${params.id}`)
     .then(res => res.json())
     .catch(err => {
       console.error(err);
@@ -39,7 +39,7 @@ export default async function Image({ params }: { params: { id: string } }) {
           style={{
             width: "100vw",
             height: "100vh",
-            backgroundImage: `url("${baseUrl}/${OG_BACKGROUND_IMAGE_FALLBACK}")`,
+            backgroundImage: `url("${baseUrl}${OG_BACKGROUND_IMAGE_FALLBACK}")`,
             backgroundSize: "100% 100%"
           }}
         ></div>
@@ -58,7 +58,7 @@ export default async function Image({ params }: { params: { id: string } }) {
           justifyContent: "space-between",
           height: "100vh",
           width: "100vw",
-          backgroundImage: `url("${baseUrl}/${OG_BACKGROUND_IMAGE}")`,
+          backgroundImage: `url("${baseUrl}${OG_BACKGROUND_IMAGE}")`,
           backgroundSize: "100% 100%",
           gap: "30px"
         }}
