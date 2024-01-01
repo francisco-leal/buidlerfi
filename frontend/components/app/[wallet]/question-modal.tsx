@@ -6,9 +6,9 @@ import { PageMessage } from "@/components/shared/page-message";
 import { Reactions } from "@/components/shared/reactions";
 import { UnifiedUserItem } from "@/components/shared/unified-user-item";
 import { OpenDialog } from "@/contexts/DialogContainer";
-import { useProfileContext } from "@/contexts/profileContext";
 import { useGetQuestion, usePutQuestion } from "@/hooks/useQuestionsApi";
 import { useGetUserStats } from "@/hooks/useUserApi";
+import { useUserProfile } from "@/hooks/useUserProfile";
 import { DEFAULT_PROFILE_PICTURE } from "@/lib/assets";
 import { getDifference } from "@/lib/utils";
 import { FileUploadOutlined, LockOutlined } from "@mui/icons-material";
@@ -25,7 +25,7 @@ import { ReplyContextMenu } from "./reply-context-menu";
 export default function QuestionModal({ questionId, close }: { questionId: number; close: () => void }) {
   const { data: question, refetch } = useGetQuestion(Number(questionId));
   const [isEditingReply, setIsEditingReply] = useState(false);
-  const { hasKeys, socialData, isOwnProfile } = useProfileContext();
+  const { hasKeys, user, isOwnProfile } = useUserProfile(question?.replier.wallet);
   const [reply, setReply] = useState("");
   const putQuestion = usePutQuestion();
   const pathname = usePathname();
@@ -157,18 +157,18 @@ export default function QuestionModal({ questionId, close }: { questionId: numbe
               <PageMessage
                 title="Unlock answer"
                 icon={<LockOutlined />}
-                text={`Hold at least one key to ask ${socialData?.displayName} a question and access all answers.`}
+                text={`Hold at least one key to ask ${user?.displayName} a question and access all answers.`}
               />
             )}
 
             {!question.repliedOn && !isOwnProfile && (
               <PageMessage
                 title="Waiting for answer ..."
-                icon={<Avatar size="sm" src={socialData?.avatarUrl} />}
+                icon={<Avatar size="sm" src={user?.avatarUrl || undefined} />}
                 text={
                   hasKeys
-                    ? `You will get notified when ${socialData?.displayName} answers`
-                    : `Buy a key, and get notified when ${socialData?.displayName} answers`
+                    ? `You will get notified when ${user?.displayName} answers`
+                    : `Buy a key, and get notified when ${user?.displayName} answers`
                 }
               />
             )}

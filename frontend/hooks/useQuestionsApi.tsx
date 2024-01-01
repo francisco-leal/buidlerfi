@@ -30,12 +30,12 @@ export const useGetKeyQuestions = () => {
   return useInfiniteQueryAxios<Awaited<ReturnType<typeof getQuestions>>>(["useGetKeyQuestions"], "/api/question/keys");
 };
 
-export const useGetQuestionsFromReplier = (replierId?: number) => {
+export const useGetQuestionsFromUser = (userId?: number, side: "questions" | "replies" = "replies") => {
   return useInfiniteQueryAxios<Awaited<ReturnType<typeof getQuestions>>>(
-    ["useGetQuestionsFromReplier", replierId],
-    "/api/question/replier",
-    { enabled: !!replierId },
-    { replier: replierId }
+    ["useGetQuestionsFromUser", userId, side],
+    "/api/question/user",
+    { enabled: !!userId },
+    { user: userId, side }
   );
 };
 

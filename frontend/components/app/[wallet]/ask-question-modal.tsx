@@ -16,8 +16,8 @@ interface Props {
 }
 
 export const AskQuestionModal: FC<Props> = ({ close, refetch, questionToEdit }) => {
-  const { user } = useUserContext();
-  const { socialData } = useProfileContext();
+  const { user: currentUser } = useUserContext();
+  const { user } = useProfileContext();
   const [questionContent, setQuestionContent] = useState("");
   const [showBadQuestionLabel, setShowBadQuestionLabel] = useState(false);
   const postQuestion = usePostQuestion();
@@ -37,7 +37,7 @@ export const AskQuestionModal: FC<Props> = ({ close, refetch, questionToEdit }) 
   const isEditMode = questionToEdit !== undefined;
 
   const sendQuestion = async () => {
-    if (!socialData) {
+    if (!user) {
       toast.error("Not ready yet");
       return;
     }
@@ -62,7 +62,7 @@ export const AskQuestionModal: FC<Props> = ({ close, refetch, questionToEdit }) 
     } else {
       await postQuestion.mutateAsync({
         questionContent: questionContent,
-        replierId: socialData.userId
+        replierId: user.id
       });
       refetch();
       close();
@@ -85,7 +85,7 @@ export const AskQuestionModal: FC<Props> = ({ close, refetch, questionToEdit }) 
       <ModalDialog layout="center" sx={{ width: "min(100vw, 500px)", padding: 0, overflowY: "auto" }}>
         <Flex y gap2 p={2} grow>
           <Flex x xsb yc>
-            <Typography level="title-sm">Ask to {socialData?.displayName}</Typography>
+            <Typography level="title-sm">Ask to {user?.displayName}</Typography>
             <Button
               loading={postQuestion.isLoading}
               disabled={questionContent.length < MIN_QUESTION_LENGTH || questionContent.length > MAX_QUESTION_LENGTH}
@@ -95,8 +95,8 @@ export const AskQuestionModal: FC<Props> = ({ close, refetch, questionToEdit }) 
             </Button>
           </Flex>
           <FullTextArea
-            placeholder={`Ask ${socialData?.displayName} a question...`}
-            avatarUrl={user?.avatarUrl || undefined}
+            placeholder={`Ask ${user?.displayName} a question...`}
+            avatarUrl={currentUser?.avatarUrl || undefined}
             onChange={e => setQuestionContent(e.target.value)}
             value={questionContent}
           />

@@ -2,7 +2,7 @@ import { Flex } from "@/components/shared/flex";
 import { Reactions } from "@/components/shared/reactions";
 import { useProfileContext } from "@/contexts/profileContext";
 import { useBetterRouter } from "@/hooks/useBetterRouter";
-import { useGetHotQuestions, useGetKeyQuestions, useGetQuestionsFromReplier } from "@/hooks/useQuestionsApi";
+import { useGetHotQuestions, useGetKeyQuestions, useGetQuestionsFromUser } from "@/hooks/useQuestionsApi";
 import { getDifference, shortAddress } from "@/lib/utils";
 import theme from "@/theme";
 import { Avatar, AvatarGroup, Chip, Typography } from "@mui/joy";
@@ -13,7 +13,7 @@ import { QuestionContextMenu } from "./question-context-menu";
 
 interface Props {
   question?:
-    | NonNullable<ReturnType<typeof useGetQuestionsFromReplier>["data"]>[number]
+    | NonNullable<ReturnType<typeof useGetQuestionsFromUser>["data"]>[number]
     | NonNullable<ReturnType<typeof useGetHotQuestions>["data"]>[number]
     | NonNullable<ReturnType<typeof useGetKeyQuestions>["data"]>[number];
   onClick: () => void;
@@ -70,7 +70,7 @@ export const QuestionEntry: FC<Props> = ({ question, onClick, type }) => {
                   </strong>{" "}
                   asked{" "}
                   <strong onClick={() => router.push(`/profile/${question.replier?.wallet}`)}>
-                    {question.replier?.displayName}
+                    {question.replier?.displayName || shortAddress(question.questioner?.wallet)}
                   </strong>
                 </Typography>
               )}
@@ -79,10 +79,6 @@ export const QuestionEntry: FC<Props> = ({ question, onClick, type }) => {
               <Typography level="body-sm">{askedOn}</Typography>
             </Flex>
             <QuestionContextMenu question={question} refetch={() => refetch()} />
-            {/* <Flex x yc gap2>
-              
-
-            </Flex> */}
           </Flex>
           <Typography
             onClick={e => {

@@ -1,7 +1,6 @@
 import { useGetKeyRelationships } from "@/hooks/useKeyRelationshipApi";
-import { useGetQuestionsFromReplier } from "@/hooks/useQuestionsApi";
-import { SocialData } from "@/hooks/useSocialData";
-import { useGetRecommendedUser } from "@/hooks/useUserApi";
+import { useGetQuestionsFromUser } from "@/hooks/useQuestionsApi";
+import { useGetRecommendedUser, useGetUser } from "@/hooks/useUserApi";
 import { useUserProfile } from "@/hooks/useUserProfile";
 import { useParams } from "next/navigation";
 import { ReactNode, createContext, useContext } from "react";
@@ -14,11 +13,14 @@ interface ProfileContextType {
   hasKeys: boolean;
   isLoading: boolean;
   refetch: () => Promise<unknown>;
-  socialData?: SocialData;
+  user?: ReturnType<typeof useGetUser>["data"];
   recommendedUser?: ReturnType<typeof useGetRecommendedUser>["data"];
   isOwnProfile: boolean;
-  questions: ReturnType<typeof useGetQuestionsFromReplier>["data"];
-  getQuestionsFromReplierQuery?: ReturnType<typeof useGetQuestionsFromReplier>;
+  questions: ReturnType<typeof useGetQuestionsFromUser>["data"];
+  questionsAsked: ReturnType<typeof useGetQuestionsFromUser>["data"];
+  getQuestionsFromReplierQuery?: ReturnType<typeof useGetQuestionsFromUser>;
+  getQuestionsFromQuestionerQuery?: ReturnType<typeof useGetQuestionsFromUser>;
+  hasLaunchedKeys: boolean;
 }
 
 const ProfileContext = createContext<ProfileContextType>({
@@ -30,7 +32,9 @@ const ProfileContext = createContext<ProfileContextType>({
   isLoading: true,
   refetch: () => Promise.resolve(),
   questions: [],
-  isOwnProfile: false
+  questionsAsked: [],
+  isOwnProfile: false,
+  hasLaunchedKeys: false
 });
 
 export const useProfileContext = () => useContext(ProfileContext);

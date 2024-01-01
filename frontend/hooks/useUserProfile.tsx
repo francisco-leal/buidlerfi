@@ -1,12 +1,11 @@
 import { useUserContext } from "@/contexts/userContext";
-import { useGetQuestionsFromReplier } from "@/hooks/useQuestionsApi";
-import { useSocialData } from "@/hooks/useSocialData";
-import { useGetRecommendedUser } from "@/hooks/useUserApi";
+import { useGetQuestionsFromUser } from "@/hooks/useQuestionsApi";
+import { useGetRecommendedUser, useGetUser } from "@/hooks/useUserApi";
 import { useCallback, useMemo } from "react";
 import { useGetKeyRelationships } from "./useKeyRelationshipApi";
 
 export const useUserProfile = (wallet?: string) => {
-  const { user } = useUserContext();
+  const { user: currentUser } = useUserContext();
   const { data: holders, refetch, isLoading: isLoadingHolders } = useGetKeyRelationships(wallet, "owner");
 
   const {
@@ -17,8 +16,10 @@ export const useUserProfile = (wallet?: string) => {
 
   const { isLoading: isLoadingRecommendedUser, data: recommendedUser } = useGetRecommendedUser(wallet as `0x${string}`);
 
-  const socialData = useSocialData(wallet as `0x${string}`);
-  const getQuestionsFromReplierQuery = useGetQuestionsFromReplier(socialData?.userId);
+  const { data: user, refetch: refetchUser, isLoading: isLoadingUser } = useGetUser(wallet as `0x${string}`);
+  console.log(user);
+  const getQuestionsFromReplierQuery = useGetQuestionsFromUser(user?.id);
+  const getQuestionsFromQuestionerQuery = useGetQuestionsFromUser(user?.id, "questions");
 
   const sortedHolders = useMemo(
     () => holders?.sort((a, b) => a.createdAt.valueOf() - b.createdAt.valueOf()),
@@ -27,13 +28,28 @@ export const useUserProfile = (wallet?: string) => {
 
   const [myShares, supporterNumber] = useMemo(() => {
     if (!holders) return [undefined, undefined];
-    const index = holders.findIndex(h => h.holder.id === user?.id);
+    const index = holders.findIndex(h => h.holder.id === currentUser?.id);
     return [holders[index], index + 1];
-  }, [holders, user?.id]);
+  }, [holders, currentUser?.id]);
 
   const refetchAll = useCallback(async () => {
-    await Promise.all([refetch(), getQuestionsFromReplierQuery.refetch(), refetchHoldings()]);
-  }, [refetch, refetchHoldings, getQuestionsFromReplierQuery]);
+    await Promise.all([
+      refetch(),
+      getQuestionsFromReplierQuery.refetch(),
+      refetchHoldings(),
+      getQuestionsFromQuestionerQuery.refetch(),
+      refetchUser()
+    ]);
+  }, [refetch, getQuestionsFromReplierQuery, refetchHoldings, getQuestionsFromQuestionerQuery, refetchUser]);
+
+  console.log({
+    isLoadingHolders,
+    getQuestions: getQuestionsFromQuestionerQuery.isLoading,
+    getReplies: getQuestionsFromReplierQuery.isLoading,
+    isLoadingRecommendedUser,
+    isLoadingHoldings,
+    isLoadingUser
+  });
 
   const value = useMemo(() => {
     return {
@@ -44,15 +60,19 @@ export const useUserProfile = (wallet?: string) => {
       hasKeys: (myShares && myShares.amount > BigInt(0)) || false,
       isLoading:
         isLoadingHolders ||
-        (socialData?.userId && getQuestionsFromReplierQuery.isLoading) ||
+        (user?.id && getQuestionsFromReplierQuery.isLoading) ||
         isLoadingRecommendedUser ||
-        isLoadingHoldings,
+        isLoadingHoldings ||
+        isLoadingUser,
       questions: getQuestionsFromReplierQuery.data,
+      questionsAsked: getQuestionsFromQuestionerQuery.data,
       refetch: refetchAll,
-      socialData,
+      user,
       recommendedUser,
-      isOwnProfile: user?.wallet?.toLowerCase() === wallet?.toLowerCase(),
-      getQuestionsFromReplierQuery
+      isOwnProfile: currentUser?.wallet?.toLowerCase() === wallet?.toLowerCase(),
+      getQuestionsFromReplierQuery,
+      getQuestionsFromQuestionerQuery,
+      hasLaunchedKeys: !!holdings?.find(key => key.holder.id === key.owner.id)
     };
   }, [
     sortedHolders,
@@ -60,13 +80,15 @@ export const useUserProfile = (wallet?: string) => {
     supporterNumber,
     myShares,
     isLoadingHolders,
+    getQuestionsFromQuestionerQuery,
     getQuestionsFromReplierQuery,
     isLoadingRecommendedUser,
     isLoadingHoldings,
+    isLoadingUser,
     refetchAll,
-    socialData,
+    user,
     recommendedUser,
-    user?.wallet,
+    currentUser?.wallet,
     wallet
   ]);
 

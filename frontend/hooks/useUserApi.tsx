@@ -5,6 +5,7 @@ import {
   getTopUsersByAnswersGiven,
   getTopUsersByKeysOwned,
   getTopUsersByQuestionsAsked,
+  getUser,
   search
 } from "@/backend/user/user";
 import {
@@ -13,7 +14,6 @@ import {
   generateChallengeSA,
   getRecommendedUserSA,
   getRecommendedUsersSA,
-  getUserSA,
   getUserStatsSA,
   linkNewWalletSA,
   refreshCurrentUserProfileSA,
@@ -21,6 +21,8 @@ import {
 } from "@/backend/user/userServerActions";
 import { SimpleUseQueryOptions } from "@/models/helpers.model";
 import { Prisma } from "@prisma/client";
+import { useQuery } from "@tanstack/react-query";
+import { useAxios } from "./useAxios";
 import { useDebounce } from "./useDebounce";
 import { useInfiniteQueryAxios } from "./useInfiniteQueryAxios";
 import { useMutationSA } from "./useMutationSA";
@@ -39,10 +41,15 @@ export const useCreateUser = () => {
 };
 
 export const useGetUser = (address?: string, reactQueryOptions?: { enabled?: boolean }) => {
-  return useQuerySA(["useGetUser", address], async options => getUserSA(address!, options), {
-    enabled: !!address,
-    ...reactQueryOptions
-  });
+  const axios = useAxios();
+  return useQuery(
+    ["useGetUser", address],
+    async () => axios.get<Awaited<ReturnType<typeof getUser>>>(`/api/user/${address}`).then(res => res.data.data),
+    {
+      enabled: !!address,
+      ...reactQueryOptions
+    }
+  );
 };
 
 export const useGetNewUsers = () => {

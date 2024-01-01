@@ -24,6 +24,7 @@ model User {
   isAdmin                     Boolean   @default(false)
   hasFinishedOnboarding       Boolean   @default(false)
   lastRecommendationsSyncedAt DateTime?
+  bio                         String?   @db.VarChar(500)
 
   questions            Question[]                @relation("questioner")
   replies              Question[]                @relation("replier")

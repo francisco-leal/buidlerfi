@@ -3,7 +3,8 @@ import { differenceInMinutes, startOfDay, subDays, subMonths } from "date-fns";
 import { URLSearchParams } from "url";
 import { formatUnits, parseEther } from "viem";
 
-export const shortAddress = (address: string) => {
+export const shortAddress = (address?: string) => {
+  if (!address) return "";
   return `${address.toLowerCase().slice(0, 6)}...${address.toLowerCase().slice(-4)}`;
 };
 

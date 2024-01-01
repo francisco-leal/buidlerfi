@@ -4,7 +4,7 @@ import {
   useDeleteQuestion,
   useGetHotQuestions,
   useGetQuestion,
-  useGetQuestionsFromReplier
+  useGetQuestionsFromUser
 } from "@/hooks/useQuestionsApi";
 import { DeleteOutline, EditOutlined, FileUploadOutlined, MoreHoriz } from "@mui/icons-material";
 import { CircularProgress, Dropdown, ListItemDecorator, Menu, MenuButton, MenuItem } from "@mui/joy";
@@ -14,7 +14,7 @@ import { AskQuestionModal } from "./ask-question-modal";
 
 interface Props {
   question:
-    | NonNullable<ReturnType<typeof useGetQuestionsFromReplier>["data"]>[number]
+    | NonNullable<ReturnType<typeof useGetQuestionsFromUser>["data"]>[number]
     | NonNullable<ReturnType<typeof useGetQuestion>["data"]>
     | NonNullable<ReturnType<typeof useGetHotQuestions>["data"]>[number];
   refetch: () => Promise<unknown>;

@@ -26,7 +26,7 @@ export default function QuestionPage() {
   const { id: questionId } = useParams();
   const { data: question, refetch } = useGetQuestion(Number(questionId));
   const [isEditingReply, setIsEditingReply] = useState(false);
-  const { hasKeys, socialData, isOwnProfile } = useUserProfile(question?.replier.wallet as `0x${string}`);
+  const { hasKeys, user, isOwnProfile } = useUserProfile(question?.replier.wallet as `0x${string}`);
   const [reply, setReply] = useState("");
   const putQuestion = usePutQuestion();
   const { data: questionerStats } = useGetUserStats(question?.questioner?.id);
@@ -79,7 +79,7 @@ export default function QuestionPage() {
 
   return (
     <Flex y grow>
-      <InjectTopBar title={socialData.displayName} withBack />
+      <InjectTopBar title={user?.displayName || shortAddress(user?.wallet)} withBack />
       <Flex y p={2} gap1>
         <Flex x yc xsb>
           <UnifiedUserItem
@@ -156,18 +156,18 @@ export default function QuestionPage() {
           <PageMessage
             title="Unlock answer"
             icon={<LockOutlined />}
-            text={`Hold at least one key to ask ${socialData.displayName} a question and access all answers.`}
+            text={`Hold at least one key to ask ${user?.displayName} a question and access all answers.`}
           />
         )}
 
         {!question.repliedOn && !isOwnProfile && (
           <PageMessage
             title="Waiting for answer ..."
-            icon={<Avatar size="sm" src={socialData.avatarUrl} />}
+            icon={<Avatar size="sm" src={user?.avatarUrl || undefined} />}
             text={
               hasKeys
-                ? `You will get notified when ${socialData.displayName} answers`
-                : `Buy a key, and get notified when ${socialData.displayName} answers`
+                ? `You will get notified when ${user?.displayName} answers`
+                : `Buy a key, and get notified when ${user?.displayName} answers`
             }
           />
         )}

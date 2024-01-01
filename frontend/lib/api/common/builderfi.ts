@@ -56,22 +56,6 @@ query RelationshipsQuery($address: ID = "owner") {
 }
 `;
 
-const getHoldersQuery = `
-query MyQuery($address: ID = "owner") {
-  shareRelationships(where: {owner_: {owner: $address}}, orderBy: supporterNumber, orderDirection:asc) {
-    heldKeyNumber
-    id
-    supporterNumber
-    owner {
-      ${gqlShare}
-    }
-    holder {
-      ${gqlShare}
-    }
-  }
-}
-`;
-
 const getContractAnalytic = `
 query GetContract($id: ID!) {
   contractAnalytic(id: $id) {
@@ -152,24 +136,6 @@ export const fetchHoldings = async (address: string) => {
     headers: {
       "Content-Type": "application/json"
     }
-  }).then(res => res.json());
-
-  return res.data.shareRelationships;
-};
-
-export const fetchHolders = async (address: string) => {
-  const res: BuilderFiHoldersResponse = await fetch(GRAPH_URL, {
-    method: "POST",
-    body: JSON.stringify({
-      query: getHoldersQuery,
-      variables: {
-        address: address.toLowerCase()
-      }
-    }),
-    headers: {
-      "Content-Type": "application/json"
-    },
-    cache: "no-cache"
   }).then(res => res.json());
 
   return res.data.shareRelationships;

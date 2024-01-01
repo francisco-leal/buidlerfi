@@ -12,7 +12,14 @@ interface Props {
 
 export const BannerCard: FC<Props> = ({ body, title, children, onClose }) => {
   return (
-    <Card>
+    <Card
+      sx={{
+        backgroundColor: theme => theme.palette.primary[50],
+        ".MuiTypography-root": {
+          color: theme => theme.palette.primary[400]
+        }
+      }}
+    >
       <Flex x xsb>
         <Typography textColor="primary.400" level="title-sm">
           {title}

@@ -1,7 +1,6 @@
 "use server";
 
 import { publishNewQuestionCast } from "@/lib/api/backend/farcaster";
-import { fetchHolders } from "@/lib/api/common/builderfi";
 import { MIN_QUESTION_LENGTH, PAGINATION_LIMIT } from "@/lib/constants";
 import { ERRORS } from "@/lib/errors";
 import { exclude } from "@/lib/exclude";
@@ -16,12 +15,14 @@ export const createQuestion = async (privyUserId: string, questionContent: strin
     return { error: ERRORS.QUESTION_LENGTH_INVALID };
   }
 
-  const questioner = await prisma.user.findUniqueOrThrow({ where: { privyUserId }, include: { socialProfiles: true } });
+  const questioner = await prisma.user.findUniqueOrThrow({
+    where: { privyUserId },
+    include: { socialProfiles: true, keysOwned: true }
+  });
   const replier = await prisma.user.findUniqueOrThrow({ where: { id: replierId }, include: { socialProfiles: true } });
 
-  const replierHolders = await fetchHolders(replier.wallet);
-  const found = replierHolders.find(holder => holder.holder.owner.toLowerCase() === questioner.wallet.toLowerCase());
-  if (!found || Number(found.heldKeyNumber) === 0) {
+  const key = questioner.keysOwned.find(key => key.ownerId === replierId);
+  if (!key || key.amount === BigInt(0)) {
     return { error: ERRORS.MUST_HOLD_KEY };
   }
 
@@ -204,7 +205,7 @@ export async function getQuestions(args: getQuestionsArgs, offset: number) {
 }
 
 export const getQuestion = async (privyUserId: string, questionId: number) => {
-  const currentUser = await prisma.user.findUniqueOrThrow({ where: { privyUserId } });
+  const currentUser = await prisma.user.findUniqueOrThrow({ where: { privyUserId }, include: { keysOwned: true } });
 
   const question = await prisma.question.findUniqueOrThrow({
     where: {
@@ -218,10 +219,9 @@ export const getQuestion = async (privyUserId: string, questionId: number) => {
     }
   });
 
-  const replierHolders = await fetchHolders(question.replier.wallet.toLowerCase());
-  const found = replierHolders.find(holder => holder.holder.owner.toLowerCase() === currentUser.wallet.toLowerCase());
+  const key = currentUser.keysOwned.find(key => key.ownerId === question.replierId);
 
-  if (found && Number(found.heldKeyNumber) > 0) return { data: question };
+  if (key && key.amount > BigInt(0)) return { data: question };
   else return { data: exclude(question, ["reply"]) };
 };
 

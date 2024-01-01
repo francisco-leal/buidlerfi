@@ -38,6 +38,7 @@ export const INTRO_BLOG_POST_LINK = "https://paragraph.xyz/@builderfi/intro-buil
 export const ONBOARDING_WALLET_CREATED_KEY = "onboarding-wallet-created";
 export const MIN_BALANCE_ONBOARDING = parseEther("0.001");
 export const PAGINATION_LIMIT = 20;
+export const USER_BIO_MAX_LENGTH = 160;
 
 // FARCASTER
 export const NEW_BUILDERFI_QUESTION_CAST =

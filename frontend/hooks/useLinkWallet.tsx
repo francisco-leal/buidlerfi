@@ -11,7 +11,7 @@ export const useLinkExternalWallet = () => {
   const [walletToSign, setWalletToSign] = useState<ConnectedWallet>();
   const [challenge, setChallenge] = useState<ReturnType<typeof useGenerateChallenge>["data"]>();
   const [isLoading, setIsLoading] = useState(false);
-  const [successCB, setSuccessCB] = useState<() => Promise<void>>();
+  const [successCB, setSuccessCB] = useState<() => Promise<unknown> | unknown>();
   const { refetch } = useUserContext();
 
   const linkNewWallet = useLinkWallet();
@@ -43,7 +43,7 @@ export const useLinkExternalWallet = () => {
     onError: () => setIsLoading(false)
   });
 
-  const linkWallet = (onSuccess?: () => Promise<void>) => {
+  const linkWallet = (onSuccess?: () => Promise<unknown> | unknown) => {
     setIsLoading(true);
     //STEP1: request wallet connect with privy
     if (onSuccess) setSuccessCB(() => onSuccess);
