@@ -1,14 +1,12 @@
 import { Flex } from "@/components/shared/flex";
 import { Reactions } from "@/components/shared/reactions";
-import { useProfileContext } from "@/contexts/profileContext";
 import { useBetterRouter } from "@/hooks/useBetterRouter";
+import { useMarkdown } from "@/hooks/useMarkdown";
 import { useGetHotQuestions, useGetKeyQuestions, useGetQuestionsFromUser } from "@/hooks/useQuestionsApi";
 import { getDifference, shortAddress } from "@/lib/utils";
 import theme from "@/theme";
-import { Avatar, AvatarGroup, Chip, Typography } from "@mui/joy";
-import anchorme from "anchorme";
+import { Avatar, AvatarGroup, Box, Chip, Typography } from "@mui/joy";
 import { FC, useMemo } from "react";
-import sanitize from "sanitize-html";
 import { QuestionContextMenu } from "./question-context-menu";
 
 interface Props {
@@ -18,19 +16,13 @@ interface Props {
     | NonNullable<ReturnType<typeof useGetKeyQuestions>["data"]>[number];
   onClick: () => void;
   type: "profile" | "home";
+  refetch?: () => Promise<unknown>;
 }
-export const QuestionEntry: FC<Props> = ({ question, onClick, type }) => {
+export const QuestionEntry: FC<Props> = ({ question, onClick, type, refetch }) => {
   const askedOn = useMemo(() => getDifference(question?.createdAt), [question?.createdAt]);
-  const { refetch } = useProfileContext();
   const router = useBetterRouter();
 
-  const sanitizedContent = useMemo(
-    () =>
-      sanitize(
-        anchorme({ input: question?.questionContent, options: { attributes: { target: "_blank" }, truncate: 20 } })
-      ),
-    [question?.questionContent]
-  );
+  const content = useMarkdown(question?.questionContent);
 
   if (!question) return <></>;
 
@@ -58,13 +50,14 @@ export const QuestionEntry: FC<Props> = ({ question, onClick, type }) => {
                 <Typography
                   level="title-sm"
                   whiteSpace="pre-line"
+                  textColor="neutral.800"
                   sx={{ cursor: "pointer" }}
                   onClick={() => router.push(`/profile/${question.questioner?.wallet}`)}
                 >
                   {question.questioner?.displayName}
                 </Typography>
               ) : (
-                <Typography level="body-sm">
+                <Typography level="body-sm" textColor="neutral.800">
                   <strong
                     style={{ cursor: "pointer" }}
                     onClick={() => router.push(`/profile/${question.questioner?.wallet}`)}
@@ -84,21 +77,18 @@ export const QuestionEntry: FC<Props> = ({ question, onClick, type }) => {
               <Typography level="helper">•</Typography>
               <Typography level="body-sm">{askedOn}</Typography>
             </Flex>
-            <QuestionContextMenu question={question} refetch={() => refetch()} />
+            <QuestionContextMenu question={question} refetch={async () => refetch?.()} />
           </Flex>
-          <Typography
+          <Box
+            sx={{ cursor: "pointer" }}
             onClick={e => {
               e.preventDefault();
               e.stopPropagation();
               onClick();
             }}
-            style={{ cursor: "pointer" }}
-            fontWeight={400}
-            level="body-sm"
-            whiteSpace="pre-line"
           >
-            <span className="remove-text-transform" dangerouslySetInnerHTML={{ __html: sanitizedContent }} />
-          </Typography>
+            {content}
+          </Box>
         </Flex>
       </Flex>
       <Flex
