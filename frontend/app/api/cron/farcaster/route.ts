@@ -4,7 +4,6 @@ import {
   replyToNewQuestionErrorNoUser,
   replyToNewQuestionErrorNotKeyHolder
 } from "@/lib/api/backend/farcaster";
-import { fetchHolders } from "@/lib/api/common/builderfi";
 import { BUILDERFI_FARCASTER_FID } from "@/lib/constants";
 import { ERRORS } from "@/lib/errors";
 import prisma from "@/lib/prisma";
@@ -152,7 +151,7 @@ const prepareQuestion = async (
   console.log(questionAuthorUsername, questionContent, questionRecipientUsername, questionCastHash);
   const questionAuthor = await prisma.socialProfile.findFirst({
     where: { profileName: questionAuthorUsername, type: SocialProfileType.FARCASTER },
-    include: { user: true }
+    include: { user: { include: { keysOwned: true } } }
   });
   const questionRecipient = await prisma.socialProfile.findFirst({
     where: { profileName: questionRecipientUsername, type: SocialProfileType.FARCASTER },
@@ -170,12 +169,9 @@ const prepareQuestion = async (
 
   // check if the question author is a key holder of question recipient
   // i.e. check if author can actually ask questions to recipient
-  const replierHolders = await fetchHolders(questionRecipient.user.wallet);
-  const found = replierHolders.find(
-    holder => holder.holder.owner.toLowerCase() === questionAuthor.user.wallet.toLowerCase()
-  );
+  const key = questionAuthor.user.keysOwned.find(key => key.ownerId === questionRecipient.user.id);
   // if not, reply with an error
-  if (!found || Number(found.heldKeyNumber) === 0) {
+  if (!key || key.amount === BigInt(0)) {
     return await replyToNewQuestionErrorNotKeyHolder(
       questionCastHash,
       questionRecipientUsername,

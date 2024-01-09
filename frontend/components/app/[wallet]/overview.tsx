@@ -1,25 +1,26 @@
 "use client";
+import { EthIcon } from "@/components/icons/ethIcon";
 import { Flex } from "@/components/shared/flex";
 import { WalletAddress } from "@/components/shared/wallet-address";
-import { useProfileContext } from "@/contexts/profileContext";
 import { useUserContext } from "@/contexts/userContext";
+import { useBetterRouter } from "@/hooks/useBetterRouter";
 import { useGetBuilderInfo } from "@/hooks/useBuilderFiContract";
-import { useLinkExternalWallet } from "@/hooks/useLinkWallet";
 import { useRefreshCurrentUser } from "@/hooks/useUserApi";
+import { useUserProfile } from "@/hooks/useUserProfile";
 import { ENS_LOGO, FARCASTER_LOGO, LENS_LOGO, TALENT_PROTOCOL_LOGO } from "@/lib/assets";
 import { formatEth, shortAddress } from "@/lib/utils";
-import { KeyOutlined } from "@mui/icons-material";
-import { Avatar, Box, Button, Link as JoyLink, Skeleton, Typography } from "@mui/joy";
+import { EditOutlined } from "@mui/icons-material";
+import { Avatar, Button, Chip, Link as JoyLink, Skeleton, Typography } from "@mui/joy";
 import { SocialProfileType } from "@prisma/client";
 import Image from "next/image";
 import { FC, useMemo } from "react";
-import { toast } from "react-toastify";
 
 interface Props {
   setBuyModalState: (state: "closed" | "buy" | "sell") => void;
+  profile: ReturnType<typeof useUserProfile>;
 }
 
-const socialInfo = {
+export const socialInfo = {
   [SocialProfileType.TALENT_PROTOCOL]: {
     name: "Talent Protocol",
     icon: <Image width={20} height={20} src={TALENT_PROTOCOL_LOGO} alt="Talent Protocol logo" />,
@@ -41,35 +42,18 @@ const socialInfo = {
     url: (username: string) => `https://app.ens.domains/${username}`
   }
 };
-const socialsOrder = Object.keys(socialInfo);
+export const socialsOrder = Object.keys(socialInfo);
 
-export const Overview: FC<Props> = ({ setBuyModalState }) => {
-  const { refetch, user } = useUserContext();
-  const { hasKeys, holders, ownedKeysCount, supporterNumber, isOwnProfile, socialData, recommendedUser } =
-    useProfileContext();
+export const Overview: FC<Props> = ({ setBuyModalState, profile }) => {
+  const { user: currentUser } = useUserContext();
 
-  const refetchAll = async () => {
-    await refetch();
-    await socialData?.refetch();
-  };
+  const router = useBetterRouter();
 
-  const { linkWallet } = useLinkExternalWallet();
-
-  const { buyPrice, isLoading, supply } = useGetBuilderInfo(socialData?.wallet);
+  const { buyPrice, supply } = useGetBuilderInfo(profile.user?.wallet);
   const refreshData = useRefreshCurrentUser();
 
-  const handleLinkOrRefreshWallet = async () => {
-    if (user?.socialWallet) {
-      await refreshData.mutateAsync();
-      await refetchAll();
-      toast.success("Profile info imported from your web3 social profiles");
-    } else {
-      linkWallet(refetchAll);
-    }
-  };
-
   const keysPlural = () => {
-    if (ownedKeysCount != 1) {
+    if (profile.ownedKeysCount != 1) {
       return "keys";
     } else {
       return "key";
@@ -77,168 +61,163 @@ export const Overview: FC<Props> = ({ setBuyModalState }) => {
   };
 
   const avatarUrl = useMemo(() => {
-    return socialData?.avatarUrl || recommendedUser?.avatarUrl || "";
-  }, [socialData, recommendedUser]);
+    return profile.user?.avatarUrl || profile.recommendedUser?.avatarUrl || "";
+  }, [profile.user, profile.recommendedUser]);
 
   const recommendedName = () =>
-    recommendedUser?.talentProtocol ||
-    recommendedUser?.farcaster ||
-    recommendedUser?.lens ||
-    recommendedUser?.ens ||
-    shortAddress(recommendedUser?.wallet || "");
+    profile.recommendedUser?.talentProtocol ||
+    profile.recommendedUser?.farcaster ||
+    profile.recommendedUser?.lens ||
+    profile.recommendedUser?.ens ||
+    shortAddress(profile.recommendedUser?.wallet || "");
 
-  const name = useMemo(() => socialData?.displayName || recommendedName(), [socialData, recommendedUser]);
+  const name = useMemo(() => profile.user?.displayName || recommendedName(), [profile.user, profile.recommendedUser]);
 
   const allSocials = useMemo(() => {
-    if (socialData?.socialsList.length) {
-      return socialData?.socialsList;
+    if (profile.user?.socialProfiles?.length) {
+      return profile.user?.socialProfiles;
     } else {
       const otherSocials = [];
 
-      if (recommendedUser?.talentProtocol) {
+      if (profile.recommendedUser?.talentProtocol) {
         otherSocials.push({
-          dappName: "TALENT_PROTOCOL",
-          profileName: recommendedUser.talentProtocol,
-          socialAddress: recommendedUser.wallet
+          type: SocialProfileType.TALENT_PROTOCOL,
+          profileName: profile.recommendedUser.talentProtocol,
+          socialAddress: profile.recommendedUser.wallet
         });
       }
-      if (recommendedUser?.farcaster) {
+      if (profile.recommendedUser?.farcaster) {
         otherSocials.push({
-          dappName: "FARCASTER",
-          profileName: recommendedUser.farcaster
+          type: SocialProfileType.FARCASTER,
+          profileName: profile.recommendedUser.farcaster
         });
       }
-      if (recommendedUser?.lens) {
+      if (profile.recommendedUser?.lens) {
         otherSocials.push({
-          dappName: "LENS",
-          profileName: recommendedUser.lens
+          type: SocialProfileType.LENS,
+          profileName: profile.recommendedUser.lens
         });
       }
-      if (recommendedUser?.ens) {
+      if (profile.recommendedUser?.ens) {
         otherSocials.push({
-          dappName: "ENS",
-          profileName: recommendedUser.ens
+          type: SocialProfileType.ENS,
+          profileName: profile.recommendedUser.ens
         });
       }
       return otherSocials;
     }
-  }, [socialData, recommendedUser]);
+  }, [profile.user, profile.recommendedUser]);
 
   return (
     <>
       <Flex y gap2 p={2}>
-        <Flex x xsb mb={-1}>
-          <Avatar size="lg" src={avatarUrl} alt={name}></Avatar>
-          <Flex x yc gap1>
-            {hasKeys && (
-              <Button
-                variant="outlined"
-                color="neutral"
-                sx={{ alignSelf: "flex-start" }}
-                onClick={() => setBuyModalState("sell")}
-                disabled={(supply || 0) <= BigInt(1)}
-              >
-                Sell
-              </Button>
-            )}
-
-            <Button
-              sx={{ alignSelf: "flex-start" }}
-              onClick={() => setBuyModalState("buy")}
-              disabled={supply === BigInt(0) && !isOwnProfile}
-            >
-              {isOwnProfile && holders?.length === 0 ? "Create keys" : "Buy"}
-            </Button>
-          </Flex>
-        </Flex>
-        <Flex x yc gap1>
-          <Flex y fullwidth>
-            {!!name ? (
-              <Typography level="h3">
-                <Skeleton loading={!socialData || socialData.isLoading}>{name}</Skeleton>
-              </Typography>
-            ) : (
-              <WalletAddress
-                address={socialData?.wallet || recommendedUser?.wallet || ""}
-                level="h3"
-                removeCopyButton={!isOwnProfile}
-              />
-            )}
-            {/* Only display if user has a display name */}
-            <Flex x yc gap={0.5} height="20px">
-              <Typography level="body-sm" startDecorator={<KeyOutlined fontSize="small" />}>
-                <Skeleton loading={isLoading}>{formatEth(buyPrice)} ETH</Skeleton>
-              </Typography>
-              {!!name && (
-                <>
-                  •
-                  <WalletAddress
-                    address={socialData?.wallet || recommendedUser?.wallet || ""}
-                    level="body-sm"
-                    removeCopyButton={!isOwnProfile}
-                  />
-                </>
+        <Skeleton variant="circular" width={80} height={80} loading={profile.isLoading}>
+          <Flex x xsb mb={-1}>
+            <Avatar size="lg" sx={{ height: "80px", width: "80px" }} src={avatarUrl} alt={name}></Avatar>
+            <Flex x ys gap1>
+              {profile.isOwnProfile && (
+                <Button
+                  sx={{ width: "36px", height: "36px" }}
+                  variant="outlined"
+                  color="neutral"
+                  loading={!!currentUser?.socialWallet && refreshData.isLoading}
+                  onClick={() => router.push("./edit")}
+                >
+                  <EditOutlined />
+                </Button>
               )}
+              {profile.hasKeys && (
+                <Button
+                  variant="outlined"
+                  color="neutral"
+                  onClick={() => setBuyModalState("sell")}
+                  disabled={(supply || 0) <= BigInt(1)}
+                >
+                  Sell
+                </Button>
+              )}
+
+              <Button onClick={() => setBuyModalState("buy")} disabled={supply === BigInt(0) && !profile.isOwnProfile}>
+                {profile.isOwnProfile && profile.holders?.length === 0 ? "Create keys" : "Buy"}
+              </Button>
             </Flex>
           </Flex>
-        </Flex>
-
-        {isOwnProfile && (
-          <Button
-            sx={{ alignSelf: "flex-start" }}
-            variant="soft"
-            loading={!!user?.socialWallet && refreshData.isLoading}
-            onClick={handleLinkOrRefreshWallet}
-          >
-            <Typography level="body-sm">
-              {user?.socialWallet ? "Refresh social data" : "Import web3 socials"}
-            </Typography>
-          </Button>
-        )}
-
-        <Flex x gap2 flexWrap={"wrap"}>
-          {allSocials
-            .sort((a, b) => {
-              return socialsOrder.indexOf(a.dappName) - socialsOrder.indexOf(b.dappName);
-            })
-            .map(social => {
-              const additionalData = socialInfo[social.dappName as keyof typeof socialInfo];
-              return (
-                <JoyLink
-                  key={social.dappName}
-                  href={additionalData.url(
-                    social.profileName,
-                    socialData?.socialAddress || recommendedUser?.wallet || ""
-                  )}
-                  target="_blank"
-                  textColor={"link"}
-                >
-                  {additionalData.icon}
-                </JoyLink>
-              );
-            })}
-        </Flex>
-
-        {ownedKeysCount === 0 ? (
-          <Typography level="body-sm">
-            {socialData?.userId ? "You don't own any keys" : `${name} is not on builder.fi yet`}
-          </Typography>
-        ) : (
-          <Flex x gap2>
-            <Typography level="body-sm">
-              Holder{" "}
-              <Box fontWeight={600} component="span">
-                {`#${supporterNumber}`}
-              </Box>
-            </Typography>
-            <Typography level="body-sm">
-              You own{" "}
-              <Box fontWeight={600} component="span">
-                {ownedKeysCount?.toString()} {keysPlural()}
-              </Box>
-            </Typography>
+          <Flex x yc gap1>
+            <Flex y fullwidth>
+              {!!name ? (
+                <Typography level="h2">{name}</Typography>
+              ) : (
+                <WalletAddress
+                  address={profile.user?.wallet || profile.recommendedUser?.wallet || ""}
+                  level="h3"
+                  removeCopyButton={!profile.isOwnProfile}
+                />
+              )}
+              {/* Only display if user has a display name */}
+              <Flex x yc gap={0.5} height="20px">
+                <Typography level="title-sm" startDecorator={<EthIcon size="sm" />}>
+                  {formatEth(buyPrice)}
+                </Typography>
+                {profile.ownedKeysCount > 0 && (
+                  <Typography level="body-sm">
+                    • You own {profile.ownedKeysCount?.toString()} {keysPlural()}
+                  </Typography>
+                )}
+              </Flex>
+            </Flex>
           </Flex>
-        )}
+
+          {profile.user?.bio && <Typography level="body-sm">{profile.user.bio}</Typography>}
+          {profile.user?.tags && profile.user?.tags.length > 0 && (
+            <Flex x yc gap1>
+              {profile.user.tags.map(tag => (
+                <Chip variant="outlined" color="neutral" key={tag.id}>
+                  {tag.name}
+                </Chip>
+              ))}
+            </Flex>
+          )}
+
+          {profile.ownedKeysCount === 0 && !profile.user ? (
+            <Typography level="body-sm">{`${name} is not on builder.fi yet`}</Typography>
+          ) : (
+            <Flex x gap2 pointer onClick={() => router.push("./holders")}>
+              <Typography level="body-sm">
+                <strong>{profile.holders?.length}</strong> holders
+              </Typography>
+              <Typography level="body-sm">
+                <strong>{profile.holdings?.length}</strong> holding
+              </Typography>
+            </Flex>
+          )}
+
+          <Flex x gap2 flexWrap={"wrap"}>
+            {allSocials
+              .sort((a, b) => {
+                return socialsOrder.indexOf(a.type) - socialsOrder.indexOf(b.type);
+              })
+              .map(social => {
+                const additionalData = socialInfo[social.type as keyof typeof socialInfo];
+                return (
+                  <JoyLink
+                    key={social.type}
+                    href={additionalData.url(
+                      social.profileName,
+                      profile.user?.socialWallet || profile.recommendedUser?.wallet || ""
+                    )}
+                    target="_blank"
+                    textColor={"link"}
+                    variant="outlined"
+                    color="neutral"
+                    p={1}
+                    sx={{ borderRadius: "50%" }}
+                  >
+                    {additionalData.icon}
+                  </JoyLink>
+                );
+              })}
+          </Flex>
+        </Skeleton>
       </Flex>
     </>
   );

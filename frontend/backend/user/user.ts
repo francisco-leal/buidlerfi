@@ -1,6 +1,6 @@
 "use server";
 
-import { PAGINATION_LIMIT } from "@/lib/constants";
+import { PAGINATION_LIMIT, USER_BIO_MAX_LENGTH } from "@/lib/constants";
 import { ERRORS } from "@/lib/errors";
 import { exclude } from "@/lib/exclude";
 import prisma from "@/lib/prisma";
@@ -81,7 +81,8 @@ export const getUser = async (wallet: string) => {
       wallet: address
     },
     include: {
-      socialProfiles: true
+      socialProfiles: true,
+      tags: true
     }
   });
 
@@ -199,11 +200,16 @@ export const linkNewWallet = async (privyUserId: string, signedMessage: string) 
 export interface UpdateUserArgs {
   tags?: string[];
   hasFinishedOnboarding?: boolean;
+  bio?: string;
 }
 
 export const updateUser = async (privyUserId: string, updatedUser: UpdateUserArgs) => {
   if (updatedUser.tags && updatedUser.tags.length > 3) {
     return { error: ERRORS.TAGS_COUNT_INVALID };
+  }
+
+  if (updatedUser.bio !== undefined && updatedUser.bio.length > USER_BIO_MAX_LENGTH) {
+    return { error: ERRORS.BIO_LENGTH_INVALID };
   }
 
   const existingUser = await prisma.user.findUniqueOrThrow({
@@ -220,7 +226,8 @@ export const updateUser = async (privyUserId: string, updatedUser: UpdateUserArg
             disconnect: existingUser.tags.map(tag => ({ id: tag.id })),
             connect: updatedUser.tags.map(tag => ({ name: tag }))
           }
-        : undefined
+        : undefined,
+      bio: updatedUser.bio
     }
   });
 

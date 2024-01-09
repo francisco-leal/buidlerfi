@@ -1,21 +1,19 @@
 import { OpenDialog } from "@/contexts/DialogContainer";
-import { useProfileContext } from "@/contexts/profileContext";
 import { useUserContext } from "@/contexts/userContext";
-import { useDeleteReply, useGetQuestion, useGetQuestionsFromReplier } from "@/hooks/useQuestionsApi";
+import { useDeleteReply, useGetQuestion, useGetQuestionsFromUser } from "@/hooks/useQuestionsApi";
 import { DeleteOutline, EditOutlined, MoreHoriz } from "@mui/icons-material";
 import { Box, CircularProgress, Dropdown, ListItemDecorator, Menu, MenuButton, MenuItem } from "@mui/joy";
 import { FC } from "react";
 
 interface Props {
   question:
-    | NonNullable<ReturnType<typeof useGetQuestionsFromReplier>["data"]>[number]
+    | NonNullable<ReturnType<typeof useGetQuestionsFromUser>["data"]>[number]
     | NonNullable<ReturnType<typeof useGetQuestion>["data"]>;
   refetchQuestion: () => void;
   onEdit: () => void;
 }
 
 export const ReplyContextMenu: FC<Props> = ({ question, refetchQuestion, onEdit }) => {
-  const { refetch } = useProfileContext();
   const { user } = useUserContext();
   const deleteReply = useDeleteReply();
   const isEditable = question.replierId === user?.id;
@@ -25,7 +23,6 @@ export const ReplyContextMenu: FC<Props> = ({ question, refetchQuestion, onEdit 
       type: "confirm",
       submit: () =>
         deleteReply.mutateAsync(question.id).then(() => {
-          refetch();
           refetchQuestion();
         }),
       body: "Are you sure you want to delete this reply ?",

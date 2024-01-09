@@ -1,10 +1,10 @@
 import { useUserContext } from "@/contexts/userContext";
+import { useBetterRouter } from "@/hooks/useBetterRouter";
 import { getDifference, shortAddress } from "@/lib/utils";
 import { ChevronRight } from "@mui/icons-material";
 import { Avatar, Chip, Skeleton, Typography } from "@mui/joy";
 import { SxProps, TypographySystem } from "@mui/joy/styles/types";
 import { User } from "@prisma/client";
-import { useRouter } from "next/navigation";
 import { FC, useMemo } from "react";
 import { Flex } from "./flex";
 
@@ -66,7 +66,7 @@ export const UnifiedUserItem: FC<Props> = ({
   joinedAndReplies,
   holdersAndKeys
 }) => {
-  const router = useRouter();
+  const router = useBetterRouter();
   const { holding, holders } = useUserContext();
 
   const goToProfile = () => {
@@ -91,8 +91,8 @@ export const UnifiedUserItem: FC<Props> = ({
 
     if (joinedAndReplies) {
       const diff = getDifference(joinedAndReplies.createdAt);
-      return `Joined builder.fi ${diff} ago • ${joinedAndReplies.numberOfReplies}/${
-        joinedAndReplies.numberOfQuestions
+      return `Joined builder.fi ${diff} ago • ${joinedAndReplies.numberOfQuestions}/${
+        joinedAndReplies.numberOfReplies
       } ${pluralize("answer", joinedAndReplies.numberOfReplies)}`;
     }
 

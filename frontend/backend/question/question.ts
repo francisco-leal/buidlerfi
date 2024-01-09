@@ -1,14 +1,13 @@
 "use server";
 
 import { publishNewQuestionCast } from "@/lib/api/backend/farcaster";
-import { fetchHolders } from "@/lib/api/common/builderfi";
 import { MIN_QUESTION_LENGTH, PAGINATION_LIMIT } from "@/lib/constants";
 import { ERRORS } from "@/lib/errors";
 import { exclude } from "@/lib/exclude";
 import prisma from "@/lib/prisma";
 import { shortAddress } from "@/lib/utils";
 import { Prisma, ReactionType, SocialProfileType } from "@prisma/client";
-import { getKeyRelationships } from "../keyRelationship/keyRelationship";
+import { getKeyRelationships, ownsKey } from "../keyRelationship/keyRelationship";
 import { sendNotification } from "../notification/notification";
 
 export const createQuestion = async (privyUserId: string, questionContent: string, replierId: number) => {
@@ -16,12 +15,14 @@ export const createQuestion = async (privyUserId: string, questionContent: strin
     return { error: ERRORS.QUESTION_LENGTH_INVALID };
   }
 
-  const questioner = await prisma.user.findUniqueOrThrow({ where: { privyUserId }, include: { socialProfiles: true } });
+  const questioner = await prisma.user.findUniqueOrThrow({
+    where: { privyUserId },
+    include: { socialProfiles: true, keysOwned: true }
+  });
   const replier = await prisma.user.findUniqueOrThrow({ where: { id: replierId }, include: { socialProfiles: true } });
 
-  const replierHolders = await fetchHolders(replier.wallet);
-  const found = replierHolders.find(holder => holder.holder.owner.toLowerCase() === questioner.wallet.toLowerCase());
-  if (!found || Number(found.heldKeyNumber) === 0) {
+  const key = questioner.keysOwned.find(key => key.ownerId === replierId);
+  if (!key || key.amount === BigInt(0)) {
     return { error: ERRORS.MUST_HOLD_KEY };
   }
 
@@ -86,7 +87,7 @@ type getHotQuestionResponse = Prisma.QuestionGetPayload<{
   };
 }>;
 
-export async function getHotQuestions(offset: number) {
+export async function getHotQuestions(offset: number, filters: { questionerId?: number; replierId?: number } = {}) {
   const rawResult: any[] = await prisma.$queryRaw`
     SELECT
       q.id,
@@ -112,6 +113,12 @@ export async function getHotQuestions(offset: number) {
       "User" AS "questioner" ON q."questionerId" = questioner.id
     LEFT JOIN
       "Reaction" AS r ON q.id = r."questionId"
+    WHERE
+        (${filters.questionerId || 0} != 0 AND q."questionerId" = ${filters.questionerId})
+      OR
+        (${filters.replierId || 0} != 0 AND q."replierId" = ${filters.replierId})
+      OR
+        (${filters.questionerId || 0} = 0 AND ${filters.replierId || 0} = 0)
     GROUP BY
 		q.id,
 		"questioner".id,
@@ -158,19 +165,18 @@ export async function getKeysQuestions(privyUserId: string, offset: number) {
     }
   });
   const keys = await getKeyRelationships(currentUser.wallet, "holder");
-  const res = await getQuestions(
-    {
-      orderBy: { createdAt: "desc" },
-      where: {
-        replier: {
-          id: { in: keys.data?.map(holding => holding.owner.id) }
-        }
+  const res = await prisma.question.findMany({
+    orderBy: { createdAt: "desc" },
+    where: {
+      replier: {
+        id: { in: keys.data?.map(holding => holding.owner.id) }
       }
     },
-    offset
-  );
+    take: PAGINATION_LIMIT,
+    skip: offset
+  });
 
-  return { data: res.data };
+  return { data: res };
 }
 
 export async function getReactions(questionId: number, type: "like" | "upvote") {
@@ -202,10 +208,8 @@ export async function getQuestions(args: getQuestionsArgs, offset: number) {
 
   return { data: exclude(questions, ["reply"]) };
 }
-
-export const getQuestion = async (privyUserId: string, questionId: number) => {
-  const currentUser = await prisma.user.findUniqueOrThrow({ where: { privyUserId } });
-
+//We allow privyUserId to be undefiend for public endpoint
+export const getQuestion = async (questionId: number, privyUserId?: string) => {
   const question = await prisma.question.findUniqueOrThrow({
     where: {
       id: questionId
@@ -218,10 +222,12 @@ export const getQuestion = async (privyUserId: string, questionId: number) => {
     }
   });
 
-  const replierHolders = await fetchHolders(question.replier.wallet.toLowerCase());
-  const found = replierHolders.find(holder => holder.holder.owner.toLowerCase() === currentUser.wallet.toLowerCase());
+  //We need to check privyUserId explicitely also because if it's undefined, it's going to return the system user
+  if (!privyUserId) return { data: exclude(question, ["reply"]) };
 
-  if (found && Number(found.heldKeyNumber) > 0) return { data: question };
+  const hasKey = await ownsKey({ userId: question.replierId }, { privyUserId });
+
+  if (hasKey) return { data: question };
   else return { data: exclude(question, ["reply"]) };
 };
 
@@ -245,26 +251,20 @@ export const deleteQuestion = async (privyUserId: string, questionId: number) =>
     return { error: ERRORS.UNAUTHORIZED };
   }
 
-  const res = await prisma.$transaction(async tx => {
-    const res = await prisma.question.delete({
-      where: {
-        id: questionId
-      }
-    });
-
-    // Make sure to delete reactions when deleting question
-    await tx.reaction.deleteMany({
-      where: {
-        questionId: questionId
-      }
-    });
-    return res;
+  const res = await prisma.question.delete({
+    where: {
+      id: questionId
+    }
   });
 
   return { data: res };
 };
 
 export const editQuestion = async (privyUserId: string, questionId: number, questionContent: string) => {
+  if (questionContent.length > 280 || questionContent.length < MIN_QUESTION_LENGTH) {
+    return { error: ERRORS.QUESTION_LENGTH_INVALID };
+  }
+
   const question = await prisma.question.findUniqueOrThrow({
     where: {
       id: questionId

@@ -4,7 +4,7 @@ import {
   useDeleteQuestion,
   useGetHotQuestions,
   useGetQuestion,
-  useGetQuestionsFromReplier
+  useGetQuestionsFromUser
 } from "@/hooks/useQuestionsApi";
 import { DeleteOutline, EditOutlined, FileUploadOutlined, MoreHoriz } from "@mui/icons-material";
 import { CircularProgress, Dropdown, ListItemDecorator, Menu, MenuButton, MenuItem } from "@mui/joy";
@@ -14,7 +14,7 @@ import { AskQuestionModal } from "./ask-question-modal";
 
 interface Props {
   question:
-    | NonNullable<ReturnType<typeof useGetQuestionsFromReplier>["data"]>[number]
+    | NonNullable<ReturnType<typeof useGetQuestionsFromUser>["data"]>[number]
     | NonNullable<ReturnType<typeof useGetQuestion>["data"]>
     | NonNullable<ReturnType<typeof useGetHotQuestions>["data"]>[number];
   refetch: () => Promise<unknown>;
@@ -36,14 +36,27 @@ export const QuestionContextMenu: FC<Props> = ({ question, refetch }) => {
   };
 
   const handleShare = async () => {
-    navigator.clipboard.writeText(location.origin + `/question/${question.id}`);
-    toast.success("question url copied to clipboard");
+    if (navigator.share) {
+      navigator.share({
+        title: `${question.questioner.displayName} asked a question to ${question.replier.displayName}`,
+        text: `Get ${question.replier.displayName}’s keys on builder.fi to unlock their answer to this question !`,
+        url: `${location.origin}/question/${question.id}`
+      });
+    } else {
+      navigator.clipboard.writeText(location.origin + `/question/${question.id}`);
+      toast.success("question url copied to clipboard");
+    }
   };
 
   return (
     <>
       {isEditQuestion && (
-        <AskQuestionModal questionToEdit={question.id} refetch={refetch} close={() => setIsEditQuestion(false)} />
+        <AskQuestionModal
+          ownerUser={{ displayName: question.replier.displayName, id: question.replier.id }}
+          questionToEdit={question.id}
+          refetch={refetch}
+          close={() => setIsEditQuestion(false)}
+        />
       )}
       <Dropdown>
         <MenuButton variant="plain">

@@ -56,16 +56,6 @@ const theme = extendTheme({
         })
       }
     },
-    JoyCard: {
-      styleOverrides: {
-        root: props => ({
-          backgroundColor: props.theme.palette.primary[50],
-          ".MuiTypography-root": {
-            color: props.theme.palette.primary[400]
-          }
-        })
-      }
-    },
     JoySkeleton: {
       defaultProps: {
         animation: "wave"
@@ -73,7 +63,7 @@ const theme = extendTheme({
     },
     JoyTabs: {
       styleOverrides: {
-        root: props => ({
+        root: () => ({
           flexGrow: 1
         })
       }
