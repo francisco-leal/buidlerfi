@@ -27,11 +27,11 @@ export const useMarkdown = (text?: string | null) => {
       return anchorme({
         input: sanitize(md),
         options: {
-          attributes: () => ({
+          attributes: {
             target: "_blank",
             onClick: "window.builderfiAnchorStopPropagation(event)",
             truncate: 20
-          })
+          }
         }
       });
     },
