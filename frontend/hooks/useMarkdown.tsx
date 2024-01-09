@@ -29,7 +29,8 @@ export const useMarkdown = (text?: string | null) => {
         options: {
           attributes: () => ({
             target: "_blank",
-            onClick: "window.builderfiAnchorStopPropagation(event)"
+            onClick: "window.builderfiAnchorStopPropagation(event)",
+            truncate: 20
           })
         }
       });
