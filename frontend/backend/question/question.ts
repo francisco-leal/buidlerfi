@@ -172,6 +172,10 @@ export async function getKeysQuestions(privyUserId: string, offset: number) {
         id: { in: keys.data?.map(holding => holding.owner.id) }
       }
     },
+    include: {
+      questioner: true,
+      replier: true
+    },
     take: PAGINATION_LIMIT,
     skip: offset
   });

@@ -23,7 +23,7 @@ interface Props {
 export const QuestionContextMenu: FC<Props> = ({ question, refetch }) => {
   const { user } = useUserContext();
   const deleteQuestion = useDeleteQuestion();
-  const isEditable = question.questioner.id === user?.id && !question.repliedOn;
+  const isEditable = question.questioner?.id === user?.id && !question.repliedOn;
   const [isEditQuestion, setIsEditQuestion] = useState(false);
 
   const handleDelete = async () => {
