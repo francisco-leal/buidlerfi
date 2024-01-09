@@ -37,9 +37,9 @@ export default function Home() {
           {newQuestions.data?.map(question => (
             <QuestionEntry
               type="home"
-              key={question.id}
+              key={question?.id}
               question={question}
-              onClick={() => router.push(`/question/${question.id}`)}
+              onClick={() => router.push(`/question/${question?.id}`)}
               refetch={newQuestions?.refetch}
             />
           ))}
@@ -50,9 +50,9 @@ export default function Home() {
           {hotQuestions.data?.map(question => (
             <QuestionEntry
               type="home"
-              key={question.id}
+              key={question?.id}
               question={question}
-              onClick={() => router.push(`/question/${question.id}`)}
+              onClick={() => router.push(`/question/${question?.id}`)}
               refetch={hotQuestions?.refetch}
             />
           ))}
@@ -74,9 +74,9 @@ export default function Home() {
             keysQuestions.data?.map(question => (
               <QuestionEntry
                 type="home"
-                key={question.id}
+                key={question?.id}
                 question={question}
-                onClick={() => router.push(`/question/${question.id}`)}
+                onClick={() => router.push(`/question/${question?.id}`)}
                 refetch={keysQuestions?.refetch}
               />
             ))
