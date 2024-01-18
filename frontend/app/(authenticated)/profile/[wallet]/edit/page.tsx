@@ -22,7 +22,7 @@ export default function EditProfilePage() {
 
   const profile = useUserProfile(currentUser?.wallet);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
-  const [bio, setBio] = useState<string>(currentUser!.bio || "");
+  const [bio, setBio] = useState<string>("");
   const [isLoading, setIsLoading] = useState(false);
   const [isReady, setIsready] = useState(false);
 
@@ -73,6 +73,7 @@ export default function EditProfilePage() {
     if (currentUser?.socialWallet) {
       await refreshData.mutateAsync();
       await refetch();
+      setBio(currentUser.bio || "");
       toast.success("Profile info imported from your web3 social profiles");
     } else {
       linkWallet(refetch);
