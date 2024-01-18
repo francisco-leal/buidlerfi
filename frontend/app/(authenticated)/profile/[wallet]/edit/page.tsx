@@ -22,7 +22,7 @@ export default function EditProfilePage() {
 
   const profile = useUserProfile(currentUser?.wallet);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
-  const [bio, setBio] = useState<string>("");
+  const [bio, setBio] = useState<string>(currentUser!.bio || "");
   const [isLoading, setIsLoading] = useState(false);
   const [isReady, setIsready] = useState(false);
 
